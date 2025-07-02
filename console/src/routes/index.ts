@@ -12,6 +12,27 @@ export type CustomeRouteObject = RouteObject & {
 };
 
 const Cursor = lazy(() => import("@/pages/cursor" as string))
+const AddCursor = lazy(() => import("@/pages/cursor/add" as string))
+
+// 课程管理
+let cursorRoute = [
+  {
+    path: 'cursor',
+    Component: Cursor,
+    meta: {
+      label: '课程列表',
+      icon: 'SnippetsOutlined'
+    }
+  },
+  {
+    path: 'cursor/add',
+    Component: AddCursor
+  },
+  {
+    path: 'cursor/edit/:id',
+    Component: AddCursor
+  },
+]
 
 let router = createBrowserRouter([
   {
@@ -26,25 +47,12 @@ let router = createBrowserRouter([
           icon: 'FundProjectionScreenOutlined'
         }
       },
+      ...cursorRoute,
       {
-        path: 'cursor',
-        Component: Cursor,
-        meta: {
-          label: '课程列表',
-          icon: 'SnippetsOutlined'
-        },
-        children: [
-          {
-            path: 'detail/:id',
-            Component: Dashboard,
-          }
-        ]
-      },
-      {
-        path: 'students',
+        path: 'person',
         Component: Dashboard,
         meta: {
-          label: '学员管理',
+          label: '人员管理',
           icon: 'UserOutlined'
         }
       },

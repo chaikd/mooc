@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
-import { Avatar, Button, Layout, theme } from 'antd';
+import { Layout, theme } from 'antd';
 import { Outlet } from 'react-router';
 import Menus from '@/components/menus'
 import LayoutHeader from '@/components/header/idnex';
@@ -23,7 +18,7 @@ const App: React.FC = () => {
   }
   const contentStyle = {
     margin: '24px 16px',
-    padding: 24,
+    // padding: 24,
     minHeight: 280,
     background: colorBgContainer,
     borderRadius: borderRadiusLG,
@@ -44,7 +39,9 @@ const App: React.FC = () => {
         <Content
           style={contentStyle}
         >
-          <Outlet></Outlet>
+          <div className="h-full w-full p-4">
+            <Outlet></Outlet>
+          </div>
         </Content>
       </Layout>
     </Layout>

@@ -1,6 +1,5 @@
 import { CustomeRouteObject } from "@/routes"
-import { setMenus } from "@/store/modules/menus"
-import { useDispatch, useSelector } from "react-redux"
+import { useSelector } from "react-redux"
 import {
   FundProjectionScreenOutlined,
   SnippetsOutlined,
