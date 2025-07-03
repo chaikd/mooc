@@ -3,6 +3,7 @@ import { createBrowserRouter, type RouteObject } from "react-router";
 import Layout from '@/pages/layouts'
 import Dashboard from "@/pages/dashboard";
 import { lazy, ReactNode } from "react";
+import NotFound from "@/pages/not-found";
 
 export type CustomeRouteObject = RouteObject & {
   meta?: {
@@ -13,6 +14,7 @@ export type CustomeRouteObject = RouteObject & {
 
 const Cursor = lazy(() => import("@/pages/cursor" as string))
 const AddCursor = lazy(() => import("@/pages/cursor/add" as string))
+const Regist = lazy(() => import("@/pages/regist" as string))
 
 // 课程管理
 let cursorRoute = [
@@ -77,6 +79,14 @@ let router = createBrowserRouter([
   {
     path: 'login',
     Component: Login
+  },
+  {
+    path: 'regist',
+    Component: Regist
+  },
+  {
+    path: '*',
+    Component: NotFound
   }
 ] as CustomeRouteObject[]);
 

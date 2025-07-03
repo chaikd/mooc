@@ -1,1 +1,4 @@
 node_modules
+
+server/src/public/jwt/pem
+server/logs

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "vite test"
+    "dev": "vite"
   },
   "keywords": [],
   "author": "",
@@ -17,7 +17,9 @@
     "babel-plugin-react-compiler": "19.1.0-rc.2"
   },
   "dependencies": {
+    "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "@reduxjs/toolkit": "^2.8.2",
+    "axios": "^1.10.0",
     "react-redux": "^9.2.0",
     "react-router": "^7.6.3"
   }

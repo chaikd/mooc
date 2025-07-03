@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "console:dev": "vite console"
+    "console:dev": "pnpm --filter ./console dev",
+    "server:dev": "pnpm --filter ./server dev"
   },
   "keywords": [],
   "author": "",
