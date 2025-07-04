@@ -7,7 +7,7 @@ export default function BreadcrumbChain() {
   const menus = useSelector((state: any) => state.menus.menus)
   let bread = match.filter(v => v.pathname !== '/').map(v => {
     let pathName = v.pathname
-    let title = menus.find(val => val.key === pathName)?.label
+    let title = menus.map(v => [v, [...(v.children || [])]]).flat(2).find(val => val.key === pathName)?.label
     return {
       title
     }

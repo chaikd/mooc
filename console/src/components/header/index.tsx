@@ -1,5 +1,5 @@
 import { logoutServerAction } from "@/api/auth";
-import { getUserInfo } from "@/api/user";
+import { getSelfInfo } from "@/api/user";
 import { setUserInfo } from "@/store/modules/user";
 import { setToken } from "@/utils/token";
 import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from "@ant-design/icons";
@@ -14,9 +14,8 @@ export default function LayoutHeader({collapsed, setCollapsed, headerStyle, colo
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const fn = async () => {
-    const userInfo = await getUserInfo()
-    console.log(userInfo)
-    dispatch(setUserInfo(userInfo))
+    const userInfo = await getSelfInfo()
+    dispatch(setUserInfo(userInfo.data))
   }
   const logout = async () => {
     const res = await logoutServerAction()

@@ -15,6 +15,10 @@ export type CustomeRouteObject = RouteObject & {
 const Cursor = lazy(() => import("@/pages/cursor" as string))
 const AddCursor = lazy(() => import("@/pages/cursor/add" as string))
 const Regist = lazy(() => import("@/pages/regist" as string))
+const Person = lazy(() => import("@/pages/person" as string))
+const User = lazy(() => import("@/pages/person/user/list" as string))
+const Role = lazy(() => import("@/pages/person/role" as string))
+const Permission = lazy(() => import("@/pages/person/permission" as string))
 
 // 课程管理
 let cursorRoute = [
@@ -52,11 +56,34 @@ let router = createBrowserRouter([
       ...cursorRoute,
       {
         path: 'person',
-        Component: Dashboard,
+        Component: Person,
         meta: {
           label: '人员管理',
           icon: 'UserOutlined'
-        }
+        },
+        children: [
+          {
+            path: 'user',
+            Component: User,
+            meta: {
+              label: '用户管理',
+            },
+          },
+          {
+            path: 'role',
+            Component: Role,
+            meta: {
+              label: '角色管理',
+            }
+          },
+          {
+            path: 'permission',
+            Component: Permission,
+            meta: {
+              label: '权限管理',
+            }
+          },
+        ]
       },
       {
         path: 'live',
@@ -64,14 +91,6 @@ let router = createBrowserRouter([
         meta: {
           label: '直播管理',
           icon: 'VideoCameraOutlined'
-        }
-      },
-      {
-        path: 'role',
-        Component: Dashboard,
-        meta: {
-          label: '角色管理',
-          icon: 'ApartmentOutlined'
         }
       },
     ]

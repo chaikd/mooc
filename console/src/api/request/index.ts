@@ -17,7 +17,7 @@ request.interceptors.request.use((req) => {
 request.interceptors.response.use((res) => {
   return res.data
 }, err => {
-  if(err.response.state === 401) {
+  if(err.response.status === 401 || err.response.status === 403) {
     router.navigate('/login')
   }
   return err.response.data

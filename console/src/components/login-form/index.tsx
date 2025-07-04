@@ -13,7 +13,7 @@ export default function LoginForm({finishFn, pendding, btnText = '登陆'}) {
         {required: true, message: '请输入密码'},
         {min: 6, message: '最少6位'}
       ]}>
-        <Input placeholder="请输入密码" size="large" />
+        <Input.Password placeholder="请输入密码" size="large" />
       </Form.Item>
       <Form.Item>
         <Button className='w-full' type="primary" size="large" htmlType='submit' disabled={pendding} loading={pendding}>{btnText}</Button>

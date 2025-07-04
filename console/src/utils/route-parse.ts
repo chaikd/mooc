@@ -16,9 +16,10 @@ export const icons = {
   'VideoCameraOutlined': VideoCameraOutlined
 }
 
-export function parseRouters(routers) {
+export function parseRouters(routers, prePath = '') {
   let menus = routers.filter(v => !!v.meta?.label).map((v: CustomeRouteObject) => {
     let path = v.index ? '/' : `/${v.path}`
+    path = prePath + path
     let obj = {
       key: path,
       path,
@@ -27,7 +28,7 @@ export function parseRouters(routers) {
       children: undefined
     }
     if (v.children) {
-      obj.children = parseRouters(v.children)
+      obj.children = parseRouters(v.children, path)
     }
     if (!obj.children || obj.children.length === 0) {
       Reflect.deleteProperty(obj, 'children')

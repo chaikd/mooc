@@ -5,27 +5,16 @@ export interface UserType {
   username: string;
   password: string;
   role: string;
+  createTime: Date;
 }
 
 const userSchema = new Schema<UserType>({
   username: {type: String, unique: true},
   password: String,
-  role: String
+  role: String,
+  createTime: Date
 })
 
-const User = model<UserType>('User', userSchema)
-
-const createUser = (data: UserType) => {
-  return User.create(data)
-}
-
-const findOneUser = (data: Partial<UserType>) => {
-  return User.findOne(data)
-}
-
-export {
-  createUser,
-  findOneUser
-}
+const User = model<UserType>('user', userSchema)
 
 export default User
