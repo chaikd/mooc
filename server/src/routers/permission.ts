@@ -11,7 +11,6 @@ router.post('/add', async (req, res) => {
 
 router.post('/edit', async (req, res) => {
   const {_id, ...data} = req.body
-  console.log(data)
   const role = await updateDoc(Permission, _id, data);
   res.json({ success: true, data: role });
 })

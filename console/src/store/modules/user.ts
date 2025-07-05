@@ -7,7 +7,8 @@ const userSlice = createSlice({
   initialState: {
     authToken: getToken() || '',
     info: null,
-    userId: ''
+    userId: '',
+    permissions: []
   },
   reducers: {
     setStoreToken(state, action) {
@@ -17,6 +18,7 @@ const userSlice = createSlice({
     setUserInfo(state, action) {
       state.info = action.payload
       state.userId = action.payload?._id
+      state.permissions = action.payload.roleInfo?.permissions
     },
     setUserId(state, action) {
       state.userId = action.payload

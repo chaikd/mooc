@@ -1,20 +1,10 @@
-import router from "@/routes";
-import { setMenus } from "@/store/modules/menus";
-import { getMenus, parseRouters } from "@/utils/route-parse";
+import { getMenus } from "@/utils/route-parse";
 import { Menu } from "antd";
-import { useEffect } from "react";
-import { useDispatch } from "react-redux";
 import { useMatches, useNavigate } from "react-router";
 
 export default function Menus() {
-  const dispatch = useDispatch()
   const navigateTo = useNavigate()
   const match = useMatches()
-  useEffect(() => {
-    let routes = router.routes[0]
-    let menu = parseRouters(routes.children)
-    dispatch(setMenus(menu))
-  }, [dispatch])
   const menuChange = ({ key}) => {
     navigateTo(key)
   }

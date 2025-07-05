@@ -6,7 +6,7 @@ import { loginServerAction } from '@/api/auth'
 import useFormFinish from '@/utils/use-form-finish'
 import LoginForm from '@/components/login-form'
 import { useDispatch } from 'react-redux'
-import { setStoreToken, setUserId, setUserInfo } from '@/store/modules/user'
+import { setStoreToken, setUserId } from '@/store/modules/user'
 
 export default function Login() {
   const navigate = useNavigate()

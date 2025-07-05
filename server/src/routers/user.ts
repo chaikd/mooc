@@ -1,4 +1,4 @@
-import {User} from "@/models";
+import {Role, User} from "@/models";
 import { md5 } from "@/utils";
 import { createDoc, deleteDoc, findDocs, findOneDoc, updateDoc, countDocs } from "@/utils/database/actions";
 import { Response, Request, Router } from "express";
@@ -14,11 +14,22 @@ router.get('/selfinfo', async (req: Request, res: Response) => {
       message: '请传入用户id'
     })
   }
-  const userInfo = await findOneDoc(User, {_id}, 'username createTime _id role')
-  if(userInfo) {
+  let userInfo = await findOneDoc(User, {_id}, 'username createTime _id role')
+  let result: any = null
+  if(userInfo?.role) {
+    const role = await findOneDoc(Role, {_id: userInfo.role})
+    if (!!role) {
+      result = userInfo.toObject()
+      result.roleInfo = {
+        ...role.toObject(),
+        permissions: role.permissions.split(',')
+      }
+    }
+  }
+  if(result || userInfo) {
     res.json({
       success: true,
-      data: userInfo
+      data: result || userInfo
     })
   } else {
     res.json({
@@ -35,7 +46,7 @@ router.get('/list', async (req: Request, res: Response) => {
   const filter = {...req.query}
   Reflect.deleteProperty(filter, 'size')
   Reflect.deleteProperty(filter, 'page')
-  const users = await findDocs(User, filter, limit, skip, 'username role createTime _id')
+  let users = await findDocs(User, filter, limit, skip, 'username role createTime _id')
   const total = await countDocs(User, filter)
   res.json({ success: true, data: {
     data: users,
@@ -56,10 +67,13 @@ router.post('/add', async (req: Request, res: Response) => {
 })
 
 router.post('/edit', async (req: Request, res: Response) => {
-  const _id = req.body._id
+  const {_id, ...reqData} = req.body
   const exist = await findOneDoc(User, {_id})
   if(exist) {
-    const data = {...exist,...req.body}
+    const data = {
+      ...exist.toObject(),
+      ...reqData
+    }
     await updateDoc(User, _id, data)
     res.json({success: true, data })
   } else {

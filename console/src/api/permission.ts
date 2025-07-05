@@ -25,3 +25,28 @@ export function deletePermission(id) {
     params: {id}
   })
 }
+
+export const fetchPermissionList = async () => {
+  let res = await getPermissionList()
+  const originData = res.data
+  const data = res.data.filter(v => !v.parentId)
+  const findChildren = (datas) => {
+    datas.forEach(v => {
+      v.title = v.name
+      v.key = v.code
+      const id = v._id
+      const children = res.data.filter(d => d.parentId === id)
+      if (children.length > 0) {
+        v.children = children.map(val => ({
+          ...val,
+          parentName: val.name
+        }))
+        findChildren(v.children)
+      } else {
+        v.children = undefined
+      }
+    })
+  }
+  findChildren(data)
+  return {data, originData}
+}

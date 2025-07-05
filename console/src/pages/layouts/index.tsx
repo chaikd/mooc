@@ -3,7 +3,7 @@ import { Layout, theme } from 'antd';
 import { Outlet } from 'react-router';
 import Menus from '@/components/menus'
 import LayoutHeader from '@/components/header';
-import ProtectedRoute from '@/components/protected-route';
+import ProtectedRoute from '@/routes/protected-route';
 
 const { Sider, Content } = Layout;
 

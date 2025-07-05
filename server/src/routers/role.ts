@@ -22,6 +22,7 @@ router.get('/list', async (req: Request, res: Response) => {
   }
   const rolesWithUsername = roles.map(r => ({
     ...r.toObject(),
+    permissions: r.permissions ? r.permissions.split(',') : [],
     createUsername: userMap[String(r.createUserId)] || '',
     editUsername: userMap[String(r.editUserId)] || '',
   }));

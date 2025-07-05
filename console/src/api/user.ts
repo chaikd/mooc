@@ -1,6 +1,6 @@
 import request from "./request";
 
-type UserType = {
+export type UserType = {
   username: string
   role: string
   _id: string

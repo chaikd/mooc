@@ -27,7 +27,8 @@ let cursorRoute = [
     Component: Cursor,
     meta: {
       label: '课程列表',
-      icon: 'SnippetsOutlined'
+      icon: 'SnippetsOutlined',
+      permissions: ['CursorList']
     }
   },
   {
@@ -59,7 +60,8 @@ let router = createBrowserRouter([
         Component: Person,
         meta: {
           label: '人员管理',
-          icon: 'UserOutlined'
+          icon: 'UserOutlined',
+          permissions: ['PersonManage']
         },
         children: [
           {
@@ -67,6 +69,7 @@ let router = createBrowserRouter([
             Component: User,
             meta: {
               label: '用户管理',
+              permissions: ['UserManage']
             },
           },
           {
@@ -74,13 +77,19 @@ let router = createBrowserRouter([
             Component: Role,
             meta: {
               label: '角色管理',
-            }
+              permissions: ['RoleManage']
+            },
+            // lazy: async () => {
+            //   const { default: RoleComponent } = await import('../pages/person/role/index.js')
+            //   return { Component: RoleComponent }
+            // }
           },
           {
             path: 'permission',
             Component: Permission,
             meta: {
               label: '权限管理',
+              permissions: ['PermissionManage']
             }
           },
         ]
@@ -90,7 +99,8 @@ let router = createBrowserRouter([
         Component: Dashboard,
         meta: {
           label: '直播管理',
-          icon: 'VideoCameraOutlined'
+          icon: 'VideoCameraOutlined',
+          permissions: ['LiveManage']
         }
       },
     ]

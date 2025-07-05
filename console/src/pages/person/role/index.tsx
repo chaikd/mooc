@@ -1,11 +1,12 @@
+import { fetchPermissionList } from "@/api/permission";
 import { addRole, deleteRole, editRole, getRoleList, RoleType } from "@/api/role";
 import BreadcrumbChain from "@/components/breadcrumb-chain";
 import { StoreType } from "@/store";
-import { Button, Form, Input, message, Modal, PaginationProps, Popconfirm, Table, TableProps } from "antd";
+import { Button, Form, Input, message, Modal, PaginationProps, Popconfirm, Table, TableProps, Tree, TreeProps, Typography } from "antd";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Fragment } from "react/jsx-runtime";
-
+const { Paragraph } = Typography;
 export default function Role() {
   const [searchForm] = Form.useForm()
   const [editForm] = Form.useForm()
@@ -13,6 +14,9 @@ export default function Role() {
   const [isEdit, setIsEdit] = useState(null)
   const [isAdd, setIsAdd] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [treeData, setTreeData] = useState([])
+  const [checkedKeys, setCheckedKeys] = useState([])
+  const [halfCheckedKeys, setHalfCheckedKeys] = useState([])
   const userId = useSelector((state: StoreType) => state.user.userId)
   const onPaginationChange = (current, pageSize) => {
     setTablePagination((pre) => (
@@ -65,15 +69,25 @@ export default function Role() {
     })
   }
   const toEditRole = (val) => {
+    setLoading(true)
     setIsEdit(val)
-    editForm.setFieldValue('name', val.name)
   }
   const toDeleteRole = async (val) => {
     await deleteRole({id: val._id})
     fetchList()
   }
   const toAddRole = () => {
+    setLoading(true)
     setIsAdd(true)
+  }
+  const editName = async (name,val) => {
+    await editRole({
+      ...val,
+      editUserId: userId,
+      name,
+    })
+    fetchList()
+    message.success('编辑成功');
   }
   const handleOk = async () => {
     editForm.validateFields().then(async value => {
@@ -82,6 +96,7 @@ export default function Role() {
         await editRole({
           ...isEdit,
           ...value,
+          permissions: [...new Set([...checkedKeys,...halfCheckedKeys])].join(','),
           editUserId: userId
         })
         setIsEdit(null)
@@ -105,7 +120,8 @@ export default function Role() {
     {
       title: '名称',
       dataIndex: 'name',
-      key: 'name'
+      key: 'name',
+      render: (_, val) => (<Paragraph editable={{ onChange: (name) => editName(name,val) }}>{val.name}</Paragraph>)
     },
     {
       title: '创建时间',
@@ -132,6 +148,27 @@ export default function Role() {
       )
     }
   ]
+  const fetchPermiList = async () => {
+    const {data} = await fetchPermissionList()
+    setTreeData(data)
+  }
+  const afterModalOpenChange = async (isOpen) => {
+    if (isOpen) {
+      await fetchPermiList()
+      if (!!isEdit) {
+        const {permissions, name} = isEdit
+        setCheckedKeys(permissions)
+        editForm.setFieldValue('name', name)
+      }
+      setLoading(false)
+    } else {
+      setCheckedKeys([])
+    }
+  }
+  const onCheck: TreeProps['onCheck'] = (checkedKeysValue, check) => {
+    setCheckedKeys(checkedKeysValue as React.Key[]);
+    setHalfCheckedKeys(check.halfCheckedKeys.map(v => `0-${v}`))
+  };
   useEffect(() => {
     fetchList()
     // eslint-disable-next-line
@@ -160,11 +197,13 @@ export default function Role() {
         closable={{ 'aria-label': 'Custom Close Button' }}
         destroyOnHidden
         open={!!isEdit || isAdd}
+        afterOpenChange={afterModalOpenChange}
         onOk={handleOk}
         onCancel={handleCancel}
+        loading={loading}
       >
         <Form form={editForm}>
-          <Form.Item name="name" rules={[
+          <Form.Item name="name" label="角色名称" rules={[
             {required: true, message: '请输入角色名称'}
           ]}>
             <Input placeholder="角色名称"></Input>
@@ -173,6 +212,14 @@ export default function Role() {
             <Input></Input>
           </Form.Item>
         </Form>
+        <Form.Item label="权限控制">
+          <Tree
+            checkable
+            onCheck={onCheck}
+            checkedKeys={checkedKeys}
+            treeData={treeData}
+          />
+        </Form.Item>
       </Modal>
     </Fragment>
   )

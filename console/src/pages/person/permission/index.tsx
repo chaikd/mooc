@@ -1,4 +1,4 @@
-import { addPermission, deletePermission, editPermission, getPermissionList, PermissionType } from "@/api/permission";
+import { addPermission, deletePermission, editPermission, fetchPermissionList, getPermissionList, PermissionType } from "@/api/permission";
 import { StoreType } from "@/store";
 import { Button, Form, Input, message, Modal, Popconfirm, Radio, Select } from "antd";
 import Table, { TableProps } from "antd/es/table";
@@ -53,23 +53,7 @@ export default function Permission() {
     editForm.resetFields()
   }
   const fetchList = async () => {
-    let res = await getPermissionList()
-    const data = res.data.filter(v => !v.parentId)
-    const findChildren = (datas) => {
-      datas.forEach(v => {
-        const children = res.data.filter(d => d.parentId === v._id)
-        if (children.length > 0) {
-          v.children = children.map(v => ({
-            ...v,
-            parentName: v.name
-          }))
-          findChildren(v.children)
-        } else {
-          v.children = undefined
-        }
-      })
-    }
-    findChildren(data)
+    const data = await fetchPermissionList()
     setDataSource(data)
   }
   useEffect(() => {
@@ -97,7 +81,7 @@ export default function Permission() {
             <Popconfirm title="确定删除吗？" okText="确认" cancelText="取消" onConfirm={() => toDeleteRole(val)}>
               <Button className="mr-4" type="link" danger>删除</Button>
             </Popconfirm>
-            <Button type="link" onClick={() => addChildren(val)}>新增</Button>
+            {val.type === 'menu' && <Button type="link" onClick={() => addChildren(val)}>新增</Button>}
           </>
         )
       }
