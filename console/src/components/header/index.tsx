@@ -1,17 +1,23 @@
 import { logoutServerAction } from "@/api/auth";
-import { setToken } from "@/utils/token";
+import { removeToken } from "@/utils/token";
+import { removeUserInfo } from "@/utils/user-info";
 import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from "@ant-design/icons";
 import { Avatar, Button, Dropdown, Layout } from "antd";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router";
+import { setUserInfo } from "@/store/modules/user";
 
 const { Header } = Layout;
 
 export default function LayoutHeader({collapsed, setCollapsed, headerStyle, colorBgContainer}) {
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const logout = async () => {
     const res = await logoutServerAction()
     if(res.success) {
-      setToken('')
+      removeToken()
+      removeUserInfo()
+      dispatch(setUserInfo({}))
       navigate('login')
     }
   }

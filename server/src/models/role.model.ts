@@ -7,6 +7,7 @@ export interface RoleType {
   createUserId: String
   editUserId: String
   permissions: String
+  code: String
 }
 
 const roleSchema = new Schema({
@@ -14,7 +15,8 @@ const roleSchema = new Schema({
   createTime: Date,
   createUserId: String,
   editUserId: String,
-  permissions: String
+  permissions: String,
+  code: String
 })
 
 const Role = model<RoleType>('role',roleSchema)

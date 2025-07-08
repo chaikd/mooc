@@ -9,6 +9,7 @@ const request = axios.create({
 request.interceptors.request.use((req) => {
   // const token = getToken()
   // req.headers.set('Authorization', token)
+  // req.headers.set('Catch-Store', 'no-catch')
   return req
 }, (err) => {
   return Promise.reject(err)

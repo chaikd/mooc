@@ -41,7 +41,7 @@ const App: React.FC = () => {
           <Content
             style={contentStyle}
           >
-            <div className="h-full w-full p-4">
+            <div className="h-full w-full p-4 overflow-y-auto">
               <Outlet></Outlet>
             </div>
           </Content>

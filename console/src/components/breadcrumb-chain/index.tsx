@@ -1,13 +1,27 @@
 import { Breadcrumb } from "antd"
-import { useSelector } from "react-redux"
 import { useMatches } from "react-router"
+import router from "@/routes"
+import _ from 'lodash'
 
-export default function BreadcrumbChain() {
+function flatMapDeepFn(data, propName: string) {
+  let arr = data
+  while (arr.some(v => v?.[propName] && v?.[propName].length)) {
+    arr = _.flatMapDeep(arr, (val) => {
+      let datas = val?.[propName]
+      if(val?.[propName]) {
+        Reflect.deleteProperty(val, propName)
+      }
+      return [val, datas]
+    })
+  }
+  return arr.filter(v => !!v)
+}
+
+export default function BreadcrumbChain({breads = undefined}) {
   const match = useMatches()
-  const menus = useSelector((state: any) => state.menus.menus)
-  let bread = match.filter(v => v.pathname !== '/').map(v => {
-    let pathName = v.pathname
-    let title = menus.map(v => [v, [...(v.children || [])]]).flat(2).find(val => val.key === pathName)?.label
+  const routers = flatMapDeepFn(_.cloneDeep(router.routes), 'children')
+  let bread = breads ? breads : match.filter(v => v.pathname !== '/').map(v => {
+    let title = routers.find(val => val.id === v.id)?.meta?.label
     return {
       title
     }

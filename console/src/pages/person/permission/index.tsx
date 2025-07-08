@@ -53,7 +53,7 @@ export default function Permission() {
     editForm.resetFields()
   }
   const fetchList = async () => {
-    const data = await fetchPermissionList()
+    const {data} = await fetchPermissionList()
     setDataSource(data)
   }
   useEffect(() => {

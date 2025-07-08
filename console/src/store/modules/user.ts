@@ -1,14 +1,15 @@
 // import { getUserInfo } from "@/api/user";
 import { getToken, setToken } from "@/utils/token";
+import { getUserInfo, setUserInfo as setLocalUserInfo } from "@/utils/user-info";
 import { createSlice } from "@reduxjs/toolkit";
 
 const userSlice = createSlice({
   name: 'user',
   initialState: {
     authToken: getToken() || '',
-    info: null,
+    info: getUserInfo() || null,
     userId: '',
-    permissions: []
+    permissions: getUserInfo()?.roleInfo?.permissions || []
   },
   reducers: {
     setStoreToken(state, action) {
@@ -19,6 +20,7 @@ const userSlice = createSlice({
       state.info = action.payload
       state.userId = action.payload?._id
       state.permissions = action.payload.roleInfo?.permissions
+      setLocalUserInfo(action.payload)
     },
     setUserId(state, action) {
       state.userId = action.payload

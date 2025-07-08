@@ -36,3 +36,9 @@ export function deleteUser(data) {
 export function getUserInfo(id) {
   return request.get('/api/user/selfinfo', { params: { _id: id } });
 }
+
+export function getAllUser(params) {
+  return request.get('/api/user/list/type', {
+    params
+  })
+}

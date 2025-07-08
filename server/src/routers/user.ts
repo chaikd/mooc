@@ -1,6 +1,7 @@
 import {Role, User} from "@/models";
+import { RoleType } from "@/models/role.model";
 import { md5 } from "@/utils";
-import { createDoc, deleteDoc, findDocs, findOneDoc, updateDoc, countDocs } from "@/utils/database/actions";
+import { createDoc, deleteDoc, findDocs, findOneDoc, updateDoc, countDocs, findAll } from "@/utils/database/actions";
 import { Response, Request, Router } from "express";
 
 // type Req = Request & {userId: string}
@@ -61,7 +62,8 @@ router.post('/add', async (req: Request, res: Response) => {
   if (exist) {
     res.json({ success: false, message: '用户名已存在' })
   }else {
-    const user = await createDoc(User, { username, password: md5(password), role });
+    const theRole = await findOneDoc(Role, {_id: role}) as RoleType
+    const user = await createDoc(User, { username, password: md5(password), role, roleCode: theRole.code });
     res.json({ success: true, data: user });
   }
 })
@@ -70,9 +72,13 @@ router.post('/edit', async (req: Request, res: Response) => {
   const {_id, ...reqData} = req.body
   const exist = await findOneDoc(User, {_id})
   if(exist) {
+    if(!exist.roleCode) {
+      const theRole = await findOneDoc(Role, {_id: exist.role}) as RoleType
+      exist.roleCode = theRole.code
+    }
     const data = {
       ...exist.toObject(),
-      ...reqData
+      ...reqData,
     }
     await updateDoc(User, _id, data)
     res.json({success: true, data })
@@ -89,6 +95,16 @@ router.delete('/delete', async (req: Request, res: Response) => {
     res.json({success: true })
   } else {
     res.json({success: false, message: '用户不存在'})
+  }
+})
+
+router.get('/list/type', async (req: Request, res: Response) => {
+  const {...filter} = req.query
+  const datas = await findAll(User, filter)
+  if(datas) {
+    res.json({success: true, data: datas})
+  } else {
+    res.json({success: false, message: '请求有误'})
   }
 })
 

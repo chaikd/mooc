@@ -1,11 +1,11 @@
-import { getMenus } from "@/utils/route-parse";
+import { getMenus } from "@/utils/menu-parse";
 import { Menu } from "antd";
 import { useMatches, useNavigate } from "react-router";
 
 export default function Menus() {
   const navigateTo = useNavigate()
   const match = useMatches()
-  const menuChange = ({ key}) => {
+  const menuChange = ({key}) => {
     navigateTo(key)
   }
   const menus = getMenus()

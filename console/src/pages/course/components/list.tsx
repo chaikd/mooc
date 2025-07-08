@@ -1,35 +1,37 @@
 import { Table, Image } from "antd"
-import CursorStatus from "@/components/cursor-status"
-import CourseActions from "@/components/course-actions"
+import CursorStatus from "@/pages/course/components/cursor-status"
+import CourseActions from "@/pages/course/components/course-actions"
 import { getTablePaginationConfig } from "@/utils/pagination-config"
 
 export default function CursorList({list}) {
   const columns = [
     {
       title: '课程封面',
-      dataIndex: 'cover_image',
-      key: 'cover_image',
+      dataIndex: 'courseCover',
+      key: 'courseCover',
       width: 120,
-      render: (cover_image, record) => (
+      fixed: true,
+      render: (courseCover, record) => (
         <Image
           width={80}
           height={60}
-          src={cover_image}
-          alt={record.course_name}
+          src={courseCover}
+          alt={record.courseName}
           style={{ objectFit: 'cover', borderRadius: '4px' }}
         />
       )
     },
     {
       title: '课程名称',
-      dataIndex: 'course_name',
-      key: 'course_name',
+      dataIndex: 'courseName',
+      key: 'courseName',
+      fixed: true,
       width: 200,
     },
     {
       title: '讲师',
-      dataIndex: 'instructor',
-      key: 'instructor',
+      dataIndex: 'instructorName',
+      key: 'instructorName',
       width: 120,
     },
     {
@@ -37,26 +39,26 @@ export default function CursorList({list}) {
       dataIndex: 'status',
       key: 'status',
       width: 100,
-      render: (status) => <CursorStatus status={status} />
+      render: (status, val) => <CursorStatus status={val.statusInfo} />
     },
     {
       title: '报名人数',
       dataIndex: 'enrollment',
       key: 'enrollment',
       width: 120,
-      render: (enrollment) => `${enrollment}名学员`
+      render: (enrollment) => `${enrollment || 100}名学员`
     },
     {
       title: '创建时间',
-      dataIndex: 'create_time',
-      key: 'create_time',
+      dataIndex: 'createTime',
+      key: 'createTime',
       width: 180,
     },
     {
       title: '操作',
       key: 'actions',
       width: 200,
-      render: (_, record) => <CourseActions status={record.status} />
+      render: (_, record) => <CourseActions status={record.statusInfo} course={record}/>
     }
   ]
 

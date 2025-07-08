@@ -156,9 +156,9 @@ export default function Role() {
     if (isOpen) {
       await fetchPermiList()
       if (!!isEdit) {
-        const {permissions, name} = isEdit
+        const {permissions, ...data} = isEdit
         setCheckedKeys(permissions)
-        editForm.setFieldValue('name', name)
+        editForm.setFieldsValue(data)
       }
       setLoading(false)
     } else {
@@ -207,6 +207,11 @@ export default function Role() {
             {required: true, message: '请输入角色名称'}
           ]}>
             <Input placeholder="角色名称"></Input>
+          </Form.Item>
+          <Form.Item name="code" label="角色编码" rules={[
+            {required: true, message: '请输入编码'}
+          ]}>
+            <Input placeholder="角色编码"></Input>
           </Form.Item>
           <Form.Item name="createUserId" initialValue={userId} hidden>
             <Input></Input>

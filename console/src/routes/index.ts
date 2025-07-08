@@ -12,32 +12,49 @@ export type CustomeRouteObject = RouteObject & {
   }
 };
 
-const Cursor = lazy(() => import("@/pages/cursor" as string))
-const AddCursor = lazy(() => import("@/pages/cursor/add" as string))
+// 课程
+const Course = lazy(() => import("@/pages/course" as string))
+const CourseList = lazy(() => import("@/pages/course/list" as string))
+const AddCourse = lazy(() => import("@/pages/course/add" as string))
+const CourseStatus = lazy(() => import("@/pages/course/status" as string))
+const CourseChapter = lazy(() => import("@/pages/course/chapters" as string))
 const Regist = lazy(() => import("@/pages/regist" as string))
 const Person = lazy(() => import("@/pages/person" as string))
 const User = lazy(() => import("@/pages/person/user/list" as string))
 const Role = lazy(() => import("@/pages/person/role" as string))
 const Permission = lazy(() => import("@/pages/person/permission" as string))
+const System = lazy(() => import("@/pages/system" as string))
 
 // 课程管理
 let cursorRoute = [
   {
-    path: 'cursor',
-    Component: Cursor,
+    path: 'course',
+    Component: Course,
     meta: {
-      label: '课程列表',
-      icon: 'SnippetsOutlined',
-      permissions: ['CursorList']
-    }
-  },
-  {
-    path: 'cursor/add',
-    Component: AddCursor
-  },
-  {
-    path: 'cursor/edit/:id',
-    Component: AddCursor
+      label: '课程管理',
+      icon: 'AppstoreAddOutlined',
+    },
+    children: [
+      {
+        index: true,
+        Component: CourseList,
+        meta: {
+          label: '课程列表',
+        }
+      },
+      {
+        path: 'add',
+        Component: AddCourse
+      },
+      {
+        path: 'edit/:id',
+        Component: AddCourse
+      },
+      {
+        path: 'chapters/:id',
+        Component: CourseChapter,
+      },
+    ]
   },
 ]
 
@@ -103,6 +120,23 @@ let router = createBrowserRouter([
           permissions: ['LiveManage']
         }
       },
+      {
+        path: 'system',
+        Component: System,
+        meta: {
+          label: '系统管理',
+          icon: 'SettingOutlined'
+        },
+        children: [
+          {
+            path: 'course-status',
+            Component: CourseStatus,
+            meta: {
+              label: '课程状态',
+            }
+          }
+        ]
+      }
     ]
   },
   {

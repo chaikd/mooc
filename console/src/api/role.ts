@@ -2,9 +2,10 @@ import request from "./request";
 
 export type RoleType = {
   _id?: string;
-  name: String,
+  name: string,
   createTime: Date,
-  createUserId: String
+  createUserId: string
+  permissions: string[]
 }
 
 export function getRoleList(params): Promise<{
