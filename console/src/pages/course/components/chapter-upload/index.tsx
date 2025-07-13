@@ -1,12 +1,12 @@
-import { UploadOutlined, VideoCameraOutlined } from "@ant-design/icons";
+import { UploadOutlined } from "@ant-design/icons";
 import { Button, Space, Upload, UploadFile, UploadProps } from "antd";
-import { useImperativeHandle, useState } from "react";
+import {  Ref, useImperativeHandle, useState } from "react";
 import * as qiniu from 'qiniu-js'
 import { getQiniuToken } from "@/api/qiniu";
 import { useSelector } from "react-redux";
 import { StoreType } from "@/store";
 
-export default function ChapterUpload({ref}) {
+export default function ChapterUpload({ref}: {ref: Ref<object>}) {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const useId = useSelector((state: StoreType) => state.user.info._id)
 
@@ -39,10 +39,10 @@ export default function ChapterUpload({ref}) {
         })
         return uploadTask.start()
       })
-      Promise.all(uploadTasks).then((res: Array<Object>) => {
-        const result = res.map((v: {result: string}) => (JSON.parse(v.result)))
+      Promise.all(uploadTasks).then((res: Array<object>) => {
+        const result = res.map((v: {result?: string}) => (JSON.parse(v.result as string)))
         const list = result.map(v => {
-          let file = fileList.find(file => file.name === v.name)
+          const file = fileList.find(file => file.name === v.name) as UploadFile
           return {
             uid: file.uid,
             createUserId: useId,

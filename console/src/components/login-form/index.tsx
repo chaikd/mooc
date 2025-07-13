@@ -1,6 +1,12 @@
 import { Button, Form, Input } from "antd";
 
-export default function LoginForm({finishFn, pendding, btnText = '登陆'}) {
+type PropType = {
+  finishFn: () => void
+  pendding: boolean
+  btnText?: string
+}
+
+export default function LoginForm({finishFn, pendding, btnText = '登陆'}: PropType) {
   return(
     <Form onFinish={finishFn}>
       <Form.Item name="username" rules={[

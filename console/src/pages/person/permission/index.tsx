@@ -1,21 +1,21 @@
-import { addPermission, deletePermission, editPermission, fetchPermissionList, getPermissionList, PermissionType } from "@/api/permission";
+import { addPermission, deletePermission, editPermission, fetchPermissionList, PermissionType } from "@/api/permission";
 import { StoreType } from "@/store";
-import { Button, Form, Input, message, Modal, Popconfirm, Radio, Select } from "antd";
+import { Button, Form, Input, message, Modal, Popconfirm, Select } from "antd";
 import Table, { TableProps } from "antd/es/table";
-import { useEffect, useState } from "react";
+import { SetStateAction, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
 export default function Permission() {
-  const [isEdit, setIsEdit] = useState(null)
+  const [isEdit, setIsEdit] = useState<PermissionType | null>(null)
   const [isAdd, setIsAdd] = useState(false)
   const [dataSource, setDataSource] = useState([])
   const userId = useSelector((state: StoreType) => state.user.userId)
   const [editForm] = Form.useForm()
-  const toEditRole = (val) => {
+  const toEditRole = (val: PermissionType) => {
     setIsEdit(val)
     editForm.setFieldsValue(val)
   }
-  const toDeleteRole = async (val) => {
+  const toDeleteRole = async (val: PermissionType) => {
     await deletePermission(val._id)
     message.success('删除成功')
     fetchList()
@@ -42,7 +42,7 @@ export default function Permission() {
       handleCancel()
     }
   }
-  const addChildren = async (val) => {
+  const addChildren = async (val: PermissionType) => {
     editForm.setFieldValue('parentId', val._id)
     editForm.setFieldValue('parentName', val.name)
     setIsAdd(true)
@@ -92,7 +92,7 @@ export default function Permission() {
       <div className="mb-4">
         <Button onClick={toAddPermission}>新增权限</Button>
       </div>
-      <Table columns={columns} dataSource={dataSource} rowKey={(record) => record._id}></Table>
+      <Table columns={columns} dataSource={dataSource} rowKey={(record) => record._id as string}></Table>
       <Modal
         title={isEdit ? '编辑' : '添加' + '角色'}
         closable={{ 'aria-label': 'Custom Close Button' }}

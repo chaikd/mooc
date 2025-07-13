@@ -10,15 +10,15 @@ const { Paragraph } = Typography;
 export default function Role() {
   const [searchForm] = Form.useForm()
   const [editForm] = Form.useForm()
-  const [roleList, setRoleList] = useState([])
-  const [isEdit, setIsEdit] = useState(null)
+  const [roleList, setRoleList] = useState<RoleType[]>([])
+  const [isEdit, setIsEdit] = useState<RoleType | null>(null)
   const [isAdd, setIsAdd] = useState(false)
   const [loading, setLoading] = useState(false)
   const [treeData, setTreeData] = useState([])
-  const [checkedKeys, setCheckedKeys] = useState([])
-  const [halfCheckedKeys, setHalfCheckedKeys] = useState([])
+  const [checkedKeys, setCheckedKeys] = useState<string[]>([])
+  const [halfCheckedKeys, setHalfCheckedKeys] = useState<string[]>([])
   const userId = useSelector((state: StoreType) => state.user.userId)
-  const onPaginationChange = (current, pageSize) => {
+  const onPaginationChange = (current: number, pageSize: number) => {
     setTablePagination((pre) => (
       {
         ...pre,
@@ -45,7 +45,7 @@ export default function Role() {
   const fetchList = () => {
     setLoading(true)
     const searchFormData = searchForm.getFieldsValue()
-    let searchValue = {}
+    const searchValue: {[key: string]: string} = {}
     Object.keys(searchFormData).forEach(k => {
       if(searchFormData[k]) {
         searchValue[k] = searchFormData[k]
@@ -68,11 +68,11 @@ export default function Role() {
       }))
     })
   }
-  const toEditRole = (val) => {
+  const toEditRole = (val: RoleType) => {
     setLoading(true)
     setIsEdit(val)
   }
-  const toDeleteRole = async (val) => {
+  const toDeleteRole = async (val: RoleType) => {
     await deleteRole({id: val._id})
     fetchList()
   }
@@ -80,7 +80,7 @@ export default function Role() {
     setLoading(true)
     setIsAdd(true)
   }
-  const editName = async (name,val) => {
+  const editName = async (name: string,val: RoleType) => {
     await editRole({
       ...val,
       editUserId: userId,
@@ -152,10 +152,10 @@ export default function Role() {
     const {data} = await fetchPermissionList()
     setTreeData(data)
   }
-  const afterModalOpenChange = async (isOpen) => {
+  const afterModalOpenChange = async (isOpen: boolean) => {
     if (isOpen) {
       await fetchPermiList()
-      if (!!isEdit) {
+      if (isEdit) {
         const {permissions, ...data} = isEdit
         setCheckedKeys(permissions)
         editForm.setFieldsValue(data)
@@ -166,12 +166,12 @@ export default function Role() {
     }
   }
   const onCheck: TreeProps['onCheck'] = (checkedKeysValue, check) => {
-    setCheckedKeys(checkedKeysValue as React.Key[]);
+    setCheckedKeys(checkedKeysValue);
     setHalfCheckedKeys(check.halfCheckedKeys.map(v => `0-${v}`))
   };
   useEffect(() => {
     fetchList()
-    // eslint-disable-next-line
+     
   }, [tablePagination.current, tablePagination.pageSize])
   return (
     <Fragment>

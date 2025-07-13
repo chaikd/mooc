@@ -1,13 +1,13 @@
 import { Breadcrumb } from "antd"
-import { useMatches } from "react-router"
+import { RouteObject, useMatches } from "react-router"
 import router from "@/routes"
 import _ from 'lodash'
 
-function flatMapDeepFn(data, propName: string) {
+function flatMapDeepFn<T extends RouteObject & { [key: string]: any }>(data: T[], propName: string) {
   let arr = data
   while (arr.some(v => v?.[propName] && v?.[propName].length)) {
     arr = _.flatMapDeep(arr, (val) => {
-      let datas = val?.[propName]
+      const datas = val?.[propName]
       if(val?.[propName]) {
         Reflect.deleteProperty(val, propName)
       }
@@ -17,11 +17,15 @@ function flatMapDeepFn(data, propName: string) {
   return arr.filter(v => !!v)
 }
 
-export default function BreadcrumbChain({breads = undefined}) {
+export default function BreadcrumbChain({breads = undefined}: {breads?: {
+  title?: string;
+  href?: string;
+}[]}) {
   const match = useMatches()
   const routers = flatMapDeepFn(_.cloneDeep(router.routes), 'children')
-  let bread = breads ? breads : match.filter(v => v.pathname !== '/').map(v => {
-    let title = routers.find(val => val.id === v.id)?.meta?.label
+  const bread = breads ? breads : match.filter(v => v.pathname !== '/').map(v => {
+    const route: any = routers.find(val => val.id === v.id)
+    const title = route?.meta?.label
     return {
       title
     }

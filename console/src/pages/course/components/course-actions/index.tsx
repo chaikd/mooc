@@ -6,7 +6,10 @@ import { useContext } from "react"
 import { CursorContext } from "../../list"
 
 interface CourseActionsProps {
-  status: string
+  status: {
+    statusName: string;
+    statusCode: string;
+  }
   size?: 'small' | 'middle' | 'large'
   course?: any
 }
@@ -47,8 +50,10 @@ export default function CourseActions({ status, size = 'small', course }: Course
           content: '确认删除？',
           onOk: async () => {
             const res = await deleteCursor(course._id)
-            message.success('删除成功')
-            context.fetchList()
+            if (res.success) {
+              message.success('删除成功')
+              context.fetchList()
+            }
           }
         })
     }

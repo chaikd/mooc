@@ -22,10 +22,10 @@ export default function User() {
   const fetchList = async (params = {}) => {
     setLoading(true);
     const { current, pageSize } = pagination;
-    let searchValues = searchForm.getFieldsValue()
-    let searchProp = {}
+    const searchValues = searchForm.getFieldsValue()
+    const searchProp = {}
     Object.keys(searchValues).forEach(k => {
-      if(!!searchValues[k]) {
+      if(searchValues[k]) {
         searchProp[k] = searchValues[k]
       }
     })
@@ -43,7 +43,7 @@ export default function User() {
   useEffect(() => {
     fetchRoles();
     fetchList();
-    // eslint-disable-next-line
+     
   }, []);
 
   const handleAdd = () => {

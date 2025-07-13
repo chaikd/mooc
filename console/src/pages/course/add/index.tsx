@@ -3,7 +3,7 @@ import { LeftOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router';
 import { useEffect, useRef, useState } from 'react';
 import { Image } from 'antd';
-import { getAllUser } from '@/api/user';
+import { getAllUser, UserType } from '@/api/user';
 import { InputNumber } from "antd";
 import { createCursor, CursorType, getCursorDetail, updateCursor } from '@/api/course';
 import CourseChapter from '../components/course-chapter';
@@ -26,7 +26,7 @@ export default function AddCursor() {
     const res = await getAllUser({
       roleCode: "TEACHER"
     })
-    setInstructors(res.data.map(v => {
+    setInstructors(res.data.map((v: UserType) => {
       return {
         label: v.username,
         value: v._id
@@ -38,7 +38,7 @@ export default function AddCursor() {
     getDetail()
   }, [])
 
-  const submit = async (statusCode) => {
+  const submit = async (statusCode: 1 | 2) => {
     const data = form.getFieldsValue()
     data.statusCode = statusCode
     let res
@@ -56,26 +56,6 @@ export default function AddCursor() {
       navigate(-1)
     }
   }
-
-  // 假数据
-  // const instructors = [
-  //   { label: '张明', value: '张明' },
-  //   { label: '李思思', value: '李思思' },
-  //   { label: '王建', value: '王建' },
-  // ];
-  // const liveSessions = [
-  //   { label: '直播1', value: '1' },
-  //   { label: '直播2', value: '2' },
-  // ];
-  // const chapterTreeData = [
-  //   { title: '第一章：课程介绍', key: '0-0', children: [
-  //     {
-  //       title: '第一节',
-  //       key: '0-0-1'
-  //     }
-  //   ] },
-  //   { title: '第二章：基础知识', key: '0-1' },
-  // ];
 
   return (
     <div className="h-full">
@@ -121,7 +101,7 @@ export default function AddCursor() {
                 <Input placeholder="请输入课程封面地址" onChange={(e) => setCurseDetail({
                   ...curseDetail,
                   courseCover: e.target.value
-                })}/>
+                } as any)}/>
               </Form.Item>
               {curseDetail?.courseCover && <Image
                 src={curseDetail?.courseCover}

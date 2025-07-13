@@ -24,9 +24,12 @@ const User = lazy(() => import("@/pages/person/user/list" as string))
 const Role = lazy(() => import("@/pages/person/role" as string))
 const Permission = lazy(() => import("@/pages/person/permission" as string))
 const System = lazy(() => import("@/pages/system" as string))
+const Live = lazy(() => import("@/pages/live" as string))
+const LiveList = lazy(() => import("@/pages/live/list" as string))
+const LiveConsole = lazy(() => import("@/pages/live/console" as string))
 
 // 课程管理
-let cursorRoute = [
+const cursorRoute = [
   {
     path: 'course',
     Component: Course,
@@ -58,7 +61,7 @@ let cursorRoute = [
   },
 ]
 
-let router = createBrowserRouter([
+const router = createBrowserRouter([
   {
     path: '',
     Component: Layout,
@@ -113,12 +116,25 @@ let router = createBrowserRouter([
       },
       {
         path: 'live',
-        Component: Dashboard,
+        Component: Live,
         meta: {
           label: '直播管理',
           icon: 'VideoCameraOutlined',
           permissions: ['LiveManage']
-        }
+        },
+        children: [
+          {
+            index: true,
+            Component: LiveList,
+            meta: {
+              label: '直播列表',
+            }
+          },
+          {
+            path: ':id',
+            Component: LiveConsole,
+          },
+        ]
       },
       {
         path: 'system',

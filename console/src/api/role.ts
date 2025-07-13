@@ -8,7 +8,7 @@ export type RoleType = {
   permissions: string[]
 }
 
-export function getRoleList(params): Promise<{
+export function getRoleList(params: { size: number | undefined; page?: number | undefined; }): Promise<{
   page: string | number
   size: string | number
   total: number
@@ -19,18 +19,18 @@ export function getRoleList(params): Promise<{
   });
 }
 
-export function addRole(data) {
+export function addRole(data: any) {
   return request.post('/api/role/add', data);
 }
 
-export function editRole(data) {
+export function editRole(data: any) {
   return request.post('/api/role/edit', data);
 }
 
-export function deleteRole(data) {
+export function deleteRole(data: { id: any; }) {
   return request.post('/api/role/delete', data);
 }
 
-export function getRoleInfo(_id) {
+export function getRoleInfo(_id: any) {
   return request.get('/api/role/info', { params: { _id } });
 }

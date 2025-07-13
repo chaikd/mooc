@@ -2,8 +2,9 @@ import { Table, Image } from "antd"
 import CursorStatus from "@/pages/course/components/cursor-status"
 import CourseActions from "@/pages/course/components/course-actions"
 import { getTablePaginationConfig } from "@/utils/pagination-config"
+import { CursorListItemType, CursorType } from "@/api/course"
 
-export default function CursorList({list}) {
+export default function CursorList({list}: {list: CursorListItemType[]}) {
   const columns = [
     {
       title: '课程封面',
@@ -11,7 +12,7 @@ export default function CursorList({list}) {
       key: 'courseCover',
       width: 120,
       fixed: true,
-      render: (courseCover, record) => (
+      render: (courseCover: string, record: CursorListItemType) => (
         <Image
           width={80}
           height={60}
@@ -39,14 +40,14 @@ export default function CursorList({list}) {
       dataIndex: 'status',
       key: 'status',
       width: 100,
-      render: (status, val) => <CursorStatus status={val.statusInfo} />
+      render: (status: string, val: CursorListItemType) => <CursorStatus status={val.statusInfo} />
     },
     {
       title: '报名人数',
       dataIndex: 'enrollment',
       key: 'enrollment',
       width: 120,
-      render: (enrollment) => `${enrollment || 100}名学员`
+      render: (enrollment: string) => `${enrollment || 100}名学员`
     },
     {
       title: '创建时间',
@@ -58,7 +59,7 @@ export default function CursorList({list}) {
       title: '操作',
       key: 'actions',
       width: 200,
-      render: (_, record) => <CourseActions status={record.statusInfo} course={record}/>
+      render: (_: string, record: CursorListItemType) => <CourseActions status={record.statusInfo} course={record}/>
     }
   ]
 

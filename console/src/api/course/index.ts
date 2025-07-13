@@ -18,10 +18,11 @@ export interface CursorType {
 // 课程列表项类型（包含关联信息）
 export interface CursorListItemType extends CursorType {
   instructorName?: string;  // 讲师姓名
-  statusInfo?: {
+  statusInfo: {
     statusName: string;
     statusCode: string;
   };
+  enrollment?: string;
 }
 
 // 课程详情类型

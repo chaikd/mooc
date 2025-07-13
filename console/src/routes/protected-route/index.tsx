@@ -25,7 +25,7 @@ export default function ProtectedRoute({children}): ReactNode {
       dispatch(setUserInfo(userInfo.data))
       permis = userInfo.data.roleInfo.permissions
     }
-    let menus = parseRouters('', permis)
+    const menus = parseRouters('', permis)
     dispatch(setMenus(menus))
   }
   useEffect(() => {

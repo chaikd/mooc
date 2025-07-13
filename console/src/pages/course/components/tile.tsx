@@ -3,8 +3,10 @@ import { useState } from "react"
 import CursorStatus from "@/pages/course/components/cursor-status"
 import CourseActions from "@/pages/course/components/course-actions"
 import { getPaginationConfig } from "@/utils/pagination-config"
+import { CursorListItemType } from "@/api/course"
+import dayjs from "dayjs"
 
-export default function CursorTile({list}) {
+export default function CursorTile({list}: {list: CursorListItemType[]}) {
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 9 // 每页显示9个卡片（3x3网格）
   
@@ -32,7 +34,7 @@ export default function CursorTile({list}) {
               <span className="text-gray-400">{item.enrollment||100}名学员</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-500">{item.create_time}</span>
+              <span className="text-xs text-gray-500">{dayjs(item.createTime).format('YYYY-MM-DD')}</span>
               <CourseActions status={item.statusInfo} course={item}/>
             </div>
           </div>

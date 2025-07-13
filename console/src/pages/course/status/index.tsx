@@ -22,10 +22,10 @@ export default function CursorStatus() {
     setLoading(true);
     try {
       const { current, pageSize } = pagination;
-      let searchValues = searchForm.getFieldsValue();
-      let searchProp = {};
-      Object.keys(searchValues).forEach(k => {
-        if (!!searchValues[k]) {
+      const searchValues = searchForm.getFieldsValue();
+      const searchProp: Record<string, any> = {};
+      Object.keys(searchValues).forEach((k) => {
+        if (searchValues[k]) {
           searchProp[k] = searchValues[k];
         }
       });
@@ -40,6 +40,7 @@ export default function CursorStatus() {
       setList(res.data.data || []);
       setPagination(p => ({ ...p, total: res.data.total ?? 0 }));
     } catch (error) {
+      console.log(error)
       message.error('获取课程状态列表失败');
     } finally {
       setLoading(false);

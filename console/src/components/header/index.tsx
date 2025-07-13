@@ -9,9 +9,21 @@ import { setUserInfo } from "@/store/modules/user";
 
 const { Header } = Layout;
 
-export default function LayoutHeader({collapsed, setCollapsed, headerStyle, colorBgContainer}) {
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
+interface LayoutHeaderProps {
+  collapsed: boolean;
+  setCollapsed: (collapsed: boolean) => void;
+  headerStyle?: React.CSSProperties;
+  colorBgContainer?: string;
+}
+
+export default function LayoutHeader({
+  collapsed,
+  setCollapsed,
+  headerStyle,
+  colorBgContainer,
+}: LayoutHeaderProps) {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const logout = async () => {
     const res = await logoutServerAction()
     if(res.success) {
@@ -21,7 +33,7 @@ export default function LayoutHeader({collapsed, setCollapsed, headerStyle, colo
       navigate('login')
     }
   }
-  let dropdownItems = [
+  const dropdownItems = [
     {
       key: 'userCenter',
       label: '个人中心'

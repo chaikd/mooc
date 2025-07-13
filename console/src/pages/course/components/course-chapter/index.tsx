@@ -1,19 +1,25 @@
-import { ChapterTreeNodeType, createChapter, deleteChapter, getChapterTree, getParseChapterTree, updateChapter } from "@/api/course/chapter"
-import { DeleteOutlined, EditOutlined, FileOutlined, FolderOutlined, PlusOutlined, UploadOutlined, VideoCameraOutlined } from "@ant-design/icons"
+import { ChapterTreeNodeType, createChapter, deleteChapter, getParseChapterTree, updateChapter } from "@/api/course/chapter"
+import { DeleteOutlined, EditOutlined, FileOutlined, FolderOutlined, PlusOutlined } from "@ant-design/icons"
 import { Button, Card, Col, Empty, Form, Input, InputNumber, message, Modal, Popconfirm, Row, Space, Spin, Tree, Upload } from "antd"
 import TextArea from "antd/es/input/TextArea"
-import { useEffect, useImperativeHandle, useRef, useState } from "react"
+import { Ref, SetStateAction, useEffect, useImperativeHandle, useRef, useState } from "react"
 import { Link } from "react-router"
 import ChapterUpload from "../chapter-upload"
 import { addInformation } from "@/api/information"
 
-export default function CourseChapter({courseId, isEdit = false, ref}) {
+interface CourseChapterProps {
+  courseId: string | undefined;
+  isEdit?: boolean;
+  ref?: React.Ref<any>;
+}
+
+export default function CourseChapter({ courseId, isEdit = false, ref }: CourseChapterProps) {
   const [form] = Form.useForm();
   const [detailForm] = Form.useForm()
-  const [expandedKeys, setExpandedKeys] = useState([])
+  const [expandedKeys, setExpandedKeys] = useState<string[]>([])
   const [loading, setLoading] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState([])
-  const [selectedChapter, setSelectedChapter] = useState(null)
+  const [selectedChapter, setSelectedChapter] = useState<ChapterTreeNodeType | null>(null)
   const [editing, setEditing] = useState(false);
   const [currentChapter, setCurrentChapter] = useState<ChapterTreeNodeType | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -80,7 +86,7 @@ export default function CourseChapter({courseId, isEdit = false, ref}) {
     }
   };
 
-  const onTreeSelect = async (selectedKeys, e) => {
+  const onTreeSelect = async (selectedKeys: SetStateAction<never[]>, e: { selectedNodes: { data: any }[] }) => {
     setSelectedKeys(selectedKeys)
     setSelectedChapter(e.selectedNodes[0]?.data)
     detailForm.setFieldsValue(e.selectedNodes[0]?.data)
@@ -90,10 +96,10 @@ export default function CourseChapter({courseId, isEdit = false, ref}) {
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      const list = chapterUploadRef.current.getFileList()
+      const list: any = (chapterUploadRef.current as {getFileList: () => void} | null)?.getFileList()
       if(list?.length > 0) {
         const {data} = await addInformation({list})
-        values.materialIds = data.map(v => v._id)
+        values.materialIds = data.map((v: {_id: string}) => v._id)
       }
       if (editing && currentChapter?._id) {
         // 编辑
@@ -190,8 +196,8 @@ export default function CourseChapter({courseId, isEdit = false, ref}) {
                 showIcon
                 expandedKeys={expandedKeys}
                 selectedKeys={selectedKeys}
-                onExpand={setExpandedKeys}
-                onSelect={onTreeSelect}
+                onExpand={(keys) => setExpandedKeys(keys as string[])}
+                onSelect={onTreeSelect as any}
               />
             </Spin>
           </Card>
@@ -215,7 +221,19 @@ export default function CourseChapter({courseId, isEdit = false, ref}) {
               <Form.Item label="资料">
                 <div className="flex">
                   <Space>
-                    <Upload fileList={selectedChapter?.materials.map(v => ({...v,url: v.fileUrl})) || []} disabled>
+                    <Upload
+                      fileList={
+                        selectedChapter?.materials?.map((v) => ({
+                          ...v,
+                          url: v.fileUrl,
+                          uid: v._id as string, // ensure uid is always a string
+                          name: v.name,
+                          status: 'done',
+                        })) || []
+                      }
+                      disabled
+                      showUploadList={{ showRemoveIcon: false }}
+                    >
                       {/* <Button icon={<UploadOutlined />}>上传文档</Button> */}
                     </Upload>
                   </Space>

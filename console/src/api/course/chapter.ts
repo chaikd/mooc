@@ -1,3 +1,4 @@
+import { InformationType } from "../information";
 import request from "../request";
 
 // 课程章节数据类型
@@ -18,6 +19,7 @@ export interface ChapterTreeNodeType extends CursorChapterType {
   children?: ChapterTreeNodeType[];
   level?: number;
   isLeaf?: boolean;
+  materials?: InformationType[]
 }
 
 // 章节列表查询参数
@@ -83,16 +85,19 @@ export function deleteChapter(id: string): Promise<{
   return request.delete('/api/course/chapter/delete', { data: { _id: id } });
 }
 
-export async function getParseChapterTree(courseId) {
+export async function getParseChapterTree(courseId: string): Promise<{
+  trees: Array<CursorChapterType>
+  keys: Array<string>
+}> {
   const {data} = await getChapterTree(courseId)
-  let roots = data.filter(v => !v.parentChapterId)
-  let keys = []
-  const findChildren = (dataList, roots) => {
+  const roots = data.filter(v => !v.parentChapterId)
+  const keys: Array<string> = []
+  const findChildren = (dataList: Array<CursorChapterType>, roots: Array<CursorChapterType>) => {
     return roots.map(v => {
       if(v._id) {
         keys.push(v._id)
       }
-      let children = dataList.filter(item => item.parentChapterId === v._id).sort((a,b) => (a.sort - b.sort))
+      let children = dataList.filter(item => item.parentChapterId === v._id).sort((a,b) => ((a.sort as number) - (b.sort as number)))
       children = findChildren(dataList, children)
       return {
         ...v,

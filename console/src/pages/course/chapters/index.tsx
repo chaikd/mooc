@@ -35,11 +35,12 @@ const CursorChapters: React.FC = () => {
       const { data } = await getCursorDetail(courseId);
       setCourseInfo(data);
     } catch (error) {
+      console.log(error)
       message.error('获取课程信息失败');
     }
   };
   const handleAdd = () => {
-    courseChapterTreeRef.current.handleAdd()
+    (courseChapterTreeRef?.current as any)?.handleAdd()
   }
 
   useEffect(() => {
@@ -48,7 +49,7 @@ const CursorChapters: React.FC = () => {
 
   return (
     <div>
-      <BreadcrumbChain breads={breadcrumbItems}/>
+      <BreadcrumbChain breads={breadcrumbItems as any}/>
       
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
