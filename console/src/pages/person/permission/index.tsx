@@ -2,7 +2,7 @@ import { addPermission, deletePermission, editPermission, fetchPermissionList, P
 import { StoreType } from "@/store";
 import { Button, Form, Input, message, Modal, Popconfirm, Select } from "antd";
 import Table, { TableProps } from "antd/es/table";
-import { SetStateAction, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
 export default function Permission() {
@@ -16,7 +16,7 @@ export default function Permission() {
     editForm.setFieldsValue(val)
   }
   const toDeleteRole = async (val: PermissionType) => {
-    await deletePermission(val._id)
+    await deletePermission(val._id as string)
     message.success('删除成功')
     fetchList()
   }

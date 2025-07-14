@@ -2,12 +2,12 @@ import { model, Schema } from "mongoose";
 
 export interface RoleType {
   _id?: string;
-  name: String,
+  name: string,
   createTime: Date,
-  createUserId: String
-  editUserId: String
-  permissions: String
-  code: String
+  createUserId: string
+  editUserId: string
+  permissions: string | string[]
+  code: string
 }
 
 const roleSchema = new Schema({

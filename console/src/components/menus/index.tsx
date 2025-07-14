@@ -10,9 +10,10 @@ export default function Menus() {
   }
   const menus = getMenus()
   const defaultSelectedKey = match[match.length - 1].pathname
-  const itemFn = (v: any): any => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const itemFn = (v: any) => ({
     ...v,
-    icon: v['icon'].render()
+    icon: v.icon ? <v.icon /> : undefined
   })
   return (
     <Menu
@@ -20,11 +21,7 @@ export default function Menus() {
       theme="light"
       mode="inline"
       defaultSelectedKeys={[defaultSelectedKey]}
-      items={
-        menus.map((v) => (
-          itemFn(v)
-        ))
-      }
+      items={menus.map(itemFn)}
       onClick={menuChange}
     />
   )

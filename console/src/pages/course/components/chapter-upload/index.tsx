@@ -5,9 +5,10 @@ import * as qiniu from 'qiniu-js'
 import { getQiniuToken } from "@/api/qiniu";
 import { useSelector } from "react-redux";
 import { StoreType } from "@/store";
+import { InformationType } from "@/api/information";
 
 export default function ChapterUpload({ref}: {ref: Ref<object>}) {
-  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [fileList, setFileList] = useState<InformationType[]>([]);
   const useId = useSelector((state: StoreType) => state.user.info._id)
 
   useImperativeHandle(ref, () => ({
@@ -16,14 +17,14 @@ export default function ChapterUpload({ref}: {ref: Ref<object>}) {
 
   const handleChange: UploadProps['onChange'] = (info) => {
     console.log('info', info)
-    let newFileList = [...info.fileList];
+    let newFileList = [...info.fileList] as InformationType[];
     newFileList = newFileList.slice(-2);
     newFileList = newFileList.map((file) => {
       if (file.response) {
         file.url = file.response.url;
       }
       return file;
-    });
+    })
     setFileList(newFileList);
   };
 
@@ -41,12 +42,13 @@ export default function ChapterUpload({ref}: {ref: Ref<object>}) {
       })
       Promise.all(uploadTasks).then((res: Array<object>) => {
         const result = res.map((v: {result?: string}) => (JSON.parse(v.result as string)))
-        const list = result.map(v => {
+        const list: InformationType[] = result.map(v => {
           const file = fileList.find(file => file.name === v.name) as UploadFile
           return {
             uid: file.uid,
             createUserId: useId,
             name: file.name,
+            type: '', // You may want to set this appropriately
             fileUrl: v.imgUrl,         // 资料关联地址
             fileSize: file.size,      // 文件大小
             fileExtension: file.name.split('.').pop()  // 文件扩展名
@@ -60,7 +62,7 @@ export default function ChapterUpload({ref}: {ref: Ref<object>}) {
     return Upload.LIST_IGNORE
   }
 
-  const getFileList = () => fileList
+  const getFileList = (): InformationType[] => fileList
 
   const props = {
     onChange: handleChange,

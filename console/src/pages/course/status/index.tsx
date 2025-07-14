@@ -1,36 +1,37 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Input, InputNumber, message, Popconfirm, Space } from 'antd';
 import { 
-  getCursorStatusList, 
-  createCursorStatus, 
-  updateCursorStatus, 
-  deleteCursorStatus,
-  CursorStatusType,
+  getCourseStatusList, 
+  createCourseStatus, 
+  updateCourseStatus, 
+  deleteCourseStatus,
+  CourseStatusType,
 } from '@/api/course/status';
 import BreadcrumbChain from '@/components/breadcrumb-chain';
+import { PaginationProps } from 'antd/es/pagination';
 
-export default function CursorStatus() {
-  const [list, setList] = useState<CursorStatusType[]>([]);
+export default function CourseStatus() {
+  const [list, setList] = useState<CourseStatusType[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<CursorStatusType | null>(null);
+  const [editing, setEditing] = useState<CourseStatusType | null>(null);
   const [editForm] = Form.useForm();
   const [searchForm] = Form.useForm();
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+  const [pagination, setPagination] = useState<PaginationProps>({ current: 1, pageSize: 10, total: 0 });
 
   const fetchList = async (params = {}) => {
     setLoading(true);
     try {
       const { current, pageSize } = pagination;
       const searchValues = searchForm.getFieldsValue();
-      const searchProp: Record<string, any> = {};
+      const searchProp: Record<string, string> = {};
       Object.keys(searchValues).forEach((k) => {
         if (searchValues[k]) {
           searchProp[k] = searchValues[k];
         }
       });
 
-      const res = await getCursorStatusList({
+      const res = await getCourseStatusList({
         size: pageSize,
         page: current,
         ...searchProp,
@@ -57,7 +58,7 @@ export default function CursorStatus() {
     editForm.resetFields();
   };
 
-  const handleEdit = (record: CursorStatusType) => {
+  const handleEdit = (record: CourseStatusType) => {
     setEditing(record);
     setModalOpen(true);
     editForm.setFieldsValue(record);
@@ -68,12 +69,13 @@ export default function CursorStatus() {
     editForm.resetFields();
   };
 
-  const handleDelete = async (record: CursorStatusType) => {
+  const handleDelete = async (record: CourseStatusType) => {
     try {
-      await deleteCursorStatus(record._id!);
+      await deleteCourseStatus(record._id!);
       message.success('删除成功');
       fetchList();
     } catch (error) {
+      console.log(error)
       message.error('删除失败');
     }
   };
@@ -84,25 +86,26 @@ export default function CursorStatus() {
       
       if (editing) {
         // 更新
-        await updateCursorStatus({
+        await updateCourseStatus({
           _id: editing._id!,
           ...values
         });
         message.success('更新成功');
       } else {
         // 新增
-        await createCursorStatus(values);
+        await createCourseStatus(values);
         message.success('添加成功');
       }
       
       setModalOpen(false);
       fetchList();
     } catch (error) {
+      console.log(error)
       message.error('操作失败');
     }
   };
 
-  const handleTableChange = (pagination: any) => {
+  const handleTableChange = (pagination: PaginationProps) => {
     setPagination(p => ({ 
       ...p, 
       current: pagination.current, 
@@ -150,7 +153,7 @@ export default function CursorStatus() {
     {
       title: '操作',
       key: 'action',
-      render: (_: any, record: CursorStatusType) => (
+      render: (_: undefined, record: CourseStatusType) => (
         <Space>
           <Button type="link" onClick={() => handleEdit(record)}>
             编辑

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { Live } from '@/models/live';
-import { createDoc, findOneDoc, findDocs, updateDoc, deleteDoc, countDocs, findAll } from '@/servers/mongo/actions';
+import { createDoc, findOneDoc, updateDoc, deleteDoc, countDocs } from '@/servers/mongo/actions';
 import { User } from '@/models';
 
 const router = Router();
@@ -12,21 +12,21 @@ router.get('/list', async (req: Request, res: Response) => {
   const skip = Number(page);
   // 按 startTime 降序排序
   const sortConfig = {}
-  let lives = await Live.find(filter)
+  const lives = await Live.find(filter)
     .sort(sortConfig)
     .limit(limit)
     .skip((skip - 1) * limit);
   const userIds = lives.map(v => v.instructorId)
-  let instructorMap: Record<string, any> = {};
+  const instructorMap: Record<string, string> = {};
   if (userIds?.length > 0) {
     const users = await User.find({ _id: { $in: userIds }}, 'username')
-    users.reduce<Record<string, any>>((pre, cur) => {
+    users.reduce<Record<string, string>>((pre, cur) => {
       const id = cur._id as string
       pre[id] = cur.username
       return pre
     }, instructorMap)
   }
-  let data = lives.map(v => {
+  const data = lives.map(v => {
     const obj = {
       ...v.toObject(),
       instructorName: instructorMap[String(v.instructorId)]

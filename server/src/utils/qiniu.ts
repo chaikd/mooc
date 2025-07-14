@@ -1,7 +1,7 @@
 import qiniu from 'qiniu'
 
 export function uploadQiniuToken(scope: 'mainmooc') {
-  return new Promise((reslove, reject) => {
+  return new Promise((reslove) => {
     const assessKey = process.env.QINNIU_ASSESSKEY
     const secretKey = process.env.QINNIU_SECRETKEY
     const url = process.env.QINIU_URL

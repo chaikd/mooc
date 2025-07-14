@@ -24,7 +24,7 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
-    "incremental": true
+    "incremental": true,
   },
   "include": [
     "src/**/*",

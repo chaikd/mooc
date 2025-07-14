@@ -3,7 +3,7 @@ import request from "./request";
 export type UserType = {
   username: string
   role: string
-  _id: string
+  _id?: string
 }
 
 export function getSelfInfo() {
@@ -11,8 +11,8 @@ export function getSelfInfo() {
 }
 
 export function getUserList(params: { size: number; page: number; }): Promise<{
-  page: string | number
-  size: string | number
+  page: number
+  size: number
   total: number
   data: Array<UserType>
 }> {
@@ -21,19 +21,19 @@ export function getUserList(params: { size: number; page: number; }): Promise<{
   });
 }
 
-export function addUser(data: any) {
+export function addUser(data: UserType) {
   return request.post('/api/user/add', data);
 }
 
-export function editUser(data: any) {
+export function editUser(data: UserType) {
   return request.post('/api/user/edit', data);
 }
 
-export function deleteUser(data: { _id: any; }) {
+export function deleteUser(data: { _id: string; }) {
   return request.delete('/api/user/delete', { data });
 }
 
-export function getUserInfo(id: any) {
+export function getUserInfo(id: string) {
   return request.get('/api/user/selfinfo', { params: { _id: id } });
 }
 

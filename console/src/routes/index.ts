@@ -8,7 +8,8 @@ import NotFound from "@/pages/not-found";
 export type CustomeRouteObject = RouteObject & {
   meta?: {
     label?: string,
-    icon?: ReactNode
+    icon?: ReactNode,
+    permissions?: string[]
   }
 };
 

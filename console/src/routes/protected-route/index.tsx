@@ -4,11 +4,11 @@ import { setMenus } from "@/store/modules/menus";
 import { setUserInfo } from "@/store/modules/user";
 import { isPassUrl, parseRouters } from "@/utils/menu-parse";
 import { getToken } from "@/utils/token";
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Navigate, useMatches } from "react-router";
 
-export default function ProtectedRoute({children}): ReactNode {
+export default function ProtectedRoute({children}: {children: ReactNode}): ReactNode {
   const token = getToken();
   const matchs = useMatches()
   const dispatch = useDispatch()

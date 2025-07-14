@@ -1,12 +1,14 @@
 import { model, Schema } from "mongoose"
+import { RoleType } from "./role.model";
 
 export interface UserType {
   _id?: string;
   username: string;
   password: string;
   role: string;
-  roleCode: String
+  roleCode: string
   createTime: Date;
+  roleInfo?: RoleType;
 }
 
 const userSchema = new Schema<UserType>({

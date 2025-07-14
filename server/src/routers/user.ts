@@ -1,13 +1,14 @@
 import {Role, User} from "@/models";
 import { RoleType } from "@/models/role.model";
+import { UserType } from "@/models/user.model";
 import { md5 } from "@/utils";
 import { createDoc, deleteDoc, findDocs, findOneDoc, updateDoc, countDocs, findAll } from "@/utils/database/actions";
 import { Response, Request, Router } from "express";
 
 // type Req = Request & {userId: string}
 const router = Router()
-router.get('/selfinfo', async (req: Request, res: Response) => {
-  const userId = (req as any).userId
+router.get('/selfinfo', async (req: Request & {userId?: string}, res: Response) => {
+  const userId = req.userId
   const _id = userId
   if(!_id) {
     res.json({
@@ -15,15 +16,15 @@ router.get('/selfinfo', async (req: Request, res: Response) => {
       message: '请传入用户id'
     })
   }
-  let userInfo = await findOneDoc(User, {_id}, 'username createTime _id role')
-  let result: any = null
+  const userInfo = await findOneDoc(User, {_id}, 'username createTime _id role')
+  let result: UserType | null = null
   if(userInfo?.role) {
     const role = await findOneDoc(Role, {_id: userInfo.role})
-    if (!!role) {
+    if (role) {
       result = userInfo.toObject()
       result.roleInfo = {
         ...role.toObject(),
-        permissions: role.permissions.split(',')
+        permissions: (role.permissions as string).split(',')
       }
     }
   }
@@ -47,7 +48,7 @@ router.get('/list', async (req: Request, res: Response) => {
   const filter = {...req.query}
   Reflect.deleteProperty(filter, 'size')
   Reflect.deleteProperty(filter, 'page')
-  let users = await findDocs(User, filter, limit, skip, 'username role createTime _id')
+  const users = await findDocs(User, filter, limit, skip, 'username role createTime _id')
   const total = await countDocs(User, filter)
   res.json({ success: true, data: {
     data: users,

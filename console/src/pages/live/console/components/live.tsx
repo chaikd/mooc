@@ -1,6 +1,6 @@
 import { LiveType } from "@/api/live";
 import { Space } from "antd";
-import { Device, DtlsParameters, Transport } from "mediasoup-client/types";
+import { Device, DtlsParameters, Transport, TransportOptions } from "mediasoup-client/types";
 import { Ref, useEffect, useImperativeHandle, useState } from "react";
 import { io } from "socket.io-client";
 import { getConsumer, getProduces, getReport, getRouterRtpCapabilities } from "../service";
@@ -41,10 +41,10 @@ export default function Live({id, liveDetail, ref}: PropType) {
     const routerRtpCapabilities = await getRouterRtpCapabilities(socket)
     await device.load(routerRtpCapabilities)
     // 创建发送report
-    const sendTransportInfo = await getReport(socket, 'send')
+    const sendTransportInfo = await getReport(socket, 'send') as TransportOptions
     const sendTransport: Transport = device.createSendTransport(sendTransportInfo)
     // 创建接收report
-    const recvTransportInfo = await getReport(socket, 'recv')
+    const recvTransportInfo = await getReport(socket, 'recv') as TransportOptions
     const recvTransport: Transport = device.createRecvTransport(recvTransportInfo)
 
     sendTransport.on('connect', ({ dtlsParameters }: {dtlsParameters: DtlsParameters}, cb: () => void) => {
@@ -68,7 +68,7 @@ export default function Live({id, liveDetail, ref}: PropType) {
     }
 
     const produceDownFn = () => {
-      let timer: any = null
+      let timer: null | NodeJS.Timeout = null
       return () => {
         if(timer) {
           clearTimeout(timer)
@@ -102,7 +102,6 @@ export default function Live({id, liveDetail, ref}: PropType) {
         className="w-full"
         ref={el => {
           if (el && remotStream) {
-            // @ts-ignore
             el.srcObject = remotStream;
           }
         }}

@@ -13,7 +13,7 @@ export default function LiveConsole() {
   const [isFullScreen, setIsFullScreen] = useState(false)
   const {id} = useParams()
   const [liveDetail, setLiveDetail] = useState<(LiveType & {duration?: string}) | null>(null)
-  const liveRef = useRef(null)
+  const liveRef = useRef<{startLive: () => void} | null>(null)
   const getDetail = async () => {
     if (!id) return
     const res = await getLiveDetail(id)
@@ -24,7 +24,7 @@ export default function LiveConsole() {
     })
   }
   const startLive = () => {
-    (liveRef?.current as any).startLive()
+    (liveRef?.current)?.startLive()
   }
   useEffect(() => {
     getDetail()

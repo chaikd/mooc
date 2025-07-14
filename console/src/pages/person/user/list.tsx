@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, Select, message, Popconfirm, Space } from 'antd';
-import { getUserList, addUser, editUser, deleteUser } from '@/api/user';
+import { Table, Button, Modal, Form, Input, Select, message, Popconfirm, TablePaginationConfig } from 'antd';
+import { getUserList, addUser, editUser, deleteUser, UserType } from '@/api/user';
 import { getRoleList } from '@/api/role';
 import BreadcrumbChain from '@/components/breadcrumb-chain';
 
 export default function User() {
-  const [list, setList] = useState([]);
+  const [list, setList] = useState<UserType[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const [editing, setEditing] = useState<UserType | null>(null);
   const [editForm] = Form.useForm();
   const [searchForm] = Form.useForm();
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
-  const [roleOptions, setRoleOptions] = useState([]);
+  const [pagination, setPagination] = useState<TablePaginationConfig>({ current: 1, pageSize: 10, total: 0 });
+  const [roleOptions, setRoleOptions] = useState<{value: string | undefined, label: string | undefined}[]>([]);
 
   const fetchRoles = async () => {
     const res = await getRoleList({ size: 100 });
@@ -23,15 +23,15 @@ export default function User() {
     setLoading(true);
     const { current, pageSize } = pagination;
     const searchValues = searchForm.getFieldsValue()
-    const searchProp = {}
+    const searchProp: Record<string, string> = {}
     Object.keys(searchValues).forEach(k => {
       if(searchValues[k]) {
         searchProp[k] = searchValues[k]
       }
     })
     const res = await getUserList({
-      size: pageSize,
-      page: current,
+      size: pageSize as number,
+      page: current as number,
       ...searchProp,
       ...params
     });
@@ -52,8 +52,8 @@ export default function User() {
     editForm.resetFields()
   };
 
-  const handleEdit = (record) => {
-    setEditing(record);
+  const handleEdit = (record: UserType) => {
+    setEditing(record as UserType);
     setModalOpen(true);
     editForm.setFieldsValue(record);
   };
@@ -63,8 +63,8 @@ export default function User() {
     editForm.resetFields()
   }
 
-  const handleDelete = async (record) => {
-    await deleteUser({ _id: record._id });
+  const handleDelete = async (record: UserType) => {
+    await deleteUser({ _id: record._id as string});
     message.success('删除成功');
     fetchList();
   };
@@ -82,7 +82,7 @@ export default function User() {
     fetchList();
   };
 
-  const handleTableChange = (pagination) => {
+  const handleTableChange = (pagination: TablePaginationConfig) => {
     setPagination(p => ({ ...p, current: pagination.current, pageSize: pagination.pageSize }));
     fetchList({ page: pagination.current, size: pagination.pageSize });
   };
@@ -94,14 +94,14 @@ export default function User() {
 
   const columns = [
     { title: '用户名', dataIndex: 'username', key: 'username' },
-    { title: '角色', dataIndex: 'role', key: 'role', render: (_, val) => {
+    { title: '角色', dataIndex: 'role', key: 'role', render: (_: string, val: UserType) => {
       return roleOptions.find(v => v.value === val.role)?.label
     } },
-    { title: '创建时间', dataIndex: 'createTime', key: 'createTime', render: t => t ? new Date(t).toLocaleString() : '' },
+    { title: '创建时间', dataIndex: 'createTime', key: 'createTime', render: (t: string) => t ? new Date(t).toLocaleString() : '' },
     {
       title: '操作',
       key: 'action',
-      render: (_, record) => (
+      render: (_: string, record: UserType) => (
         <>
           <Button type="link" onClick={() => handleEdit(record)}>编辑</Button>
           <Popconfirm title="确定删除吗？" onConfirm={() => handleDelete(record)}>
@@ -139,7 +139,7 @@ export default function User() {
         onChange={handleTableChange}
       />
       <Modal
-        title={editing ? '编辑用户' : '添加用户'}
+        title={!editing ? '添加用户' : '编辑用户'}
         destroyOnHidden
         open={modalOpen}
         onOk={handleOk}
@@ -147,7 +147,11 @@ export default function User() {
       >
         <Form form={editForm} layout="vertical">
           <Form.Item name="username" label="用户名" rules={[{ required: true, message: '请输入用户名' }]}><Input /></Form.Item>
-          <Form.Item hidden={editing} name={editing ? null : 'password'} label="密码" rules={[{ required: true, message: '请输入密码' }]}><Input.Password /></Form.Item>
+          {!editing && (
+            <Form.Item name="password" label="密码" rules={[{ required: true, message: '请输入密码' }]}>
+              <Input.Password />
+            </Form.Item>
+          )}
           <Form.Item name="role" label="角色" rules={[{ required: true, message: '请选择角色' }]}><Select options={roleOptions} /></Form.Item>
         </Form>
       </Modal>

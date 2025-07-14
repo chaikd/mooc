@@ -4,6 +4,7 @@ export type RoleType = {
   _id?: string;
   name: string,
   createTime: Date,
+  editUserId?: string,
   createUserId: string
   permissions: string[]
 }
@@ -19,18 +20,18 @@ export function getRoleList(params: { size: number | undefined; page?: number | 
   });
 }
 
-export function addRole(data: any) {
+export function addRole(data: RoleType) {
   return request.post('/api/role/add', data);
 }
 
-export function editRole(data: any) {
+export function editRole(data: RoleType) {
   return request.post('/api/role/edit', data);
 }
 
-export function deleteRole(data: { id: any; }) {
+export function deleteRole(data: { id: string }) {
   return request.post('/api/role/delete', data);
 }
 
-export function getRoleInfo(_id: any) {
+export function getRoleInfo(_id: string) {
   return request.get('/api/role/info', { params: { _id } });
 }

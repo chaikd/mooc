@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { Cursor, CursorStatus, User } from '@/models';
-import { CursorType } from '@/models/course';
+import { Course, CourseStatus, User } from '@/models';
+import { CourseType } from '@/models/course';
 import { createDoc, findOneDoc, findDocs, updateDoc, deleteDoc, countDocs } from '@/utils/database/actions';
 import statusRouter from './status';
 import chapterRouter from './chapter'
@@ -20,7 +20,7 @@ router.get('/list', async (req: Request, res: Response) => {
     const skip = (Number(page) - 1) * limit;
     
     // 构建查询条件
-    const queryFilter: any = { ...filter };
+    const queryFilter = { ...filter };
     if (courseName) {
       queryFilter.courseName = { $regex: courseName, $options: 'i' };
     }
@@ -32,28 +32,28 @@ router.get('/list', async (req: Request, res: Response) => {
     }
 
     // 查询课程列表
-    const courses = await findDocs(Cursor, queryFilter, limit, skip);
-    const total = await countDocs(Cursor, queryFilter);
+    const courses = await findDocs(Course, queryFilter, limit, skip);
+    const total = await countDocs(Course, queryFilter);
 
     // 获取所有涉及的用户ID和状态ID
     const userIds = Array.from(new Set(courses.map(c => c.instructorId).filter(Boolean)));
     const statusIds = Array.from(new Set(courses.map(c => c.statusId).filter(Boolean)));
 
     // 查询讲师信息
-    let instructorMap: Record<string, any> = {};
+    let instructorMap: Record<string, string> = {};
     if (userIds.length > 0) {
       const instructors = await User.find({ _id: { $in: userIds } }, 'username');
-      instructorMap = instructors.reduce<Record<string, any>>((acc, cur) => {
+      instructorMap = instructors.reduce<Record<string, string>>((acc, cur) => {
         acc[String(cur._id)] = cur.username;
         return acc;
       }, {});
     }
 
     // 查询状态信息
-    let statusMap: Record<string, any> = {};
+    let statusMap: Record<string, object> = {};
     if (statusIds.length > 0) {
-      const statuses = await CursorStatus.find({ _id: { $in: statusIds } }, 'statusName statusCode');
-      statusMap = statuses.reduce<Record<string, any>>((acc, cur) => {
+      const statuses = await CourseStatus.find({ _id: { $in: statusIds } }, 'statusName statusCode');
+      statusMap = statuses.reduce<Record<string, object>>((acc, cur) => {
         acc[String(cur._id)] = { statusName: cur.statusName, statusCode: cur.statusCode };
         return acc;
       }, {});
@@ -85,31 +85,33 @@ router.get('/list', async (req: Request, res: Response) => {
 });
 
 // 获取单个课程详情
-router.get('/:id', async (req: Request, res: Response): Promise<any> => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
     if (!id) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: '课程ID不能为空'
       });
+      return 
     }
 
-    const course = await findOneDoc(Cursor, { _id: id });
+    const course = await findOneDoc(Course, { _id: id });
     
     if (!course) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: '课程不存在'
       });
+      return 
     }
 
     // 查询讲师信息
     const instructor = await findOneDoc(User, { _id: course.instructorId }, 'username');
     
     // 查询状态信息
-    const status = await findOneDoc(CursorStatus, { _id: course.statusId }, 'statusName statusCode statusDesc');
+    const status = await findOneDoc(CourseStatus, { _id: course.statusId }, 'statusName statusCode statusDesc');
 
     const courseDetail = {
       ...course.toObject(),
@@ -129,61 +131,67 @@ router.get('/:id', async (req: Request, res: Response): Promise<any> => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: '查询课程详情失败'
+      message: '查询课程详情失败',
+      error
     });
   }
 });
 
 // 新增课程
-router.post('/add', async (req: Request, res: Response): Promise<any> => {
+router.post('/add', async (req: Request & {userId?: string}, res: Response) => {
   try {
-    const courseData: Partial<CursorType> = req.body;
-    const userId = (req as any).userId;
+    const courseData: Partial<CourseType> = req.body;
+    const userId = req.userId;
 
     // 验证必填字段
     if (!courseData.courseName) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: '课程名称不能为空'
       });
+      return 
     }
 
     if (!courseData.instructorId) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: '讲师ID不能为空'
       });
+      return 
     }
 
     if (!courseData.statusCode) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: '课程状态不能为空'
       });
+      return 
     }
 
     // 验证讲师是否存在
     const instructor = await findOneDoc(User, { _id: courseData.instructorId });
     if (!instructor) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: '讲师不存在'
       });
+      return 
     }
 
     // 验证状态是否存在
-    const status = await findOneDoc(CursorStatus, { statusCode: courseData.statusCode });
+    const status = await findOneDoc(CourseStatus, { statusCode: courseData.statusCode });
     if (!status) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: '课程状态不存在'
       });
+      return 
     } else {
       courseData.statusId = status._id
     }
 
     // 创建课程
-    const newCourse = await createDoc(Cursor, {
+    const newCourse = await createDoc(Course, {
       ...courseData,
       createUserId: userId
     });
@@ -196,59 +204,63 @@ router.post('/add', async (req: Request, res: Response): Promise<any> => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: '创建课程失败'
+      message: '创建课程失败',
+      error
     });
   }
 });
 
 // 更新课程
-router.post('/edit', async (req: Request, res: Response): Promise<any> => {
+router.post('/edit', async (req: Request, res: Response) => {
   try {
-    const { _id, ...updateData }: Partial<CursorType> & { _id: string } = req.body;
-    const userId = (req as any).userId;
+    const { _id, ...updateData }: Partial<CourseType> & { _id: string } = req.body;
 
     if (!_id) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: '课程ID不能为空'
       });
+      return 
     }
 
     // 检查课程是否存在
-    const existingCourse = await findOneDoc(Cursor, { _id });
+    const existingCourse = await findOneDoc(Course, { _id });
     if (!existingCourse) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: '课程不存在'
       });
+      return 
     }
 
     // 如果更新讲师ID，验证讲师是否存在
     if (updateData.instructorId) {
       const instructor = await findOneDoc(User, { _id: updateData.instructorId });
       if (!instructor) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: '讲师不存在'
         });
+        return 
       }
     }
 
     // 如果更新状态ID，验证状态是否存在
     if (updateData.statusCode) {
-      const status = await findOneDoc(CursorStatus, { statusCode: updateData.statusCode });
+      const status = await findOneDoc(CourseStatus, { statusCode: updateData.statusCode });
       if (!status) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: '课程状态不存在'
         });
+        return 
       } else {
         updateData.statusId = status._id
       }
     }
 
     // 更新课程
-    const updatedCourse = await updateDoc(Cursor, _id, updateData);
+    const updatedCourse = await updateDoc(Course, _id, updateData);
 
     res.json({
       success: true,
@@ -258,34 +270,37 @@ router.post('/edit', async (req: Request, res: Response): Promise<any> => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: '更新课程失败'
+      message: '更新课程失败',
+      error
     });
   }
 });
 
 // 删除课程
-router.delete('/delete', async (req: Request, res: Response): Promise<any> => {
+router.delete('/delete', async (req: Request, res: Response) => {
   try {
     const { _id } = req.body;
 
     if (!_id) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: '课程ID不能为空'
       });
+      return 
     }
 
     // 检查课程是否存在
-    const existingCourse = await findOneDoc(Cursor, { _id });
+    const existingCourse = await findOneDoc(Course, { _id });
     if (!existingCourse) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: '课程不存在'
       });
+      return 
     }
 
     // 删除课程
-    await deleteDoc(Cursor, _id);
+    await deleteDoc(Course, _id);
 
     res.json({
       success: true,
@@ -294,7 +309,8 @@ router.delete('/delete', async (req: Request, res: Response): Promise<any> => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: '删除课程失败'
+      message: '删除课程失败',
+      error
     });
   }
 });
@@ -302,7 +318,7 @@ router.delete('/delete', async (req: Request, res: Response): Promise<any> => {
 // 获取课程状态列表
 router.get('/status/list', async (req: Request, res: Response) => {
   try {
-    const statuses = await findDocs(CursorStatus, {}, 100, 0);
+    const statuses = await findDocs(CourseStatus, {}, 100, 0);
     
     res.json({
       success: true,
@@ -311,7 +327,8 @@ router.get('/status/list', async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: '查询课程状态列表失败'
+      message: '查询课程状态列表失败',
+      error
     });
   }
 });

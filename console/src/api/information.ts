@@ -1,3 +1,4 @@
+import { UploadFile } from "antd";
 import request from "./request";
 
 export type InformationTypeType = {
@@ -9,8 +10,9 @@ export type InformationTypeType = {
   createUserId?: string;
 }
 
-export type InformationType = {
+export interface InformationType extends Partial<UploadFile> {
   _id?: string;
+  uid: string;
   name: string;
   type: string;
   fileUrl: string;

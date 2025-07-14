@@ -1,16 +1,17 @@
 import { ChapterTreeNodeType, createChapter, deleteChapter, getParseChapterTree, updateChapter } from "@/api/course/chapter"
 import { DeleteOutlined, EditOutlined, FileOutlined, FolderOutlined, PlusOutlined } from "@ant-design/icons"
-import { Button, Card, Col, Empty, Form, Input, InputNumber, message, Modal, Popconfirm, Row, Space, Spin, Tree, Upload } from "antd"
+import { Button, Card, Col, Empty, Form, Input, InputNumber, message, Modal, Popconfirm, Row, Space, Spin, Tree, TreeNodeProps, Upload } from "antd"
 import TextArea from "antd/es/input/TextArea"
-import { Ref, SetStateAction, useEffect, useImperativeHandle, useRef, useState } from "react"
+import { Ref, useEffect, useImperativeHandle, useRef, useState } from "react"
 import { Link } from "react-router"
 import ChapterUpload from "../chapter-upload"
-import { addInformation } from "@/api/information"
+import { addInformation, InformationType } from "@/api/information"
+import { BasicDataNode } from "antd/es/tree"
 
 interface CourseChapterProps {
   courseId: string | undefined;
   isEdit?: boolean;
-  ref?: React.Ref<any>;
+  ref?: Ref<{handleAdd: () => void}>;
 }
 
 export default function CourseChapter({ courseId, isEdit = false, ref }: CourseChapterProps) {
@@ -18,7 +19,7 @@ export default function CourseChapter({ courseId, isEdit = false, ref }: CourseC
   const [detailForm] = Form.useForm()
   const [expandedKeys, setExpandedKeys] = useState<string[]>([])
   const [loading, setLoading] = useState(false);
-  const [selectedKeys, setSelectedKeys] = useState([])
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([])
   const [selectedChapter, setSelectedChapter] = useState<ChapterTreeNodeType | null>(null)
   const [editing, setEditing] = useState(false);
   const [currentChapter, setCurrentChapter] = useState<ChapterTreeNodeType | null>(null);
@@ -42,6 +43,7 @@ export default function CourseChapter({ courseId, isEdit = false, ref }: CourseC
       // 默认展开所有节点
       setExpandedKeys(keys);
     } catch (error) {
+      console.error('失败:', error);
       message.error('获取章节列表失败');
     } finally {
       setLoading(false);
@@ -82,21 +84,25 @@ export default function CourseChapter({ courseId, isEdit = false, ref }: CourseC
       message.success('删除成功');
       fetchChapterTree();
     } catch (error) {
+      console.error('失败:', error);
       message.error('删除失败');
     }
   };
 
-  const onTreeSelect = async (selectedKeys: SetStateAction<never[]>, e: { selectedNodes: { data: any }[] }) => {
-    setSelectedKeys(selectedKeys)
-    setSelectedChapter(e.selectedNodes[0]?.data)
-    detailForm.setFieldsValue(e.selectedNodes[0]?.data)
-  }
+  const onTreeSelect = async (
+    selectedKeys: React.Key[],
+    info: { selectedNodes: Array<{ data: ChapterTreeNodeType }> }
+  ) => {
+    setSelectedKeys(selectedKeys as string[]);
+    setSelectedChapter(info.selectedNodes[0]?.data);
+    detailForm.setFieldsValue(info.selectedNodes[0]?.data);
+  };
 
   // 提交表单
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      const list: any = (chapterUploadRef.current as {getFileList: () => void} | null)?.getFileList()
+      const list = (chapterUploadRef.current as {getFileList: () => InformationType[]} | null)?.getFileList() as InformationType[]
       if(list?.length > 0) {
         const {data} = await addInformation({list})
         values.materialIds = data.map((v: {_id: string}) => v._id)
@@ -126,7 +132,7 @@ export default function CourseChapter({ courseId, isEdit = false, ref }: CourseC
   };
 
   // 渲染树节点
-  const renderTreeNodes = (nodes: ChapterTreeNodeType[]): any[] => {
+  const renderTreeNodes = (nodes: ChapterTreeNodeType[]): BasicDataNode[] => {
     return nodes?.map(node => ({
       key: node._id,
       title: (
@@ -197,7 +203,10 @@ export default function CourseChapter({ courseId, isEdit = false, ref }: CourseC
                 expandedKeys={expandedKeys}
                 selectedKeys={selectedKeys}
                 onExpand={(keys) => setExpandedKeys(keys as string[])}
-                onSelect={onTreeSelect as any}
+                onSelect={(selectedKeys, info) => onTreeSelect(
+                  selectedKeys,
+                  { selectedNodes: (info).selectedNodes?.map((n: TreeNodeProps) => ({ data: n.data })) ?? [] }
+                )}
               />
             </Spin>
           </Card>

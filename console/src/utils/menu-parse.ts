@@ -1,6 +1,8 @@
 import { useSelector } from "react-redux"
-import router from "@/routes";
+import router, { CustomeRouteObject } from "@/routes";
 import { icons } from "@/routes/icons";
+import { MenuItemType } from "antd/es/menu/interface";
+import { menuType, StoreType } from "@/store";
 
 export function parseRouters(prePath: string, permissions: string[]) {
   let routerConfigs = router.routes[0].children
@@ -10,32 +12,32 @@ export function parseRouters(prePath: string, permissions: string[]) {
   return _parseRouters(routerConfigs, prePath, permissions)
 }
 
-export function _parseRouters(routers: any[], prePath = '', permissions: any) {
-  return routers.filter((route: any) => {
+export function _parseRouters<T extends MenuItemType & Partial<{path?: string, children?: T[]}>>(routers: CustomeRouteObject[], prePath = '', permissions: string | string[]): T[] {
+  return routers.filter((route: CustomeRouteObject) => {
     return isMenuRoute(route, permissions)
-  }).reduce((pre: { key: string; path: string; label: any; icon: any; children: undefined; }[], cur: { index: any; path: any; meta: { label: any; icon: any; }; children: any[]; }) => {
+  }).reduce((pre: CustomeRouteObject[], cur: CustomeRouteObject) => {
     const path = cur.index ? prePath + '/' : `${prePath}/${cur.path}`
     const obj = {
       key: path,
       path,
-      label: cur.meta.label,
-      icon: cur.meta.icon,
+      label: cur.meta?.label,
+      icon: cur.meta?.icon,
       children: undefined
-    }
+    } as T
     const children = cur.children
     if(children && children.length > 0) {
-      let children = cur.children.filter((route: any) => isMenuRoute(route,permissions))
-      if(children.length == 0) {
-        children = undefined as any
+      let children = cur.children?.filter((route) => isMenuRoute(route,permissions))
+      if(children?.length == 0) {
+        children = undefined
       }
     }
     obj.children = children && _parseRouters(children, path, permissions)
     pre.push(obj)
     return pre
-  }, [])
+  }, []) as T[]
 }
 
-function isMenuRoute(route: { meta: { label: any; permissions: any; }; }, permissions: any) {
+function isMenuRoute(route: CustomeRouteObject, permissions: string | string[]) {
   if (!route.meta?.label) return false
   const menuPermission = route?.meta?.permissions;
   const isPass = menuPermission 
@@ -45,7 +47,7 @@ function isMenuRoute(route: { meta: { label: any; permissions: any; }; }, permis
 }
 
 function isPassPermissionCbFn(permissions: string | string[]) {
-  return (permi: any) => (permissions?.includes(permi) || permissions?.includes(`0-${permi}`))
+  return (permi: string) => (permissions?.includes(permi) || permissions?.includes(`0-${permi}`))
 }
 
 export function isPassUrl(id: string, permissions: string[] = []) {
@@ -54,19 +56,21 @@ export function isPassUrl(id: string, permissions: string[] = []) {
   return !routeConfig?.meta?.permissions || routeConfig?.meta?.permissions?.every(isPassPermissionCbFn(permissions))
 }
 
-function _findRouteConfig(routes: any[], id: string) {
-  const routeConfig = routes.find((v: { id: any; }) => id.startsWith(v.id))
-  if(routeConfig.id !== id) {
-    return _findRouteConfig(routeConfig.children, id)
+function _findRouteConfig(routes: CustomeRouteObject[], id: string) {
+  if (!Array.isArray(routes)) return
+  const routeConfig = routes?.find((v) => id.startsWith(v.id as string)) as CustomeRouteObject
+  if(!routeConfig) return
+  if(routeConfig?.id !== id) {
+    return _findRouteConfig(routeConfig?.children as CustomeRouteObject[], id)
   } else {
     return routeConfig
   }
 }
 
 export function getMenus() {
-  const menus = useSelector((state: any) => state.menus.menus)
-  const switchIcon = (data: any[]) => {
-    return data.map((v: { icon: string | number; }) => {
+  const menus = useSelector((state: StoreType) => state.menus.menus)
+  const switchIcon = (data: menuType[]) => {
+    return data.map((v: menuType) => {
       return {
         ...v,
         icon: icons[String(v.icon) as keyof typeof icons]

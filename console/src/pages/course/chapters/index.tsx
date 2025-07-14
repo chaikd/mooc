@@ -11,17 +11,19 @@ import {
 import {
   PlusOutlined,
 } from '@ant-design/icons';
-import { getCursorDetail, CursorDetailType } from '@/api/course';
+import { getCourseDetail, CourseDetailType } from '@/api/course';
 import BreadcrumbChain from '@/components/breadcrumb-chain';
 import { useParams } from 'react-router';
 import CourseChapter from '../components/course-chapter';
 
 const { Title, Text } = Typography;
 
-const CursorChapters: React.FC = () => {
+const CourseChapters: React.FC = () => {
   const { id: courseId } = useParams<{ id: string }>();
-  const [courseInfo, setCourseInfo] = useState<CursorDetailType | null>(null);
-  const courseChapterTreeRef = useRef(null)
+  const [courseInfo, setCourseInfo] = useState<CourseDetailType | null>(null);
+  const courseChapterTreeRef = useRef<{
+    handleAdd: () => void
+  } | null>(null)
   const breadcrumbItems = [
     { title: '课程管理', href: '/course' },
     { title: courseInfo?.courseName || '课程详情', href: `/course/edit/${courseId}` },
@@ -32,7 +34,7 @@ const CursorChapters: React.FC = () => {
   const fetchCourseInfo = async () => {
     if (!courseId) return;
     try {
-      const { data } = await getCursorDetail(courseId);
+      const { data } = await getCourseDetail(courseId);
       setCourseInfo(data);
     } catch (error) {
       console.log(error)
@@ -40,7 +42,7 @@ const CursorChapters: React.FC = () => {
     }
   };
   const handleAdd = () => {
-    (courseChapterTreeRef?.current as any)?.handleAdd()
+    (courseChapterTreeRef?.current)?.handleAdd()
   }
 
   useEffect(() => {
@@ -49,7 +51,10 @@ const CursorChapters: React.FC = () => {
 
   return (
     <div>
-      <BreadcrumbChain breads={breadcrumbItems as any}/>
+      <BreadcrumbChain breads={breadcrumbItems as {
+        title?: string;
+        href?: string;
+      }[]}/>
       
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
@@ -81,4 +86,4 @@ const CursorChapters: React.FC = () => {
   );
 };
 
-export default CursorChapters; 
+export default CourseChapters; 

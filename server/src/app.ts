@@ -20,7 +20,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 registRouters(app)
 
-app.use((req: Request, res: Response, next: NextFunction) => {
+app.use((req: Request, res: Response) => {
   res.status(404).send({error: 'not found'})
 })
 

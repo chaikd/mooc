@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { Information, InformationType } from '@/models/information';
-import { createDoc, findOneDoc, findDocs, updateDoc, deleteDoc, countDocs, findAll } from '@/utils/database/actions';
+import { createDoc, findDocs, updateDoc, deleteDoc, countDocs } from '@/utils/database/actions';
 
 const router = Router();
 

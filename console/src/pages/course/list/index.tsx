@@ -2,18 +2,18 @@ import BreadcrumbChain from "@/components/breadcrumb-chain"
 import { AppstoreOutlined, BarsOutlined } from "@ant-design/icons"
 import { Button, Input, Radio } from "antd"
 import { createContext, useEffect, useState } from "react"
-import CursorTile from "../components/tile"
-import CursorList from "../components/list"
+import CourseTile from "../components/tile"
+import CourseList from "../components/list"
 import { Link } from "react-router"
-import { getCursorList } from "@/api/course"
+import { getCourseList } from "@/api/course"
 
-export const CursorContext = createContext({})
+export const CourseContext = createContext({})
 
-export default function Cursor() {
+export default function Course() {
   const [style, setStyle] = useState('tile')
   const [list, setList] = useState([])
   const fetchList = async () => {
-    const res = await getCursorList({
+    const res = await getCourseList({
       page: 1,
       size: 10
     })
@@ -47,13 +47,13 @@ export default function Cursor() {
         </div>
       </div>
       <div className="mt-4 flex-1 h-0 overflow-y-auto">
-        <CursorContext.Provider value={{fetchList}}>
+        <CourseContext.Provider value={{fetchList}}>
           {style === 'tile' ? (
-            <CursorTile list={list}></CursorTile>
+            <CourseTile list={list}></CourseTile>
           ) : (
-            <CursorList list={list}></CursorList>
+            <CourseList list={list}></CourseList>
           )}
-        </CursorContext.Provider>
+        </CourseContext.Provider>
       </div>
     </div>
   )

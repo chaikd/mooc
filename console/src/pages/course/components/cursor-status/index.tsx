@@ -1,6 +1,6 @@
 import { Tag } from "antd";
 
-export default function CursorStatus({status = {statusName: '', statusCode: ''}}: {status: {
+export default function CourseStatus({status = {statusName: '', statusCode: ''}}: {status: {
   statusName: string;
   statusCode: string;
 }}) {

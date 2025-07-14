@@ -3,7 +3,7 @@ import { Server } from "socket.io"
 import { createMesiasoupRouter } from "../mediasoup";
 
 export default async function createLiveIo(ioServer: Server) {
-  let liveIo = ioServer.of('/ws/live')
+  const liveIo = ioServer.of('/ws/live')
   
   let mediasoupRouter: Router | null = null
   const transportsMap = new WeakMap()
@@ -14,8 +14,10 @@ export default async function createLiveIo(ioServer: Server) {
   try {
     // 尝试创建 mediasoup router
     mediasoupRouter = await createMesiasoupRouter()
-  } catch (error: any) {
-    console.warn('⚠️  Mediasoup not available:', error.message)
+  } catch (error) {
+    if (error instanceof Error && error.message) {
+      console.warn(' Mediasoup not available:', error.message)
+    }
   }
   liveIo.on('connect', async (socket) => {
     const roomId: string = socket.handshake.query.roomId as string
@@ -52,8 +54,10 @@ export default async function createLiveIo(ioServer: Server) {
           } else {
             recvTransportsMap.set(socket, transport)
           }
-        } catch (error: any) {
-          console.warn('Failed to save transport to Redis:', error.message)
+        } catch (error: unknown) {
+          if (error instanceof Error && error.message) {
+            console.warn('Failed to save transport to Redis:', error.message)
+          }
         }
         
         cb({
@@ -62,7 +66,7 @@ export default async function createLiveIo(ioServer: Server) {
           iceCandidates: transport.iceCandidates,
           dtlsParameters: transport.dtlsParameters,
         });
-      } catch (error: any) {
+      } catch (error) {
         console.error('Failed to create transport:', error)
         cb({ error: 'Failed to create transport' });
       }
@@ -71,15 +75,15 @@ export default async function createLiveIo(ioServer: Server) {
     socket.on('transportConnected', async ({transportId, recvTransportId, dtlsParameters, rtpCapabilities}, cb) => {
       try {
         if(transportId) {
-          let transport = transportsMap.get(socket)
+          const transport = transportsMap.get(socket)
           transport.connect({dtlsParameters})
           rtpCapabilitiesMap.set(socket, rtpCapabilities)
         } else if(recvTransportId) {
-          let transport = recvTransportsMap.get(socket)
+          const transport = recvTransportsMap.get(socket)
           transport.connect({dtlsParameters})
         }
         cb({ success: true })
-      } catch (error: any) {
+      } catch (error) {
         console.error('Transport connect error:', error)
         cb({ error: 'Failed to connect transport' })
       }

@@ -1,11 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import createHttpError from 'http-errors';
 import logger from '@/utils/looger';
 export const errorHandler = (
   err: Error,
   req: Request,
   res: Response,
-  next: NextFunction
 ) => {
   let statusCode = 500;
   let message = 'Internal Server Error';

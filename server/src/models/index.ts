@@ -2,7 +2,7 @@ import User from './user.model'
 import Role from './role.model'
 import Permission from './permission'
 import { Information, InformationType } from './information'
-import { Cursor, CursorStatus, CursorChapter } from './course'
+import { Course, CourseStatus, CourseChapter } from './course'
 
 export {
   User,
@@ -10,7 +10,7 @@ export {
   Permission,
   Information,
   InformationType,
-  Cursor,
-  CursorStatus,
-  CursorChapter,
+  Course,
+  CourseStatus,
+  CourseChapter,
 }

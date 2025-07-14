@@ -1,10 +1,12 @@
 import { defineConfig, PluginOption } from 'vite';
 import { resolve } from 'node:path'
 import React from '@vitejs/plugin-react'
+// import vitePluginEslint from 'vite-plugin-eslint'
 
 export default defineConfig({
   plugins: [
-    (React() as PluginOption)
+    (React() as PluginOption),
+    // vitePluginEslint()
   ],
   resolve: {
     alias: {

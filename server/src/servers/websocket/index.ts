@@ -11,8 +11,8 @@ const createWebsocketServer = async (appServer: Server) => {
     }
   })
 
-  let liveIo = createLiveIo(ioServer)
-  let chatIo = createChatIo(ioServer)
+  createLiveIo(ioServer) // liveIo
+  createChatIo(ioServer) // chatIo
 }
 
 export {

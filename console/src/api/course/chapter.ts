@@ -2,7 +2,7 @@ import { InformationType } from "../information";
 import request from "../request";
 
 // 课程章节数据类型
-export interface CursorChapterType {
+export interface CourseChapterType {
   _id?: string;
   chapterName: string;     // 章节名称
   chapterDesc?: string;    // 章节描述
@@ -15,7 +15,7 @@ export interface CursorChapterType {
 }
 
 // 章节树形结构类型
-export interface ChapterTreeNodeType extends CursorChapterType {
+export interface ChapterTreeNodeType extends CourseChapterType {
   children?: ChapterTreeNodeType[];
   level?: number;
   isLeaf?: boolean;
@@ -54,7 +54,7 @@ export function getChapterTree(courseId: string): Promise<{
 // 获取章节详情
 export function getChapterDetail(id: string): Promise<{
   success: boolean;
-  data: CursorChapterType;
+  data: CourseChapterType;
 }> {
   return request.get(`/api/course/chapter/${id}`);
 }
@@ -62,7 +62,7 @@ export function getChapterDetail(id: string): Promise<{
 // 创建章节
 export function createChapter(data: ChapterCreateParams): Promise<{
   success: boolean;
-  data: CursorChapterType;
+  data: CourseChapterType;
   message: string;
 }> {
   return request.post('/api/course/chapter/add', data);
@@ -71,7 +71,7 @@ export function createChapter(data: ChapterCreateParams): Promise<{
 // 更新章节
 export function updateChapter(data: ChapterUpdateParams): Promise<{
   success: boolean;
-  data: CursorChapterType;
+  data: CourseChapterType;
   message: string;
 }> {
   return request.post('/api/course/chapter/edit', data);
@@ -86,13 +86,13 @@ export function deleteChapter(id: string): Promise<{
 }
 
 export async function getParseChapterTree(courseId: string): Promise<{
-  trees: Array<CursorChapterType>
+  trees: Array<CourseChapterType>
   keys: Array<string>
 }> {
   const {data} = await getChapterTree(courseId)
   const roots = data.filter(v => !v.parentChapterId)
   const keys: Array<string> = []
-  const findChildren = (dataList: Array<CursorChapterType>, roots: Array<CursorChapterType>) => {
+  const findChildren = (dataList: Array<CourseChapterType>, roots: Array<CourseChapterType>) => {
     return roots.map(v => {
       if(v._id) {
         keys.push(v._id)

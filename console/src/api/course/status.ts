@@ -1,7 +1,7 @@
 import request from "../request";
 
 // 课程状态类型
-export interface CursorStatusType {
+export interface CourseStatusType {
   _id?: string;
   statusCode: string;
   statusName: string;
@@ -12,7 +12,7 @@ export interface CursorStatusType {
 }
 
 // 课程状态列表查询参数
-export interface CursorStatusListParams {
+export interface CourseStatusListParams {
   size?: number;
   page?: number;
   statusName?: string;
@@ -20,15 +20,15 @@ export interface CursorStatusListParams {
 }
 
 // 课程状态列表响应
-export interface CursorStatusListResponse {
-  data: CursorStatusType[];
+export interface CourseStatusListResponse {
+  data: CourseStatusType[];
   total: number;
   page: number;
   size: number;
 }
 
 // 课程状态创建参数
-export interface CursorStatusCreateParams {
+export interface CourseStatusCreateParams {
   statusCode: string;
   statusName: string;
   statusDesc?: string;
@@ -36,46 +36,46 @@ export interface CursorStatusCreateParams {
 }
 
 // 课程状态更新参数
-export interface CursorStatusUpdateParams extends CursorStatusCreateParams {
+export interface CourseStatusUpdateParams extends CourseStatusCreateParams {
   _id: string;
 }
 
 // 获取课程状态列表
-export function getCursorStatusList(params: CursorStatusListParams = {}): Promise<{
+export function getCourseStatusList(params: CourseStatusListParams = {}): Promise<{
   success: boolean;
-  data: CursorStatusListResponse;
+  data: CourseStatusListResponse;
 }> {
   return request.get('/api/course/status/list', { params });
 }
 
 // 获取课程状态详情
-export function getCursorStatusDetail(id: string): Promise<{
+export function getCourseStatusDetail(id: string): Promise<{
   success: boolean;
-  data: CursorStatusType;
+  data: CourseStatusType;
 }> {
   return request.get(`/api/course/status/detail/${id}`);
 }
 
 // 创建课程状态
-export function createCursorStatus(data: CursorStatusCreateParams): Promise<{
+export function createCourseStatus(data: CourseStatusCreateParams): Promise<{
   success: boolean;
-  data: CursorStatusType;
+  data: CourseStatusType;
   message: string;
 }> {
   return request.post('/api/course/status/add', data);
 }
 
 // 更新课程状态
-export function updateCursorStatus(data: CursorStatusUpdateParams): Promise<{
+export function updateCourseStatus(data: CourseStatusUpdateParams): Promise<{
   success: boolean;
-  data: CursorStatusType;
+  data: CourseStatusType;
   message: string;
 }> {
   return request.post('/api/course/status/edit', data);
 }
 
 // 删除课程状态
-export function deleteCursorStatus(id: string): Promise<{
+export function deleteCourseStatus(id: string): Promise<{
   success: boolean;
   message: string;
 }> {
@@ -83,9 +83,9 @@ export function deleteCursorStatus(id: string): Promise<{
 }
 
 // 获取所有课程状态（用于下拉选择）
-export function getAllCursorStatus(): Promise<{
+export function getAllCourseStatus(): Promise<{
   success: boolean;
-  data: CursorStatusType[];
+  data: CourseStatusType[];
 }> {
   return request.get('/api/course/status/all');
 } 

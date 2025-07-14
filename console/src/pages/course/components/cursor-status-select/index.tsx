@@ -1,21 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Select, SelectProps } from 'antd';
-import { getAllCursorStatus, CursorStatusType } from '@/api/course/status';
+import { getAllCourseStatus, CourseStatusType } from '@/api/course/status';
 
-interface CursorStatusSelectProps extends Omit<SelectProps, 'options'> {
+interface CourseStatusSelectProps extends Omit<SelectProps, 'options'> {
   placeholder?: string;
   allowClear?: boolean;
 }
 
-export default function CursorStatusSelect(props: CursorStatusSelectProps) {
+export default function CourseStatusSelect(props: CourseStatusSelectProps) {
   const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchStatusOptions = async () => {
     setLoading(true);
     try {
-      const res = await getAllCursorStatus();
-      const statusOptions = res.data.map((status: CursorStatusType) => ({
+      const res = await getAllCourseStatus();
+      const statusOptions = res.data.map((status: CourseStatusType) => ({
         value: status._id!,
         label: `${status.statusName} (${status.statusCode})`
       }));

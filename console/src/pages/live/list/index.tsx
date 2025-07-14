@@ -1,13 +1,13 @@
 import { getAllUser, UserType } from "@/api/user";
 import BreadcrumbChain from "@/components/breadcrumb-chain";
-import { Button, DatePicker, Form, Input, message, Modal, Popconfirm, Select, Space, Table } from "antd";
+import { Button, DatePicker, Form, Input, message, Modal, Popconfirm, Select, Table } from "antd";
 import { useForm } from "antd/es/form/Form";
 import { ColumnProps } from "antd/es/table";
 import { ReactNode, useEffect, useState } from "react";
 import { Link } from "react-router";
 import dayjs, { Dayjs } from 'dayjs'
 import TextArea from "antd/es/input/TextArea";
-import { addLive, deleteLive, editLive, getLiveList, EditLiveType } from "@/api/live";
+import { addLive, deleteLive, editLive, getLiveList, EditLiveType, LiveType } from "@/api/live";
 const { RangePicker } = DatePicker;
 
 export default function Live() {
@@ -17,8 +17,8 @@ export default function Live() {
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
   const [form] = useForm()
   const [searchForm] = useForm()
-  const [dataSource, setDataSource] = useState([])
-  const [defaultTime, setDefaultTime] = useState<[Dayjs, Dayjs]>([dayjs(new Date()), dayjs(new Date()).add(2, 'hours')])
+  const [dataSource, setDataSource] = useState<LiveType[]>([])
+  const [defaultTime] = useState<[Dayjs, Dayjs]>([dayjs(new Date()), dayjs(new Date()).add(2, 'hours')])
   const modalConfirm = async () => {
     const formValue = await form.validateFields()
     formValue.startTime = formValue.time[0]
@@ -84,10 +84,10 @@ export default function Live() {
       size: pageSize
     })
     if (res.success) {
-      setDataSource(res.data)
+      setDataSource(res.data as LiveType[])
       setPagination({
         ...pagination,
-        total: res.total
+        total: res.total as number
       })
     }
   }
@@ -129,7 +129,7 @@ export default function Live() {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      render: (status, record) => {return status}
+      render: (status) => {return status}
     },
     {
       title: '计划时间',

@@ -1,9 +1,9 @@
 import { Button, message, Modal, Space } from "antd"
 import { getActionsByStatus, getButtonType, isDangerButton } from "@/utils/course-actions"
 import { useNavigate } from "react-router"
-import { deleteCursor, updateCursor } from "@/api/course"
+import { CourseType, deleteCourse, updateCourse } from "@/api/course"
 import { useContext } from "react"
-import { CursorContext } from "../../list"
+import { CourseContext } from "../../list"
 
 interface CourseActionsProps {
   status: {
@@ -11,7 +11,7 @@ interface CourseActionsProps {
     statusCode: string;
   }
   size?: 'small' | 'middle' | 'large'
-  course?: any
+  course: CourseType
 }
 
 type contextType = {fetchList: () => void}
@@ -19,15 +19,16 @@ type contextType = {fetchList: () => void}
 export default function CourseActions({ status, size = 'small', course }: CourseActionsProps) {
   const actions = getActionsByStatus(status)
   const navigate = useNavigate()
-  const context: contextType = useContext(CursorContext) as contextType
+  const context: contextType = useContext(CourseContext) as contextType
   const actionTouch = async (action: string) => {
     switch(action) {
-      case '编辑':
-        navigate(`/course/edit/${course._id}`)
+      case '编辑':{
+        navigate(`/course/edit/${course?._id}`)
         break;
-      case '发布':
-        const res = await updateCursor({
-          _id: course._id,
+      }
+      case '发布':{
+        const res = await updateCourse({
+          _id: course?._id || '',
           statusCode: 2
         })
         if(res.success) {
@@ -35,9 +36,10 @@ export default function CourseActions({ status, size = 'small', course }: Course
           context.fetchList()
         }
         break;
-      case '下架':
-        const {success} = await updateCursor({
-          _id: course._id,
+      }
+      case '下架':{
+        const {success} = await updateCourse({
+          _id: course._id || '',
           statusCode: 1
         })
         if(success) {
@@ -45,17 +47,19 @@ export default function CourseActions({ status, size = 'small', course }: Course
           context.fetchList()
         }
         break;
-      case '删除':
+      }
+      case '删除':{
         Modal.confirm({
           content: '确认删除？',
           onOk: async () => {
-            const res = await deleteCursor(course._id)
+            const res = await deleteCourse(course?._id || '')
             if (res.success) {
               message.success('删除成功')
               context.fetchList()
             }
           }
         })
+      }
     }
   }
   

@@ -1,5 +1,5 @@
-import { Permission, User } from "@/models"
-import { createDoc, deleteDoc, findAll, findDocs, updateDoc } from "@/utils/database/actions"
+import { Permission } from "@/models"
+import { createDoc, deleteDoc, findAll, updateDoc } from "@/utils/database/actions"
 import Express from "express"
 
 const router = Express.Router()

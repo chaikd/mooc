@@ -25,8 +25,8 @@ export interface EditLiveType extends LiveType {
 }
 
 
-export function getLiveList(params: { searchValue: string,page: number; size: number; }): Promise<{success: boolean, data: any, total: number}> {
-  return request.get('/api/live/list', { params }).then((res: any) => ({...res.data, success: res.success}));
+export function getLiveList(params: { searchValue: string,page: number; size: number; }): Promise<{success?: boolean, data?: LiveType[], total?: number}> {
+  return request.get('/api/live/list', { params }).then((res: ResType) => ({...res.data, success: res.success}));
 }
 
 export function addLive(data: LiveType): Promise<ResType> {

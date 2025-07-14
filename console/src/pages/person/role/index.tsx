@@ -73,7 +73,7 @@ export default function Role() {
     setIsEdit(val)
   }
   const toDeleteRole = async (val: RoleType) => {
-    await deleteRole({id: val._id})
+    await deleteRole({id: val._id as string})
     fetchList()
   }
   const toAddRole = () => {
@@ -109,6 +109,7 @@ export default function Role() {
         message.success('添加成功');
       }
     }).catch(err => {
+      console.log(err)
     })
   }
   const handleCancel = () => {
@@ -166,8 +167,8 @@ export default function Role() {
     }
   }
   const onCheck: TreeProps['onCheck'] = (checkedKeysValue, check) => {
-    setCheckedKeys(checkedKeysValue);
-    setHalfCheckedKeys(check.halfCheckedKeys.map(v => `0-${v}`))
+    setCheckedKeys(checkedKeysValue as string[]);
+    setHalfCheckedKeys(check.halfCheckedKeys?.map(v => `0-${v}`) || [])
   };
   useEffect(() => {
     fetchList()

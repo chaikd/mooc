@@ -14,7 +14,7 @@ export class RedisRequest {
     }
   }
 
-  async set(type: string, data: Object) {
+  async set(type: string, data: Record<string, string | object>) {
     if(!this.redisClient) return
     const key = `${type}`;
     const flatData = flatten(data);
@@ -35,7 +35,7 @@ export class RedisRequest {
     return await this.redisClient.del(key);
   }
 
-  async setField(type: string, field: string, value: any) {
+  async setField(type: string, field: string, value: object | string) {
     if(!this.redisClient) return
     const key = `${type}`;
     const strValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
@@ -45,9 +45,10 @@ export class RedisRequest {
   async getField(type: string, field: string) {
     if(!this.redisClient) return
     const key = `${type}`;
-    const val: any = await this.redisClient.hGet(key, field);
+    const val = await this.redisClient.hGet(key, field);
     try {
-      return JSON.parse(val);
+      const value = typeof val === 'string' ? val : ''
+      return JSON.parse(value);
     } catch {
       return val;
     }
@@ -82,10 +83,10 @@ export class RedisRequest {
 }
 
 // 扁平化对象以适应 Redis Hash
-function flatten(obj: Record<string, any>): Record<string, any> {
+function flatten(obj: Record<string, string | object>): Record<string, string> {
   const result: Record<string, string> = {}
   for (const key in obj) {
-    const value = obj[key];
+    const value = obj[key]
     result[key] = typeof value === 'object' ? JSON.stringify(value) : String(value);
   }
   return result;
@@ -93,7 +94,7 @@ function flatten(obj: Record<string, any>): Record<string, any> {
 
 // 还原对象字段
 function parseHash(hash: Record<string, string>) {
-  const result: Record<string, any> = {};
+  const result: Record<string, string | object> = {};
   for (const key in hash) {
     try {
       result[key] = JSON.parse(hash[key]);

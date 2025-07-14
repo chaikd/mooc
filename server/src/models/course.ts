@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose";
 
 // 课程状态接口
-export interface CursorStatusType {
+export interface CourseStatusType {
   _id?: string;
   statusCode: string;      // 状态code
   statusName: string;      // 状态名称
@@ -12,7 +12,7 @@ export interface CursorStatusType {
 }
 
 // 课程章节接口
-export interface CursorChapterType {
+export interface CourseChapterType {
   _id?: string;
   chapterName: string;     // 章节名称
   chapterDesc?: string;    // 章节描述
@@ -25,7 +25,7 @@ export interface CursorChapterType {
 }
 
 // 课程报名状态接口
-export interface CursorEnrollmentStatusType {
+export interface CourseEnrollmentStatusType {
   _id?: string;
   statusCode: string;      // 状态code
   statusName: string;      // 状态名称
@@ -36,7 +36,7 @@ export interface CursorEnrollmentStatusType {
 }
 
 // 课程报名/选课接口
-export interface CursorEnrollmentType {
+export interface CourseEnrollmentType {
   _id?: string;
   courseId: string;        // 课程id
   studentId: string;       // 学生id
@@ -53,7 +53,7 @@ export interface CursorEnrollmentType {
 }
 
 // 学习记录接口
-export interface CursorStudyRecordType {
+export interface CourseStudyRecordType {
   _id?: string;
   enrollmentId: string;    // 报名记录id
   chapterId: string;       // 章节id
@@ -66,7 +66,7 @@ export interface CursorStudyRecordType {
 }
 
 // 课程数据接口
-export interface CursorType {
+export interface CourseType {
   _id?: string;
   courseName: string;      // 课程名称
   instructorId: string;    // 讲师id
@@ -82,7 +82,7 @@ export interface CursorType {
 }
 
 // 课程状态模型
-const CursorStatusSchema = new Schema<CursorStatusType>({
+const CourseStatusSchema = new Schema<CourseStatusType>({
   statusCode: { type: String, required: true, unique: true },
   statusName: { type: String, required: true },
   statusDesc: { type: String },
@@ -92,7 +92,7 @@ const CursorStatusSchema = new Schema<CursorStatusType>({
 });
 
 // 课程章节模型
-const CursorChapterSchema = new Schema<CursorChapterType>({
+const CourseChapterSchema = new Schema<CourseChapterType>({
   chapterName: { type: String, required: true },
   chapterDesc: { type: String },
   parentChapterId: { type: String },
@@ -104,7 +104,7 @@ const CursorChapterSchema = new Schema<CursorChapterType>({
 });
 
 // 课程数据模型
-const CursorSchema = new Schema<CursorType>({
+const CourseSchema = new Schema<CourseType>({
   courseName: { type: String, required: true },
   instructorId: { type: String, required: true },
   courseDesc: { type: String },
@@ -119,7 +119,7 @@ const CursorSchema = new Schema<CursorType>({
 });
 
 // 课程报名状态模型
-const CursorEnrollmentStatusSchema = new Schema<CursorEnrollmentStatusType>({
+const CourseEnrollmentStatusSchema = new Schema<CourseEnrollmentStatusType>({
   statusCode: { type: String, required: true, unique: true },
   statusName: { type: String, required: true },
   statusDesc: { type: String },
@@ -129,7 +129,7 @@ const CursorEnrollmentStatusSchema = new Schema<CursorEnrollmentStatusType>({
 });
 
 // 课程报名/选课模型
-const CursorEnrollmentSchema = new Schema<CursorEnrollmentType>({
+const CourseEnrollmentSchema = new Schema<CourseEnrollmentType>({
   courseId: { type: String, required: true },
   studentId: { type: String, required: true },
   enrollmentStatusId: { type: String, required: true },
@@ -145,7 +145,7 @@ const CursorEnrollmentSchema = new Schema<CursorEnrollmentType>({
 });
 
 // 学习记录模型
-const CursorStudyRecordSchema = new Schema<CursorStudyRecordType>({
+const CourseStudyRecordSchema = new Schema<CourseStudyRecordType>({
   enrollmentId: { type: String, required: true },
   chapterId: { type: String, required: true },
   studentId: { type: String, required: true },
@@ -156,18 +156,18 @@ const CursorStudyRecordSchema = new Schema<CursorStudyRecordType>({
   createTime: { type: Date, default: Date.now }
 });
 
-const CursorStatus = model<CursorStatusType>('cursorStatus', CursorStatusSchema);
-const CursorChapter = model<CursorChapterType>('cursorChapter', CursorChapterSchema);
-const Cursor = model<CursorType>('cursor', CursorSchema);
-const CursorEnrollmentStatus = model<CursorEnrollmentStatusType>('cursorEnrollmentStatus', CursorEnrollmentStatusSchema);
-const CursorEnrollment = model<CursorEnrollmentType>('cursorEnrollment', CursorEnrollmentSchema);
-const CursorStudyRecord = model<CursorStudyRecordType>('cursorStudyRecord', CursorStudyRecordSchema);
+const CourseStatus = model<CourseStatusType>('cursorStatus', CourseStatusSchema);
+const CourseChapter = model<CourseChapterType>('cursorChapter', CourseChapterSchema);
+const Course = model<CourseType>('cursor', CourseSchema);
+const CourseEnrollmentStatus = model<CourseEnrollmentStatusType>('cursorEnrollmentStatus', CourseEnrollmentStatusSchema);
+const CourseEnrollment = model<CourseEnrollmentType>('cursorEnrollment', CourseEnrollmentSchema);
+const CourseStudyRecord = model<CourseStudyRecordType>('cursorStudyRecord', CourseStudyRecordSchema);
 
 export {
-  CursorStatus,
-  CursorChapter,
-  Cursor,
-  CursorEnrollmentStatus,
-  CursorEnrollment,
-  CursorStudyRecord
+  CourseStatus,
+  CourseChapter,
+  Course,
+  CourseEnrollmentStatus,
+  CourseEnrollment,
+  CourseStudyRecord
 };

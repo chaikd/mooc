@@ -1,5 +1,5 @@
 export type ResType = {
-  success: boolean
+  success?: boolean
   message?: string
-  data?: object | Array<any>
+  data?: object | Array<object>
 }

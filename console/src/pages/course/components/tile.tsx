@@ -1,12 +1,12 @@
 import { Pagination } from "antd"
 import { useState } from "react"
-import CursorStatus from "@/pages/course/components/cursor-status"
+import CourseStatus from "@/pages/course/components/cursor-status"
 import CourseActions from "@/pages/course/components/course-actions"
 import { getPaginationConfig } from "@/utils/pagination-config"
-import { CursorListItemType } from "@/api/course"
+import { CourseListItemType } from "@/api/course"
 import dayjs from "dayjs"
 
-export default function CursorTile({list}: {list: CursorListItemType[]}) {
+export default function CourseTile({list}: {list: CourseListItemType[]}) {
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 9 // 每页显示9个卡片（3x3网格）
   
@@ -30,7 +30,7 @@ export default function CursorTile({list}: {list: CursorListItemType[]}) {
             <p className="font-[600] mt-4 text-lg">{item.courseName}</p>
             <p className="text-sm mt-2 text-gray-400">讲师：{item.instructorName}</p>
             <div className="flex justify-between text-sm mt-2 mb-3">
-              <CursorStatus status={item.statusInfo}></CursorStatus>
+              <CourseStatus status={item.statusInfo}></CourseStatus>
               <span className="text-gray-400">{item.enrollment||100}名学员</span>
             </div>
             <div className="flex justify-between items-center">

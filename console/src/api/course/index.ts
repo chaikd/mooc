@@ -1,7 +1,7 @@
 import request from "../request";
 
 // 课程数据类型
-export interface CursorType {
+export interface CourseType {
   _id?: string;
   courseName: string;      // 课程名称
   instructorId: string;    // 讲师id
@@ -16,7 +16,7 @@ export interface CursorType {
 }
 
 // 课程列表项类型（包含关联信息）
-export interface CursorListItemType extends CursorType {
+export interface CourseListItemType extends CourseType {
   instructorName?: string;  // 讲师姓名
   statusInfo: {
     statusName: string;
@@ -26,7 +26,7 @@ export interface CursorListItemType extends CursorType {
 }
 
 // 课程详情类型
-export interface CursorDetailType extends CursorType {
+export interface CourseDetailType extends CourseType {
   instructorInfo?: {
     _id: string;
     username: string;
@@ -40,7 +40,7 @@ export interface CursorDetailType extends CursorType {
 }
 
 // 课程列表查询参数
-export interface CursorListParams {
+export interface CourseListParams {
   page?: number;
   size?: number;
   courseName?: string;
@@ -49,7 +49,7 @@ export interface CursorListParams {
 }
 
 // 课程创建参数
-export interface CursorCreateParams {
+export interface CourseCreateParams {
   courseName?: string;
   instructorId?: string;
   courseDesc?: string;
@@ -62,54 +62,54 @@ export interface CursorCreateParams {
 }
 
 // 课程更新参数
-export interface CursorUpdateParams extends CursorCreateParams {
+export interface CourseUpdateParams extends CourseCreateParams {
   _id: string;
 }
 
 // 课程列表响应
-export interface CursorListResponse {
-  data: CursorListItemType[];
+export interface CourseListResponse {
+  data: CourseListItemType[];
   total: number;
   page: number;
   size: number;
 }
 
 // 获取课程列表
-export function getCursorList(params: CursorListParams = {}): Promise<{
+export function getCourseList(params: CourseListParams = {}): Promise<{
   success: boolean;
-  data: CursorListResponse;
+  data: CourseListResponse;
 }> {
   return request.get('/api/course/list', { params });
 }
 
 // 获取课程详情
-export function getCursorDetail(id: string): Promise<{
+export function getCourseDetail(id: string): Promise<{
   success: boolean;
-  data: CursorDetailType;
+  data: CourseDetailType;
 }> {
   return request.get(`/api/course/${id}`);
 }
 
 // 创建课程
-export function createCursor(data: CursorCreateParams): Promise<{
+export function createCourse(data: CourseCreateParams): Promise<{
   success: boolean;
-  data: CursorType;
+  data: CourseType;
   message: string;
 }> {
   return request.post('/api/course/add', data);
 }
 
 // 更新课程
-export function updateCursor(data: CursorUpdateParams): Promise<{
+export function updateCourse(data: CourseUpdateParams): Promise<{
   success: boolean;
-  data: CursorType;
+  data: CourseType;
   message: string;
 }> {
   return request.post('/api/course/edit', data);
 }
 
 // 删除课程
-export function deleteCursor(id: string): Promise<{
+export function deleteCourse(id: string): Promise<{
   success: boolean;
   message: string;
 }> {

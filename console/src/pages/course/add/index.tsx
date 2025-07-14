@@ -5,19 +5,19 @@ import { useEffect, useRef, useState } from 'react';
 import { Image } from 'antd';
 import { getAllUser, UserType } from '@/api/user';
 import { InputNumber } from "antd";
-import { createCursor, CursorType, getCursorDetail, updateCursor } from '@/api/course';
+import { createCourse, CourseType, getCourseDetail, updateCourse } from '@/api/course';
 import CourseChapter from '../components/course-chapter';
 
-export default function AddCursor() {
+export default function AddCourse() {
   const [form] = Form.useForm();
   const navigate = useNavigate();
-  const [curseDetail, setCurseDetail] = useState<CursorType | null>(null)
+  const [curseDetail, setCurseDetail] = useState<CourseType | null>(null)
   const [instructors, setInstructors] = useState([])
   const courseChapterTreeRef = useRef(null)
   const param = useParams()
   const getDetail = async () => {
     if(param.id) {
-      const res = await getCursorDetail(param.id)
+      const res = await getCourseDetail(param.id)
       form.setFieldsValue(res.data)
       setCurseDetail(res.data)
     }
@@ -43,12 +43,12 @@ export default function AddCursor() {
     data.statusCode = statusCode
     let res
     if (param.id) {
-      res = await updateCursor({
+      res = await updateCourse({
         ...curseDetail,
         ...data
       })
     } else {
-      res = await createCursor(data)
+      res = await createCourse(data)
     }
     if(res.success) {
       const msg = param.id ? '编辑成功' : '添加成功'
@@ -101,7 +101,7 @@ export default function AddCursor() {
                 <Input placeholder="请输入课程封面地址" onChange={(e) => setCurseDetail({
                   ...curseDetail,
                   courseCover: e.target.value
-                } as any)}/>
+                } as CourseType)}/>
               </Form.Item>
               {curseDetail?.courseCover && <Image
                 src={curseDetail?.courseCover}
