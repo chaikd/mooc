@@ -5,7 +5,7 @@ import { authenticateToken } from './middleware/jwt';
 import registRouters, { isWhiteList } from './routers';
 import { errorHandler } from './middleware';
 
-const app = express();
+const app: any = express();
 
 app.use(express.json());
 app.use(cookieParser());

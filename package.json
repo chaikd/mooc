@@ -7,7 +7,8 @@
   "scripts": {
     "console:dev": "pnpm --filter ./console dev",
     "server:dev": "pnpm --filter ./server dev",
-    "lint": "pnpm --filter ./server lint & pnpm --filter ./console lint"
+    "lint": "pnpm --filter ./server lint & pnpm --filter ./console lint",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -35,6 +36,7 @@
     "@types/react-dom": "^19.1.6",
     "@types/socket.io": "^3.0.2",
     "autoprefixer": "^10.4.21",
+    "husky": "^9.1.7",
     "sass": "^1.89.2",
     "tailwindcss": "^4.1.11",
     "vite": "^7.0.0"
