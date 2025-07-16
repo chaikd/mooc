@@ -8,6 +8,8 @@ import { Link } from "react-router";
 import dayjs, { Dayjs } from 'dayjs'
 import TextArea from "antd/es/input/TextArea";
 import { addLive, deleteLive, editLive, getLiveList, EditLiveType, LiveType } from "@/api/live";
+import { useSelector } from "react-redux";
+import { StoreType } from "@/store";
 const { RangePicker } = DatePicker;
 
 export default function Live() {
@@ -19,6 +21,7 @@ export default function Live() {
   const [searchForm] = useForm()
   const [dataSource, setDataSource] = useState<LiveType[]>([])
   const [defaultTime] = useState<[Dayjs, Dayjs]>([dayjs(new Date()), dayjs(new Date()).add(2, 'hours')])
+  const userInfo = useSelector((state: StoreType) => state.user.info)
   const modalConfirm = async () => {
     const formValue = await form.validateFields()
     formValue.startTime = formValue.time[0]
@@ -151,7 +154,9 @@ export default function Live() {
               <Button type="link" danger>删除</Button>
             </Popconfirm>
             {
-              record.startTime && record.endTime && (dayjs() > dayjs(record.startTime).subtract(20, 'minutes') && dayjs() < dayjs(record.endTime))
+              ((record.status === 'scheduled' && record.startTime && record.endTime && (dayjs() > dayjs(record.startTime).subtract(20, 'minutes') && dayjs() < dayjs(record.endTime)))
+              || record.status === 'live' || record.status === 'ended')
+              && (userInfo._id === record.instructorId || userInfo.roleInfo?.code === 'SYSTEM')
               && <Link to={`/live/${record._id}`}><Button type="link">进入控制台</Button></Link>
             }
           </>

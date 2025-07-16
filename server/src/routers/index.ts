@@ -6,6 +6,7 @@ import permissionRouter from './permission'
 import courseRouter from './course'
 import qiniuRouter from './qiniu'
 import informationRouter from './information'
+import liveRouter from './live'
 
 const whiteList = [
   '/regist',
@@ -24,4 +25,5 @@ export default function registRouters(app: Express) {
   app.use('/api/course',courseRouter)
   app.use('/api/qiniu',qiniuRouter)
   app.use('/api/information', informationRouter)
+  app.use('/api/live', liveRouter)
 }

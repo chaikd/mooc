@@ -5,6 +5,7 @@ export type RoleType = {
   name: string,
   createTime: Date,
   editUserId?: string,
+  code?: string,
   createUserId: string
   permissions: string[]
 }

@@ -1,9 +1,11 @@
 import request from "./request";
+import { RoleType } from "./role";
 
 export type UserType = {
   username: string
   role: string
   _id?: string
+  roleInfo?: RoleType
 }
 
 export function getSelfInfo() {

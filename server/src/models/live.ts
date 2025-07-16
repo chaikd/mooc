@@ -9,6 +9,8 @@ interface LiveType {
   status: 'scheduled' | 'live' | 'ended'
   startTime: Date
   endTime: Date
+  liveStartTime: Date
+  liveEndTime: Date
   createTime: Date
   liveDataId: string
   roomToken: string
@@ -30,6 +32,8 @@ const LiveSchema = new Schema<LiveType>({
   },
   startTime: Date,
   endTime: Date,
+  liveStartTime: Date,
+  liveEndTime: Date,
   roomToken: String, // 用于 join 权限验证
   recordEnabled: { type: Boolean, default: false },
   recordUrl: String, // 回放地址（可选）

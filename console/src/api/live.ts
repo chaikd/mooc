@@ -11,6 +11,8 @@ export type LiveType = {
   status?: 'scheduled' | 'live' | 'ended';
   startTime: string | Date;
   endTime: string | Date;
+  liveStartTime?: string | Date;
+  liveEndTime?: string | Date;
   createTime?: string | Date;
   liveDataId?: string;
   roomToken?: string;

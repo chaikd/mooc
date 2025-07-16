@@ -13,10 +13,10 @@ export function getProduces(socket: Socket): Promise<{produces: Producer[]}> {
   return requestWs(socket, 'getProduces')
 }
 
-export function getConsumer(socket: Socket, producerId: string): Promise<ConsumerOptions<AppData>> {
-  return requestWs(socket, 'getConsumer', {producerId})
+export function getConsumer(socket: Socket, producerId: string, rtpCapabilities?: RtpCapabilities): Promise<ConsumerOptions<AppData>> {
+  return requestWs(socket, 'getConsumer', {producerId, rtpCapabilities})
 }
 
-export function requestWs<T>(socket: Socket, event: string, data?: Record<string, string>): Promise<T> {
+export function requestWs<T>(socket: Socket, event: string, data?: Record<string, string | object | undefined>): Promise<T> {
   return new Promise(resolve => socket.emit(event, data, resolve))
 }

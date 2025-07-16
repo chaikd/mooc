@@ -1,31 +1,60 @@
 import { Router } from "mediasoup/node/lib/RouterTypes"
 import { Server } from "socket.io"
 import { createMesiasoupRouter } from "../mediasoup";
+import { Producer } from "mediasoup-client/lib/Producer";
+import { Transport } from "mediasoup/node/lib/types";
+import redisRequest from "../redis";
 
 export default async function createLiveIo(ioServer: Server) {
   const liveIo = ioServer.of('/ws/live')
   
-  let mediasoupRouter: Router | null = null
-  const transportsMap = new WeakMap()
-  const recvTransportsMap = new WeakMap()
-  const rtpCapabilitiesMap = new WeakMap()
-  const producerMap = new Map()
+  const mediasoupRouters = new Map()
+  const weakData = new Map()
   
-  try {
-    // 尝试创建 mediasoup router
-    mediasoupRouter = await createMesiasoupRouter()
-  } catch (error) {
-    if (error instanceof Error && error.message) {
-      console.warn(' Mediasoup not available:', error.message)
-    }
-  }
   liveIo.on('connect', async (socket) => {
     const roomId: string = socket.handshake.query.roomId as string
-    socket.join(roomId)
+    await socket.join(roomId)
+    let mediasoupRouter = mediasoupRouters.get(roomId)
+    if (!mediasoupRouter) {
+      try {
+        // 尝试创建 mediasoup router
+        const newMediasoupRouter: Router = await createMesiasoupRouter()
+        mediasoupRouters.set(roomId, newMediasoupRouter)
+        mediasoupRouter = newMediasoupRouter
+      } catch (error) {
+        if (error instanceof Error && error.message) {
+          console.warn(' Mediasoup not available:', error.message)
+        }
+      }
+    }
+    let roomWeakData = weakData.get(roomId)
+    if (!roomWeakData) {
+      roomWeakData = new Map()
+      weakData.set(roomId, roomWeakData)
+      roomWeakData.set('transportsMap', new WeakMap())
+      roomWeakData.set('recvTransportsMap', new WeakMap())
+      roomWeakData.set('rtpCapabilitiesMap', new WeakMap())
+      roomWeakData.set('producerMap', new Map())
+    }
+    const transportsMap = roomWeakData.get('transportsMap')
+    const recvTransportsMap = roomWeakData.get('recvTransportsMap')
+    const rtpCapabilitiesMap = roomWeakData.get('rtpCapabilitiesMap')
+    const producerMap = roomWeakData.get('producerMap')
     
+    const getLiveInfo = async () => {
+      const room = liveIo.adapter.rooms.get(roomId);
+      const numClients = room ? room.size : 0;
+      const historyPersonCount = await redisRequest.redisClient?.sCard(`${roomId}:userIds`)
+      return {
+        personCount: numClients,
+        historyPersonCount
+      }
+    }
+
     // 发送连接确认消息
     socket.emit('connected', { message: 'WebSocket connected successfully', socketId: socket.id })
-
+    await liveIo.to(roomId).emit('liveRoomInfo', await getLiveInfo())
+    
     socket.on('getRtpCapabilities', (_, cb) => {
       if (mediasoupRouter) {
         cb({ routerRtpCapabilities: mediasoupRouter.rtpCapabilities });
@@ -48,16 +77,10 @@ export default async function createLiveIo(ioServer: Server) {
           appData: {direction}
         })
         
-        try {
-          if (direction === 'send') {
-            transportsMap.set(socket, transport)
-          } else {
-            recvTransportsMap.set(socket, transport)
-          }
-        } catch (error: unknown) {
-          if (error instanceof Error && error.message) {
-            console.warn('Failed to save transport to Redis:', error.message)
-          }
+        if (direction === 'send') {
+          transportsMap.set(socket, transport)
+        } else {
+          recvTransportsMap.set(socket, transport)
         }
         
         cb({
@@ -80,7 +103,7 @@ export default async function createLiveIo(ioServer: Server) {
           rtpCapabilitiesMap.set(socket, rtpCapabilities)
         } else if(recvTransportId) {
           const transport = recvTransportsMap.get(socket)
-          transport.connect({dtlsParameters})
+          transport.connect({ dtlsParameters })
         }
         cb({ success: true })
       } catch (error) {
@@ -92,48 +115,76 @@ export default async function createLiveIo(ioServer: Server) {
     socket.on('produce', async ({ kind, rtpParameters, appData }, cb) => {
       const roomId: string = socket.handshake.query.roomId as string
       const transport = transportsMap.get(socket)
-      const producer = await transport.produce({kind, rtpParameters, appData})
+      const producer = await transport?.produce({kind, rtpParameters, appData})
       cb({ id: producer.id })
-      if(!producerMap.has(roomId)) {
-        producerMap.set(roomId, new Set())
-      }
-      producerMap.get(roomId).add(producer)
-      liveIo.to(roomId).emit('produceDown')
+      producerMap.set(producer.id, producer)
+      await liveIo.to(roomId).emit('produceReady')
       socket.on('disconnect', () => {
-        producerMap.set(roomId, new Set())
-        liveIo.to(roomId).emit('produceDown')
+        producerMap.clear()
+        liveIo.to(roomId).emit('produceReady')
       })
     })
 
     socket.on('getProduces', (_, cb) => {
-      const roomId: string = socket.handshake.query.roomId as string
-      const produces = [...producerMap.get(roomId)].map(producer => {
+      const producers = producerMap ? [...producerMap.values()] as Producer[] : []
+      const produces = producers.map((producer) => {
         return {
           id: producer.id
         }
       })
       cb({produces})
     })
-    socket.on('getConsumer', async ({producerId}, cb) => {
-      const rtp = rtpCapabilitiesMap.get(socket)
+    socket.on('produceClose', ({ produceId }, cb) => {
+      const producer = producerMap.get(produceId)
+      if (producer) {
+        producer.close()
+      }
+      producerMap.delete(produceId)
+      liveIo.to(roomId).emit('produceClosed', {produceId})
+      cb()
+    })
+    socket.on('getConsumer', async ({producerId, rtpCapabilities}, cb) => {
+      const rtp = rtpCapabilities ? rtpCapabilities : rtpCapabilitiesMap.get(socket)
       if(rtp && mediasoupRouter?.canConsume({producerId, rtpCapabilities: rtp })) {
-        const recvTrans = recvTransportsMap.get(socket)
-        const consum = await recvTrans.consume({
-          producerId,
-          rtpCapabilities: rtp,
-          paused: false
-        })
-        // await consum.resume()
-        cb({
-          id: consum.id,
-          producerId,
-          kind: consum.kind,
-          rtpParameters: consum.rtpParameters
-        })
+        const recvTrans = recvTransportsMap.get(socket) as Transport
+        if (recvTrans) {
+          const consum = await recvTrans.consume({
+            producerId,
+            rtpCapabilities: rtp,
+            paused: false
+          })
+          // await consum.resume()
+          cb({
+            id: consum.id,
+            producerId,
+            kind: consum.kind,
+            rtpParameters: consum.rtpParameters
+          })
+        }
       }
     })
+    socket.on('closeLive', async (_, cb) => {
+      const producers = producerMap.values()
+      if (producers) {
+        for(const producer of producers) {
+          await producer.close()
+        }
+      }
+      producerMap.clear()
+      await liveIo.to(roomId).emit('liveEnded')
+      await liveIo.to(roomId).socketsLeave(roomId)
+      await mediasoupRouter.close()
+      mediasoupRouters.delete(roomId)
+      weakData.delete(roomId)
+      cb()
+    })
+    socket.on('recordUser', async (userInfo) => {
+      await redisRequest.redisClient?.sAdd(`${roomId}:userIds`, userInfo.id)
+      liveIo.to(roomId).emit('liveRoomInfo', await getLiveInfo())
+    })
 
-    socket.on('close', async () => {
+    socket.on('disconnect', async () => {
+      await socket.leave(roomId)
       transportsMap.delete(socket)
       recvTransportsMap.delete(socket)
       rtpCapabilitiesMap.delete(socket)
