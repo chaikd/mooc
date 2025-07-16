@@ -7,7 +7,7 @@
   "scripts": {
     "console:dev": "pnpm --filter ./console dev",
     "server:dev": "pnpm --filter ./server dev",
-    "lint": "pnpm --filter ./server lint & pnpm --filter ./console lint",
+    "lint": "pnpm --filter ./server lint & pnpm --filter ./console lint & pnpm --filter ./web lint",
     "prepare": "husky"
   },
   "keywords": [],

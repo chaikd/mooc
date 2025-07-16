@@ -1,0 +1,22 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.7.1",
+  "dependencies": {
+    "@ant-design/nextjs-registry": "^1.0.2",
+    "next": "^15.4.1"
+  },
+  "devDependencies": {
+    "eslint-config-next": "15.4.1"
+  }
+}
