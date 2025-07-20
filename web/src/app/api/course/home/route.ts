@@ -1,9 +1,9 @@
 import { connectDB, Course, Live, LiveType, User } from "@mooc/db-shared";
 import { findAll, findDocs } from "@mooc/db-shared/src/utils/database/actions";
 import { Model } from "mongoose";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   await connectDB()
   const now = new Date()
   let responseInfo = {}

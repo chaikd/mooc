@@ -1,6 +1,4 @@
-import { LoadingOutlined } from '@ant-design/icons'
 import HeadAuth from './head-auth'
-import { Suspense } from 'react'
 
 export default function Header() {
   return (

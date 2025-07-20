@@ -7,8 +7,6 @@ import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import Password from "antd/es/input/Password";
 import { logOut } from '@/services/auth';
 import { Avatar, Dropdown } from 'antd';
-import useSWR from 'swr';
-import request from '@/services/request';
 import { Spin } from 'antd';
 
 function HeadAvatar({ userInfo, outFn }) {
