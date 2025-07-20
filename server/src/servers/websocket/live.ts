@@ -3,7 +3,7 @@ import { Server } from "socket.io"
 import { createMesiasoupRouter } from "../mediasoup";
 import { Producer } from "mediasoup-client/lib/Producer";
 import { Transport } from "mediasoup/node/lib/types";
-import redisRequest from "../redis";
+import {redisRequest} from "@mooc/db-shared";
 
 export default async function createLiveIo(ioServer: Server) {
   const liveIo = ioServer.of('/ws/live')

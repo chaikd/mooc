@@ -1,8 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { CourseStatus } from '@/models';
-import { CourseStatusType } from '@/models/course';
-import { createDoc, findOneDoc, findDocs, updateDoc, deleteDoc, countDocs } from '@/utils/database/actions';
+import { CourseStatus, CourseStatusType, mdaction } from '@mooc/db-shared';
 import { RequestTypeWithJWT } from '@/middleware/jwt';
+// import { createDoc, findOneDoc, findDocs, updateDoc, deleteDoc, countDocs } from '@/utils/database/actions';
 
 const router = Router();
 
@@ -23,8 +22,8 @@ router.get('/list', async (req: Request, res: Response) => {
     }
 
     // 查询状态列表
-    const statuses = await findDocs(CourseStatus, queryFilter, limit, skip);
-    const total = await countDocs(CourseStatus, queryFilter);
+    const statuses = await mdaction.findDocs(CourseStatus, queryFilter, limit, skip);
+    const total = await mdaction.countDocs(CourseStatus, queryFilter);
 
     res.json({
       success: true,
@@ -57,7 +56,7 @@ router.get('/detail/:id', async (req: Request, res: Response) => {
       return 
     }
 
-    const status = await findOneDoc(CourseStatus, { _id: id });
+    const status = await mdaction.findOneDoc(CourseStatus, { _id: id });
     
     if (!status) {
       res.status(404).json({
@@ -104,7 +103,7 @@ router.post('/add', async (req: RequestTypeWithJWT, res: Response) => {
     }
 
     // 检查状态代码是否已存在
-    const existingStatus = await findOneDoc(CourseStatus, { statusCode: statusData.statusCode });
+    const existingStatus = await mdaction.findOneDoc(CourseStatus, { statusCode: statusData.statusCode });
     if (existingStatus) {
       res.status(400).json({
         success: false,
@@ -114,7 +113,7 @@ router.post('/add', async (req: RequestTypeWithJWT, res: Response) => {
     }
 
     // 创建课程状态
-    const newStatus = await createDoc(CourseStatus, {
+    const newStatus = await mdaction.createDoc(CourseStatus, {
       ...statusData,
       createUserId: userId
     });
@@ -147,7 +146,7 @@ router.post('/edit', async (req: Request, res: Response) => {
     }
 
     // 检查状态是否存在
-    const existingStatus = await findOneDoc(CourseStatus, { _id });
+    const existingStatus = await mdaction.findOneDoc(CourseStatus, { _id });
     if (!existingStatus) {
       res.status(404).json({
         success: false,
@@ -172,7 +171,7 @@ router.post('/edit', async (req: Request, res: Response) => {
     }
 
     // 更新课程状态
-    const updatedStatus = await updateDoc(CourseStatus, _id, updateData);
+    const updatedStatus = await mdaction.updateDoc(CourseStatus, _id, updateData);
 
     res.json({
       success: true,
@@ -202,7 +201,7 @@ router.delete('/delete', async (req: Request, res: Response): Promise<void> => {
     }
 
     // 检查状态是否存在
-    const existingStatus = await findOneDoc(CourseStatus, { _id });
+    const existingStatus = await mdaction.findOneDoc(CourseStatus, { _id });
     if (!existingStatus) {
       res.status(404).json({
         success: false,
@@ -221,7 +220,7 @@ router.delete('/delete', async (req: Request, res: Response): Promise<void> => {
     // }
 
     // 删除课程状态
-    await deleteDoc(CourseStatus, _id);
+    await mdaction.deleteDoc(CourseStatus, _id);
 
     res.json({
       success: true,
@@ -239,7 +238,7 @@ router.delete('/delete', async (req: Request, res: Response): Promise<void> => {
 // 获取所有课程状态（用于下拉选择）
 router.get('/all', async (req: Request, res: Response) => {
   try {
-    const statuses = await findDocs(CourseStatus, {}, 1000, 0, 'statusCode statusName sort');
+    const statuses = await mdaction.findDocs(CourseStatus, {}, 1000, 0, 'statusCode statusName sort');
     
     // 按排序字段排序
     const sortedStatuses = statuses.sort((a, b) => (a.sort || 0) - (b.sort || 0));

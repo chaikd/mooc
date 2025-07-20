@@ -1,4 +1,4 @@
-import { model, Schema } from "mongoose";
+import mongoose, { model, Schema } from "mongoose";
 
 // 资料类型接口
 export interface InformationTypeType {
@@ -42,10 +42,10 @@ const InformationSchema = new Schema<InformationType>({
   createUserId: { type: String, required: true }
 });
 
-const InformationType = model<InformationTypeType>('informationType', InformationTypeSchema);
-const Information = model<InformationType>('information', InformationSchema);
+const InformationTypeModel = mongoose.models.informationType || model<InformationTypeType>('informationType', InformationTypeSchema);
+const Information = mongoose.models.information || model<InformationType>('information', InformationSchema);
 
 export {
-  InformationType,
+  InformationTypeModel,
   Information
 };

@@ -1,5 +1,5 @@
-import { model, Schema } from "mongoose"
-import { RoleType } from "./role.model";
+import { model, Schema, models } from "mongoose"
+import { RoleType } from "./role";
 
 export interface UserType {
   _id?: string;
@@ -19,6 +19,6 @@ const userSchema = new Schema<UserType>({
   createTime: Date
 })
 
-const User = model<UserType>('user', userSchema)
+const User = models.user || model<UserType>('user', userSchema)
 
 export default User

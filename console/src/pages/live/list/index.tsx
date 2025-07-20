@@ -38,6 +38,7 @@ export default function Live() {
         getList()
       }
     } else {
+      console.log('formValue', formValue)
       const res = await editLive({
         ...isEdit,
         ...formValue
@@ -61,9 +62,9 @@ export default function Live() {
         form.setFieldsValue(isEdit)
       }
     } else {
-      form.setFieldsValue({})
       setIsEdit(null)
       setIsOpen(false)
+      form.resetFields()
     }
   }
 
@@ -200,6 +201,9 @@ export default function Live() {
           </Form.Item>
           <Form.Item name="time" label="直播时间" rules={[{required: true, message: '请选择直播开始和结束时间'}]}>
             <RangePicker showTime />
+          </Form.Item>
+          <Form.Item name="liveCover" label="直播封面">
+            <Input placeholder="直播封面图片地址"></Input>
           </Form.Item>
           <Form.Item name="description" label="描述">
             <TextArea placeholder="直播描述"></TextArea>

@@ -1,15 +1,13 @@
 import { Router, Request, Response } from 'express';
-import Role from '@/models/role.model';
-import { createDoc, findOneDoc, findDocs, updateDoc, deleteDoc, countDocs } from '@/utils/database/actions';
-import User from '@/models/user.model';
+import {Role, User, mdaction} from '@mooc/db-shared';
 
 const router = Router();
 
 // 获取角色列表（支持分页）
 router.get('/list', async (req: Request, res: Response) => {
   const { size = 10, page = 0, ...filter } = req.query;
-  const roles = await findDocs(Role, filter, Number(size), Number(page));
-  const total = await countDocs(Role, filter)
+  const roles = await mdaction.findDocs(Role, filter, Number(size), Number(page));
+  const total = await mdaction.countDocs(Role, filter)
   // 查询所有涉及到的用户
   const userIds = Array.from(new Set(roles.map(r => r.createUserId).filter(Boolean)));
   let userMap: Record<string, string> = {};
@@ -37,21 +35,21 @@ router.get('/list', async (req: Request, res: Response) => {
 
 // 新增角色
 router.post('/add', async (req: Request, res: Response) => {
-  const role = await createDoc(Role, req.body);
+  const role = await mdaction.createDoc(Role, req.body);
   res.json({ success: true, data: role });
 });
 
 // 编辑角色
 router.post('/edit', async (req: Request, res: Response) => {
   const { _id, ...data } = req.body;
-  const role = await updateDoc(Role, _id, data);
+  const role = await mdaction.updateDoc(Role, _id, data);
   res.json({ success: true, data: role });
 });
 
 // 删除角色
 router.post('/delete', async (req: Request, res: Response) => {
   const { id } = req.body;
-  const result = await deleteDoc(Role, id);
+  const result = await mdaction.deleteDoc(Role, id);
   res.json({ success: true, data: result });
 });
 
@@ -59,7 +57,7 @@ router.post('/delete', async (req: Request, res: Response) => {
 router.get('/info', async (req: Request, res: Response) => {
   const { _id } = req.query;
   if(_id) {
-    const role = await findOneDoc(Role, { _id: String(_id) });
+    const role = await mdaction.findOneDoc(Role, { _id: String(_id) });
     res.json({ success: true, data: role });
   }
 });

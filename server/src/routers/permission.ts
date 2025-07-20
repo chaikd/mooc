@@ -1,28 +1,27 @@
-import { Permission } from "@/models"
-import { createDoc, deleteDoc, findAll, updateDoc } from "@/utils/database/actions"
+import { Permission, mdaction } from "@mooc/db-shared"
 import Express from "express"
 
 const router = Express.Router()
 
 router.post('/add', async (req, res) => {
-  const role = await createDoc(Permission, req.body);
+  const role = await mdaction.createDoc(Permission, req.body);
   res.json({ success: true, data: role });
 })
 
 router.post('/edit', async (req, res) => {
   const {_id, ...data} = req.body
-  const role = await updateDoc(Permission, _id, data);
+  const role = await mdaction.updateDoc(Permission, _id, data);
   res.json({ success: true, data: role });
 })
 
 router.delete('/delete', async (req, res) => {
   const { id } = req.query as {id: string};
-  const result = await deleteDoc(Permission, id);
+  const result = await mdaction.deleteDoc(Permission, id);
   res.json({ success: true, data: result });
 })
 
 router.get('/list', async (req, res) => {
-  const data = await findAll(Permission)
+  const data = await mdaction.findAll(Permission)
   res.json({
     success: true,
     data

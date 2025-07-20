@@ -1,8 +1,7 @@
 import { Router, Response, Request } from "express";
 import { md5 } from "@/utils/md5";
+import { User, mdaction } from "@mooc/db-shared";
 import { generateToken } from "@/middleware/jwt";
-import { createDoc, findOneDoc } from "@/utils/database/actions";
-import { User } from "@/models";
 const router = Router()
 
 type UserCreateInput = {
@@ -14,7 +13,7 @@ type UserCreateInput = {
 
 router.post('/regist', async (_req: Request, _res: Response) => {
   const userInfo: UserCreateInput = _req.body
-  const hasUsername = await findOneDoc(User, {username: userInfo.username})
+  const hasUsername = await mdaction.findOneDoc(User, {username: userInfo.username})
   if(hasUsername) {
     _res.status(403).json({
       success: false,
@@ -22,7 +21,7 @@ router.post('/regist', async (_req: Request, _res: Response) => {
     })
     return
   }
-  await createDoc(User, {
+  await mdaction.createDoc(User, {
     ...userInfo,
     password: md5(userInfo.password),
     role: 'student'
@@ -36,9 +35,9 @@ router.post('/regist', async (_req: Request, _res: Response) => {
   })
 })
 
-router.post('/login',async (_req: Request, _res: Response) => {
+router.post('/login', async (_req: Request, _res: Response) => {
   const reqUser: UserCreateInput = _req.body as UserCreateInput
-  const userInfo: UserCreateInput | null = await findOneDoc(User, {username: reqUser.username, password: md5(reqUser.password)})
+  const userInfo: UserCreateInput | null = await mdaction.findOneDoc(User, {username: reqUser.username, password: md5(reqUser.password)})
   if (userInfo?.id) {
     const token = generateToken(userInfo.id)
     _res.cookie('authorization', token, {

@@ -1,4 +1,4 @@
-import { model, Schema } from "mongoose";
+import mongoose, { model, Schema } from "mongoose";
 
 // 课程状态接口
 export interface CourseStatusType {
@@ -156,12 +156,12 @@ const CourseStudyRecordSchema = new Schema<CourseStudyRecordType>({
   createTime: { type: Date, default: Date.now }
 });
 
-const CourseStatus = model<CourseStatusType>('cursorStatus', CourseStatusSchema);
-const CourseChapter = model<CourseChapterType>('cursorChapter', CourseChapterSchema);
-const Course = model<CourseType>('cursor', CourseSchema);
-const CourseEnrollmentStatus = model<CourseEnrollmentStatusType>('cursorEnrollmentStatus', CourseEnrollmentStatusSchema);
-const CourseEnrollment = model<CourseEnrollmentType>('cursorEnrollment', CourseEnrollmentSchema);
-const CourseStudyRecord = model<CourseStudyRecordType>('cursorStudyRecord', CourseStudyRecordSchema);
+const CourseStatus = mongoose.models.cursorStatus || model<CourseStatusType>('cursorStatus', CourseStatusSchema);
+const CourseChapter = mongoose.models.cursorChapter || model<CourseChapterType>('cursorChapter', CourseChapterSchema);
+const Course = mongoose.models.cursor || model<CourseType>('cursor', CourseSchema);
+const CourseEnrollmentStatus = mongoose.models.cursorEnrollmentStatus || model<CourseEnrollmentStatusType>('cursorEnrollmentStatus', CourseEnrollmentStatusSchema);
+const CourseEnrollment = mongoose.models.cursorEnrollment || model<CourseEnrollmentType>('cursorEnrollment', CourseEnrollmentSchema);
+const CourseStudyRecord = mongoose.models.cursorStudyRecord || model<CourseStudyRecordType>('cursorStudyRecord', CourseStudyRecordSchema);
 
 export {
   CourseStatus,

@@ -8,10 +8,11 @@ import LoginForm from '@/components/login-form'
 import { useDispatch } from 'react-redux'
 import { setStoreToken, setUserId } from '@/store/modules/user'
 
+export type loginType = {password:string, username: string}
 export default function Login() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  const loginFn = async (data) => {
+  const loginFn = async (data: loginType) => {
     const res = await loginServerAction(data)
     if (res.success) {
       dispatch(setStoreToken(res.token))

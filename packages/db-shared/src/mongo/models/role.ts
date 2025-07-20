@@ -1,4 +1,4 @@
-import { model, Schema } from "mongoose";
+import mongoose, { model, Schema } from "mongoose";
 
 export interface RoleType {
   _id?: string;
@@ -19,6 +19,6 @@ const roleSchema = new Schema({
   code: String
 })
 
-const Role = model<RoleType>('role',roleSchema)
+const Role = mongoose.models.role || model<RoleType>('role',roleSchema)
 
 export default Role

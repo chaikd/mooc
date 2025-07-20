@@ -1,10 +1,7 @@
-import { Fragment } from "react";
-import Header from '@/components/header'
+import Home from "@/app/home/page";
 
 export default function AppPage() {
   return (
-    <Fragment>
-      <Header></Header>
-    </Fragment>
+    <Home></Home>
   )
 }

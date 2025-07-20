@@ -27,8 +27,8 @@ export const findDocs = async <T>(model: Model<T>, filter: Partial<T> = {}, limi
   return await query.exec()
 }
 
-export const findAll = async <T>(model: Model<T>, filter: Partial<T> = {}) => {
-  const datas = await model.find(filter)
+export const findAll = async <T>(model: Model<T>, filter: Partial<T> = {}, select?: string) => {
+  const datas = await model.find(filter, select)
   return datas
 }
 

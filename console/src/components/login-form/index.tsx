@@ -1,7 +1,8 @@
+import { loginType } from "@/pages/login";
 import { Button, Form, Input } from "antd";
 
 type PropType = {
-  finishFn: () => void
+  finishFn: (data: loginType) => void
   pendding: boolean
   btnText?: string
 }

@@ -1,7 +1,8 @@
 import { createServer } from 'http';
 import app from './app'
 import env from './config'
-import { connectDB } from './utils';
+// import { connectDB } from './utils';
+import { connectDB } from '@mooc/db-shared'
 import { createWebsocketServer } from './servers/websocket';
 
 const server = createServer(app)

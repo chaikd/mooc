@@ -1,4 +1,4 @@
-import { model, Schema } from "mongoose";
+import mongoose, { model, Schema } from "mongoose";
 
 export interface PermissionType {
   _id?: string,
@@ -19,6 +19,6 @@ const permissionSchema = new Schema<PermissionType>({
   createUserId: String,
 })
 
-const Permission = model('permission',permissionSchema)
+const Permission = mongoose.models.permission || model('permission',permissionSchema)
 
 export default Permission

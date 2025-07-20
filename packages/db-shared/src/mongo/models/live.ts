@@ -1,6 +1,6 @@
-import { model, ObjectId, Schema } from "mongoose";
+import mongoose, { model, ObjectId, Schema } from "mongoose";
 
-interface LiveType {
+export interface LiveType {
   _id?: string
   title: string
   description: string
@@ -14,6 +14,7 @@ interface LiveType {
   createTime: Date
   liveDataId: string
   roomToken: string
+  liveCover: string
   chatEnabled: boolean // 是否开启聊天
   maxViewerCount: number // 最大在线人数
   recordEnabled: boolean // 是否录播
@@ -34,14 +35,13 @@ const LiveSchema = new Schema<LiveType>({
   endTime: Date,
   liveStartTime: Date,
   liveEndTime: Date,
+  liveCover: String,
   roomToken: String, // 用于 join 权限验证
   recordEnabled: { type: Boolean, default: false },
   recordUrl: String, // 回放地址（可选）
   createTime: { type: Date, default: Date.now },
 })
 
-const Live = model('live',LiveSchema)
+const Live = mongoose.models.live || model('live',LiveSchema)
 
-export {
-  Live
-}
+export default Live

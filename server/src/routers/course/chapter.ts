@@ -1,8 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { CourseChapter, Information } from '@/models';
-import { CourseChapterType } from '@/models/course';
-import { createDoc, findOneDoc, updateDoc, deleteDoc, findAll } from '@/utils/database/actions';
-import { InformationType } from '@/models/information';
+import { CourseChapter, Information, CourseChapterType, InformationType, mdaction } from '@mooc/db-shared';
 import { Document } from 'mongoose';
 type chaptersType = CourseChapterType & Partial<{materials?: Array<InformationType>}>
 
@@ -14,7 +11,7 @@ router.get('/tree/:courseId', async (req: Request, res: Response) => {
     const filter: Record<string, string> = {};
     if (courseId) filter.courseId = courseId;
     if (parentChapterId !== undefined) filter.parentChapterId = parentChapterId;
-    let chapters: Array<chaptersType & Document> = await findAll(CourseChapter, filter);
+    let chapters: Array<chaptersType & Document> = await mdaction.findAll(CourseChapter, filter);
     const materialIds: Array<string> = [];
     chapters.forEach(v => {
       if (v.materialIds) {
@@ -44,7 +41,7 @@ router.get('/tree/:courseId', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const chapter = await findOneDoc(CourseChapter, { _id: id });
+    const chapter = await mdaction.findOneDoc(CourseChapter, { _id: id });
     if (!chapter) {
       res.status(404).json({ success: false, message: '章节不存在' });
       return 
@@ -64,7 +61,7 @@ router.post('/add', async (req: Request & {userId?: string}, res: Response) => {
       res.status(400).json({ success: false, message: '课程ID和章节名称不能为空' });
       return 
     }
-    const newChapter = await createDoc(CourseChapter, {
+    const newChapter = await mdaction.createDoc(CourseChapter, {
       ...data,
       createUserId: userId
     });
@@ -82,7 +79,7 @@ router.post('/edit', async (req: Request, res: Response) => {
       res.status(400).json({ success: false, message: '章节ID不能为空' });
       return 
     }
-    const updated = await updateDoc(CourseChapter, _id, updateData);
+    const updated = await mdaction.updateDoc(CourseChapter, _id, updateData);
     res.json({ success: true, data: updated, message: '章节更新成功' });
   } catch (error) {
     res.status(500).json({ success: false, message: '更新章节失败', error });
@@ -97,7 +94,7 @@ router.delete('/delete', async (req: Request, res: Response) => {
       res.status(400).json({ success: false, message: '章节ID不能为空' });
       return 
     }
-    await deleteDoc(CourseChapter, _id);
+    await mdaction.deleteDoc(CourseChapter, _id);
     res.json({ success: true, message: '章节删除成功' });
   } catch (error) {
     res.status(500).json({ success: false, message: '删除章节失败', error });
