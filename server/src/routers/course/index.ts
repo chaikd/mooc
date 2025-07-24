@@ -187,7 +187,6 @@ router.post('/add', async (req: Request & {userId?: string}, res: Response) => {
     } else {
       courseData.statusId = status._id
     }
-
     // 创建课程
     const newCourse = await mdaction.createDoc(Course, {
       ...courseData,

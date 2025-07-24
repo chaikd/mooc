@@ -94,7 +94,7 @@ export function useLocalProducers() {
 
   const clearLocalProducers = () => {
     localProducers.current.values().forEach((producer: Producer) => {
-      producer.close()
+      producer?.close()
     })
     localProducers.current.clear()
   }

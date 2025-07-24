@@ -17,14 +17,11 @@ async function authenticateToken(req: NextRequest) {
     const loginUrl = new URL('/', req.url)
     return NextResponse.redirect(loginUrl)
   }
-  const cert = readFileSync(public_key);
   const newHeaders = new Headers(req.headers)
   try {
     const tokenValue = typeof token === 'string' ? token : token.value;
-    const decoded = await jwt.verify(tokenValue, cert, { algorithms: ['RS256'] });
-    if (typeof decoded === 'object' && Reflect.has(decoded, 'data')) {
-      newHeaders.set('userId', decoded?.data as string)
-    }
+    const userInd = await parseToken(tokenValue)
+    newHeaders.set('userId', userInd)
   } catch (err) {
     return NextResponse.json({ message: '请重新登陆' , err}, { status: 403 });
   }
@@ -33,6 +30,14 @@ async function authenticateToken(req: NextRequest) {
           headers: newHeaders,
         },
       })
+}
+
+export async function parseToken(tokenValue) {
+  const cert = readFileSync(public_key);
+  const decoded = await jwt.verify(tokenValue, cert, { algorithms: ['RS256'] });
+  if (typeof decoded === 'object' && Reflect.has(decoded, 'data')) {
+    return decoded?.data as string
+  }
 }
 
 // 生成jwt

@@ -1,1 +1,6 @@
 @use "tailwindcss" as *;
+
+@theme {
+  --color-primary: #6366F1;
+  --width-container: 1280px;
+}

@@ -52,6 +52,7 @@ export interface CourseListParams {
 export interface CourseCreateParams {
   courseName?: string;
   instructorId?: string;
+  instructorDesc?: string;
   courseDesc?: string;
   courseCover?: string;
   courseDuration?: number;

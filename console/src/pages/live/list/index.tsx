@@ -38,7 +38,6 @@ export default function Live() {
         getList()
       }
     } else {
-      console.log('formValue', formValue)
       const res = await editLive({
         ...isEdit,
         ...formValue

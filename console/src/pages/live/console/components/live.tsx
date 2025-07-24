@@ -98,7 +98,6 @@ export default function Live({liveDetail, ref, getDetail, userInfo}: PropType) {
     const socket = socketio.current
 
     socket.on('liveRoomInfo', (data) => {
-      console.log('liveroominfo', data)
       setLiveRoomInfo(pre => ({
         ...pre,
         ...data
@@ -133,7 +132,6 @@ export default function Live({liveDetail, ref, getDetail, userInfo}: PropType) {
       if (!recvTransport) return;
       const { track } = await recvTransport.consume(consumer);
       addTrackToRemote(track)
-      console.log('recordUser', ({id: userInfo._id, username: userInfo.username, role: userInfo.roleInfo?.code}))
       socket.emit('recordUser', ({id: userInfo._id, username: userInfo.username, role: userInfo.roleInfo?.code}))
     }
     const produceReadyFn = () => {
@@ -180,14 +178,14 @@ export default function Live({liveDetail, ref, getDetail, userInfo}: PropType) {
     }
   }, [id])
 
-  return (<div className="view-box h-full">
+  return (
     <div className="video-box relative flex w-full h-full flex-col">
       {liveDetail?.status === 'ended' && <div className="absolute left-0 top-0 w-full h-full text-center pt-20">
         <span className="font-[600] text-xl">直播已结束</span>
       </div>}
       <video
         ref={videoRef}
-        className="w-full bg-gray-100"
+        className="w-full bg-gray-100 flex-1 h-0"
         autoPlay
         playsInline
         muted
@@ -200,8 +198,8 @@ export default function Live({liveDetail, ref, getDetail, userInfo}: PropType) {
           <span>在线：{liveRoomInfo.personCount || 0}</span>
         </Space>
       </div>
-    </div>
     {/* <div className="info-box1 bg-green-100">2</div>
     <div className="info-box2 bg-red-100">3</div> */}
-  </div>)
+    </div>
+  )
 }

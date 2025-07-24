@@ -1,5 +1,6 @@
+"use server";
 import request, { responseType } from "./request";
 
-export function getHomeInfo(): Promise<responseType> {
-  return request('/api/course/home')
+export async function getHomeInfo(): Promise<responseType> {
+  return request("/api/course/home");
 }

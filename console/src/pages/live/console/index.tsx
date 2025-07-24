@@ -62,7 +62,7 @@ export default function LiveConsole() {
   }, [])
   return (
     <>
-      <div className={classNames('flex flex-col min-h-full',{
+      <div className={classNames('flex flex-col h-full',{
         'fixed w-screen h-screen left-0 top-0 bg-white p-4': isFullScreen
       })}>
         <div className="flex justify-between items-center">
@@ -78,20 +78,22 @@ export default function LiveConsole() {
             {isShowActionBtn('live') && <Button onClick={closeLive}>结束直播</Button>}
           </Space>
         </div>
-        <div className="flex-1 flex h-0 mt-4">
-          <div className="flex-1 mr-4">
-            {liveDetail &&<Live {...{
-              liveDetail,
-              ref: liveRef,
-              getDetail,
-              userInfo
-            }}></Live>}
-          </div>
-          <div className="message-box bg-yellow-100">
-            <LiveChat {...{
-              ref: chatRef,
-              liveDetail
-            }}></LiveChat>
+        <div className="flex-1 h-0 mt-2">
+          <div className="flex h-full">
+            <div className="flex-1 h-full mr-4">
+              <Live {...{
+                liveDetail,
+                ref: liveRef,
+                getDetail,
+                userInfo
+              }}></Live>
+            </div>
+            <div className="message-box border border-gray-100 h-full">
+              <LiveChat {...{
+                ref: chatRef,
+                liveDetail
+              }}></LiveChat>
+            </div>
           </div>
         </div>
       </div>

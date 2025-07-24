@@ -77,18 +77,23 @@ export default function AddCourse() {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="讲师" name="instructorId" rules={[{ required: true, message: '请选择讲师' }]}>
-                <Select placeholder="请选择讲师" options={instructors} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
               <Form.Item label="课程时长（分钟）" name="courseDuration" rules={[{ required: true, message: '请输入课程时长' }]}>
                 <Input placeholder="请输入课程时长" />
               </Form.Item>
             </Col>
             <Col span={12}>
+              <Form.Item label="讲师" name="instructorId" rules={[{ required: true, message: '请选择讲师' }]}>
+                <Select placeholder="请选择讲师" options={instructors} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
               <Form.Item label="价格" name="price" rules={[{ required: true, message: '请输入课程价格' }]}>
                 <InputNumber placeholder="请输入课程价格" precision={2} />
+              </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Form.Item label="讲师简介" name="instructorDesc">
+                <Input.TextArea rows={3} placeholder="请输入讲师简介" />
               </Form.Item>
             </Col>
             <Col span={24}>

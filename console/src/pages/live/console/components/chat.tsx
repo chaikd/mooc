@@ -78,13 +78,13 @@ export default function LiveChat({ref, liveDetail}: PropType) {
   }, [])
   return (
     <div className="flex flex-col h-full">
-      <div className="w-full h-ful p-4 flex-1">
+      <div className="w-full h-0 p-4 flex-1 overflow-y-auto">
         {messageList?.length > 0 && messageList.map((v: MessageType) => {
           return(
             <div key={v.createTime} className={classNames('mt-2', {
               'text-right': v.userId === userInfo._id
             })}>
-              <p className=" text-blue-400">
+              <p className="text-blue-400">
                 {v.userId !== userInfo._id && <span className="mr-2">{v.username}</span>}
                 <span>{dayjs(v.createTime).format('YYYY-MM-DD HH:mm:ss')}</span>
                 {v.userId === userInfo._id && <span className="ml-2">{v.username}</span>}
@@ -97,12 +97,12 @@ export default function LiveChat({ref, liveDetail}: PropType) {
         </>}
       </div>
       {
-        liveDetail?.status !== 'ended' && <div className="p-4 border-t border-gray-200" style={{ height: '140px' }}>
+        liveDetail?.status !== 'ended' && <div className="p-2 border-t border-gray-100" style={{ height: '140px' }}>
           <Form form={messageForm} onFinish={sendMsg}>
-            <Form.Item name="messageText">
+            <Form.Item name="messageText" className="!mb-2">
               <TextArea rows={2}></TextArea>
             </Form.Item>
-            <Form.Item className="text-right">
+            <Form.Item className="text-right !mb-0">
               <Button htmlType="submit">发送</Button>
             </Form.Item>
           </Form>

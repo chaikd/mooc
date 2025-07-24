@@ -1,7 +1,7 @@
 import Login from "@/pages/login";
 import { createBrowserRouter, type RouteObject } from "react-router";
 import Layout from '@/pages/layouts'
-import Dashboard from "@/pages/dashboard";
+// import Dashboard from "@/pages/dashboard";
 import { lazy, ReactNode } from "react";
 import NotFound from "@/pages/not-found";
 
@@ -67,14 +67,14 @@ const router = createBrowserRouter([
     path: '',
     Component: Layout,
     children: [
-      {
-        index: true,
-        Component: Dashboard,
-        meta: {
-          label: '首页',
-          icon: 'FundProjectionScreenOutlined'
-        }
-      },
+      // {
+      //   index: true,
+      //   Component: Dashboard,
+      //   meta: {
+      //     label: '首页',
+      //     icon: 'FundProjectionScreenOutlined'
+      //   }
+      // },
       ...cursorRoute,
       {
         path: 'person',
