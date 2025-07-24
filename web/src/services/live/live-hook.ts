@@ -3,7 +3,7 @@ import { Producer, Transport } from "mediasoup-client/types";
 import { useEffect, useRef, useState } from "react";
 
 export function useMediaStream() {
-  let remoteStream
+  const remoteStream = useRef<MediaStream | null>(null)
   // const [remoteStream, setRemotStream] = useState<MediaStream | null>(new MediaStream())
   const videoRef = useRef<HTMLVideoElement>(null);
   const localStream = useRef<MediaStream | null>(null);
@@ -19,15 +19,15 @@ export function useMediaStream() {
   }
 
   const addTrackToRemote = (track: MediaStreamTrack) => {
-    remoteStream?.addTrack(track);
+    remoteStream.current?.addTrack(track);
   }
 
   const clearRemoteStream = () => {
     if (remoteStream) {
-      const tracks = remoteStream.getTracks()
+      const tracks = remoteStream.current.getTracks()
       tracks.forEach(v => {
         v.stop()
-        remoteStream.removeTrack(v)
+        remoteStream.current.removeTrack(v)
       })
     }
   }
@@ -40,15 +40,15 @@ export function useMediaStream() {
   }
 
   useEffect(() => {
-    remoteStream = new MediaStream()
-    setVideoSrc(remoteStream)
+    remoteStream.current = new MediaStream()
+    setVideoSrc(remoteStream.current)
   }, []);
 
   return {
     videoRef,
     setVideoSrc,
     localStream,
-    remoteStream,
+    remoteStream: remoteStream.current,
     setLocalStream,
     addTrackToRemote,
     clearRemoteStream,
@@ -61,6 +61,7 @@ export function useLocalProducers() {
   const [recvTransport, setRecvTransport] = useState<Transport | null>(null)
   const localProducers = useRef<Map<string, Producer>>(new Map())
 
+  // eslint-disable-next-line no-unused-vars
   const startLocalProducer = async (track: MediaStreamTrack, onTrackEnd: (producer: Producer) => void = () => {}) => {
     try {
       track.onended = async () => {

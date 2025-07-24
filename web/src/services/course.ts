@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import request from "./request";
 import { redirect } from "next/navigation";
 
-export async function useCourseDetail<T>(id): Promise<T> {
+export async function getCourseDetail<T>(id): Promise<T> {
   return request.get(`/api/course/${id}`).then((res) => res?.data);
 }
 
@@ -44,7 +44,7 @@ export async function parseChapter(data) {
 export async function searchCourseAction(formData) {
   const {courseName} = Object.fromEntries(formData)
   // revalidatePath(`/course/center`)
-  const query = courseName ? `?courseName=${courseName}` : ''
+  const query = courseName ? `?courseName=${encodeURIComponent(courseName)}` : ''
   redirect(`/course/center${query}`)
 }
 

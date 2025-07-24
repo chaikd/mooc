@@ -1,6 +1,6 @@
 import LiveChat from "@/modules/live/chat";
 import LiveVideo from "@/modules/live/live";
-import { getAuthUserInfo, liveInfoAction } from "@/services/live/live";
+import { getAuthUserInfo, liveInfoAction } from "@/services/live";
 import { ClockCircleOutlined, UserOutlined } from "@ant-design/icons";
 import { Avatar, Button } from "antd";
 import dayjs from "dayjs";

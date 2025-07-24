@@ -15,9 +15,11 @@ export default async function HomeContent() {
       <div className="live-list">
         <div className="head flex justify-between">
           <span className="text-xl font-[600]">直播推荐</span>
-          <Button type="link" color="primary">
-            <Link href="/course/live">查看更多</Link>
-          </Button>
+            <Link href="/live/center">
+              <Button type="link" className="!text-primary">
+                查看更多
+              </Button>
+            </Link>
         </div>
         <div className="grid grid-cols-3 grid-flow-rows gap-4 mt-2">
           {homeInfo?.lives?.map((v) => (
@@ -41,9 +43,11 @@ export default async function HomeContent() {
       <div className="course-list mt-8">
         <div className="head flex justify-between">
           <span className="text-xl font-[600]">课程推荐</span>
-          <Button type="link" color="primary">
-            <Link href="/course/center">查看更多</Link>
-          </Button>
+            <Link href="/course/center">
+              <Button type="link" className="!text-primary">
+                查看更多
+              </Button>
+            </Link>
         </div>
         <div className="grid grid-cols-4 grid-flow-rows gap-4 mt-2">
           {homeInfo?.courses?.map((v) => (

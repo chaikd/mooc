@@ -1,11 +1,10 @@
 import CourseCard from "@/modules/course-card"
-import { fetchCourse, pageChangeAction } from "@/services/course"
+import { fetchCourse } from "@/services/course"
 import { CourseType } from "@mooc/db-shared"
 import CourseListPagination from "./pagination"
 import Link from "next/link"
-// import { startTransition } from "react"
 
-export default async function({courseName, page, pageSize}) {
+export default async function CourseList({courseName, page, pageSize}) {
   const res = await fetchCourse<{
     courseList: CourseType[],
     total: number

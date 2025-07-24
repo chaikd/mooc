@@ -34,7 +34,7 @@ export default function CourseCard({ isLive = false, info }: {
             <TeamOutlined className="mr-2 text-gray-600"/>
             <span>{info?.studentsCount || 0}人在学习</span>
           </p>
-          <Button type="primary" color="primary" size="small">立即观看</Button>
+          {/* <Button type="primary" color="primary" size="small">立即观看</Button> */}
         </div>
       </div>
     </div>

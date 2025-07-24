@@ -1,10 +1,11 @@
-import { Course, User } from "@mooc/db-shared";
+import { connectDB, Live, User } from "@mooc/db-shared";
 import { countDocs, findAll, findDocs } from "@mooc/db-shared/src/utils/database/actions";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  let {query, page, pageSize} = await req.json()
-  const filter = {statusCode: 2}
+  await connectDB()
+  let {page, pageSize, query} = await req.json()
+  const filter = {}
   query = query || {}
   Object.keys(query).forEach(prop => {
     filter[prop] = {
@@ -12,11 +13,11 @@ export async function POST(req: NextRequest) {
       $options: 'i'
     }
   })
-  let courseList = await findDocs(Course, filter, pageSize, page)
-  const total = await countDocs(Course, filter)
-  if(courseList) {
+  let liveList = await findDocs(Live, filter, pageSize, page)
+  const total = await countDocs(Live, filter)
+  if(liveList) {
     const instructorIds = [
-      ...new Set(courseList.map((v) => v.instructorId.toString())),
+      ...new Set(liveList.map((v) => v.instructorId.toString())),
     ];
     const instructors = await findAll(
       User,
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
       },
       "username _id role roleCode"
     );
-    courseList = courseList.map((v) => {
+    liveList = liveList.map((v) => {
       const obj = {
         ...v.toObject(),
       };
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        courseList,
+        liveList,
         page,
         pageSize,
         total

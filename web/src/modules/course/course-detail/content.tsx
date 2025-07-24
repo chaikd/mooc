@@ -5,12 +5,12 @@ import {
   TeamOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { getCourseChapters, parseChapter, useCourseDetail } from "@/services/course";
+import { getCourseChapters, parseChapter, getCourseDetail } from "@/services/course";
 import { CourseChapterType, CourseType, UserType } from "@mooc/db-shared";
 import ChapterTree from './chapter-tree'
 
 export default async function Content({ id }) {
-  const courseDetail = await useCourseDetail<
+  const courseDetail = await getCourseDetail<
     CourseType & {
       isLive: boolean;
       studentsCount: number;

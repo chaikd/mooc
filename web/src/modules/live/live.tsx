@@ -1,6 +1,6 @@
 "use client"
 import { Space } from "antd";
-import { Device, DtlsParameters, Producer, Transport, TransportOptions } from "mediasoup-client/types";
+import { Device, DtlsParameters, Transport, TransportOptions } from "mediasoup-client/types";
 import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { getConsumer, getProduces, getReport, getRouterRtpCapabilities } from "@/services/live/socketio";
@@ -80,6 +80,7 @@ export default function LiveVideo({liveDetail, userInfo}: PropType) {
       socket.emit('transportConnected', { recvTransportId: recvTransport.id, dtlsParameters }, cb);
     })
 
+    // eslint-disable-next-line no-unused-vars
     sendTransport.on('produce', ({ kind, rtpParameters, appData }, cb: (obj: {id: string}) => void) => {
       socket.emit('produce', { transportId: sendTransport.id, recvTransportId: recvTransport.id,kind, rtpParameters, appData, rtpCapabilities: device.rtpCapabilities  }, ({id}: {id: string}) => cb({id}))
     })
