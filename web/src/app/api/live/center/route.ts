@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   await connectDB()
+  // eslint-disable-next-line prefer-const
   let {page, pageSize, query} = await req.json()
   const filter = {}
   query = query || {}

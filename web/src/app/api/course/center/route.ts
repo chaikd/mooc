@@ -3,6 +3,7 @@ import { countDocs, findAll, findDocs } from "@mooc/db-shared/src/utils/database
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
+  // eslint-disable-next-line prefer-const
   let {query, page, pageSize} = await req.json()
   const filter = {statusCode: 2}
   query = query || {}
