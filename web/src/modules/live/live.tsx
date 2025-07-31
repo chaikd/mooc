@@ -150,7 +150,7 @@ export default function LiveVideo({liveDetail, userInfo}: PropType) {
       <div className="w-full bg-gray-100 flex-1 h-0">
         <video
           ref={videoRef}
-          className="w-full bg-gray-100 flex-1 h-0"
+          className="w-full bg-gray-100 flex-1 h-full"
           autoPlay
           playsInline
           muted
