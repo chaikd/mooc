@@ -4,6 +4,8 @@ import { createMesiasoupRouter } from "../mediasoup";
 import { Producer } from "mediasoup-client/lib/Producer";
 import { Transport } from "mediasoup/node/lib/types";
 import {redisRequest} from "@mooc/db-shared";
+import { startFFmpeg } from "../ffmpeg";
+import { createPipeTransport } from "../mediasoup/transcoder";
 
 export default async function createLiveIo(ioServer: Server) {
   const liveIo = ioServer.of('/ws/live')
@@ -119,6 +121,17 @@ export default async function createLiveIo(ioServer: Server) {
       cb({ id: producer.id })
       producerMap.set(producer.id, producer)
       await liveIo.to(roomId).emit('produceReady')
+
+      const {plainTransport, consumer} = await createPipeTransport(mediasoupRouter, producer)
+      const {ffmpegPort, ffmpegRtcpPort} = await startFFmpeg({plainTransport, roomId, consumer})
+      // 连接 PlainTransport到FFmpeg指定的端口
+      await plainTransport.connect({
+        ip: '127.0.0.1',
+        port: ffmpegPort,
+        rtcpPort: ffmpegRtcpPort,
+      });
+      console.log('▶️ mediasoup → FFmpeg RTP/RTCP 发包已开启');
+    
       socket.on('disconnect', () => {
         producerMap.clear()
         liveIo.to(roomId).emit('produceReady')
@@ -133,6 +146,10 @@ export default async function createLiveIo(ioServer: Server) {
         }
       })
       cb({produces})
+    })
+    socket.on('hlsStream', (_, cb) => {
+      const roomId: string = socket.handshake.query.roomId as string
+      cb({ type: 'hls-ready', url: `/hls/${roomId}/playlist_live.m3u8` });
     })
     socket.on('produceClose', ({ produceId }, cb) => {
       const producer = producerMap.get(produceId)
@@ -182,7 +199,6 @@ export default async function createLiveIo(ioServer: Server) {
       await redisRequest.redisClient?.sAdd(`${roomId}:userIds`, userInfo.id)
       liveIo.to(roomId).emit('liveRoomInfo', await getLiveInfo())
     })
-
     socket.on('disconnect', async () => {
       await socket.leave(roomId)
       transportsMap.delete(socket)

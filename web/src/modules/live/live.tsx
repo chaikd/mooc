@@ -26,7 +26,7 @@ export default function LiveVideo({liveDetail, userInfo}: PropType) {
     setSendTransport,
     setRecvTransport,
     clearLocalProducers,
-    localProducers,
+    // localProducers,
   } = useLocalProducers()
   const {
     videoRef,
@@ -142,18 +142,20 @@ export default function LiveVideo({liveDetail, userInfo}: PropType) {
       {liveDetail?.status === 'ended' && <div className="absolute left-0 top-0 w-full h-full text-center pt-20">
         <span className="font-[600] text-xl">直播已结束</span>
       </div>}
-      {
+      {/* {
         localProducers.current.size === 0 && <div className="absolute left-0 top-0 w-full h-full text-center pt-20">
           <span className="font-[600] text-xl">暂无直播</span>
         </div>
-      }
-      <video
-        ref={videoRef}
-        className="w-full bg-gray-100 flex-1 h-0"
-        autoPlay
-        playsInline
-        muted
-      ></video>
+      } */}
+      <div className="w-full bg-gray-100 flex-1 h-0">
+        <video
+          ref={videoRef}
+          className="w-full bg-gray-100 flex-1 h-0"
+          autoPlay
+          playsInline
+          muted
+        ></video>
+      </div>
       <div className="info flex justify-between p-2 border-t border-t-gray-100">
         <span>{liveDetail?.title}</span>
         <Space>

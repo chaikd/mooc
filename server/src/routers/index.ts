@@ -9,12 +9,15 @@ import informationRouter from './information'
 import liveRouter from './live'
 
 const whiteList = [
-  '/regist',
-  '/login'
+  '/api/auth/regist',
+  '/api/auth/login',
+  '/hls'
 ]
 
 export const isWhiteList = (url: string): boolean => {
-  return url.startsWith('/api/auth') && whiteList.some(v => url.includes(v))
+  return (
+    whiteList.some(v => url.startsWith(v))
+  )
 }
 
 export default function registRouters(app: Express) {
