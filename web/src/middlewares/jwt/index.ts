@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import {readFileSync} from 'fs'
 import { join } from 'path';
 import { NextRequest, NextResponse } from 'next/server';
+import { RequestCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 
 export interface RequestTypeWithJWT extends Request {
   userId?: string
@@ -11,12 +12,20 @@ const private_key = join(process.cwd(), process.env.PRIVATE_KEY_PATH as string)
 
 // JWT 校验中间件
 async function authenticateToken(req: NextRequest) {
-  const token = await req.cookies.get('authorization')
-  // if (!token) return NextResponse.json({ message: '暂无权限' }, { status: 401 });
-  if (!token) {
-    const loginUrl = new URL('/', req.url)
-    return NextResponse.redirect(loginUrl)
+  req.headers.set('Access-Control-Allow-Origin', '*')
+  req.headers.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+  req.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  // 处理预检请求
+  if (req.method === 'OPTIONS') {
+    return new NextResponse(null, { status: 204 })
   }
+  let token: string | RequestCookie = await req.cookies.get('authorization') as RequestCookie;
+  token = token?.value ? token : req.headers.get('Authorization')
+  if (!token) return NextResponse.json({ message: '暂无权限' }, { status: 401 });
+  // if (!token) {
+  //   const loginUrl = new URL('/', req.url)
+  //   return NextResponse.redirect(loginUrl)
+  // }
   const newHeaders = new Headers(req.headers)
   try {
     const tokenValue = typeof token === 'string' ? token : token.value;

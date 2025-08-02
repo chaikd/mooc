@@ -11,7 +11,7 @@ import { useParams } from "next/navigation";
 
 type PropType = {
   liveDetail: (LiveType & {duration?: string}) | null
-  userInfo: UserType | undefined
+  userInfo?: UserType | undefined
 }
 
 type LiveRoomInfo = {
@@ -121,8 +121,8 @@ export default function LiveVideo({liveDetail, userInfo}: PropType) {
       recvTransport.close()
       socket.disconnect()
     })
-
-    if(liveDetail?.status === 'live' && (userInfo?._id as string) !== (liveDetail.instructorId as unknown as string)) {
+    //  && (userInfo?._id as string) !== (liveDetail.instructorId as unknown as string)
+    if(liveDetail?.status === 'live') {
       const getProduce = produceReadyFn()
       getProduce()
     }
@@ -135,7 +135,7 @@ export default function LiveVideo({liveDetail, userInfo}: PropType) {
       const socket = socketio.current
       socket?.disconnect()
     }
-  }, [id])
+  }, [id, liveDetail])
 
   return (
     <div className="video-box relative flex w-full h-full flex-col">
@@ -157,7 +157,7 @@ export default function LiveVideo({liveDetail, userInfo}: PropType) {
         ></video>
       </div>
       <div className="info flex justify-between p-2 border-t border-t-gray-100">
-        <span>{liveDetail?.title}</span>
+        <span className="text-lg font-[600]">{liveDetail?.title}</span>
         <Space>
           <span>时长：{liveDetail?.status === 'ended' ? liveDetail.duration : timeCount}</span>
           <span>看过：{liveRoomInfo.historyPersonCount || 0}</span>

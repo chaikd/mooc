@@ -28,6 +28,7 @@ export default function LiveChat({liveDetail, userInfo}: PropType) {
   const [messageForm] = useForm()
   const { id } = useParams()
   const chatIo = useRef<Socket | null>(null)
+  const msgBoxRef = useRef<HTMLDivElement>(null)
   
   chatIo.current = io('http://localhost:3000/ws/chat', {
     query: {
@@ -37,6 +38,7 @@ export default function LiveChat({liveDetail, userInfo}: PropType) {
   })
   chatIo.current.on('message', (message) => {
     setMessageList(messageList.concat(JSON.parse(message)))
+    scrollToBottom()
   })
   chatIo.current.on('messageList', (messages) => {
     const list: MessageType[] = []
@@ -44,6 +46,7 @@ export default function LiveChat({liveDetail, userInfo}: PropType) {
       list.push(JSON.parse(msg))
     }
     setMessageList((pre) => [...list, ...pre])
+    scrollToBottom()
   })
 
   const getMessages = () => {
@@ -64,6 +67,14 @@ export default function LiveChat({liveDetail, userInfo}: PropType) {
   const closeLive = () => {
     chatIo.current?.emit('closeLive')
   }
+  const scrollToBottom = () => {
+    new Promise(resolve => setTimeout(resolve, 100)).then(() => {
+      msgBoxRef.current?.scrollTo({
+        top: msgBoxRef.current.scrollHeight,
+        behavior: 'smooth'
+      })
+    })
+  }
   // useImperativeHandle(ref,() => {
   //   return {
   //     closeLive
@@ -78,7 +89,7 @@ export default function LiveChat({liveDetail, userInfo}: PropType) {
   }, [])
   return (
     <div className="flex flex-col h-full">
-      <div className="w-full p-4 flex-1 overflow-y-auto">
+      <div className="w-full p-4 flex-1 overflow-y-auto" ref={msgBoxRef}>
         {messageList?.length > 0 && messageList.map((v: MessageType) => {
           return(
             <div key={v.createTime} className={classNames('mt-2', {

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
         success: false,
         message: '用户名或密码错误'
       }, {status: 401})
-    if (userInfo.toObject()?._id) {
+    if (userInfo?.toObject()?._id) {
       const token = generateToken(userInfo.id)
       response = NextResponse.json({
         success: true,
