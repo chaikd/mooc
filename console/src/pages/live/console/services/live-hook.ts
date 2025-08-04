@@ -1,111 +1,204 @@
-import { Producer, Transport } from "mediasoup-client/types";
-import { useEffect, useRef, useState } from "react";
+import { getMediaStream } from "@/utils/media/stream";
+import { Consumer, Producer, Transport } from "mediasoup-client/types";
+import { Ref, useEffect, useRef, useState } from "react";
+import { Socket } from "socket.io-client";
 
-export function useMediaStream() {
+export type ProducerTypes = 'microphone' | 'camera' | 'screen-video' | 'screen-audio'
+interface ProducerMapItem {
+  type: ProducerTypes,
+  producer: Producer
+}
+
+export interface UseMediaStreamType {
+  videoRef: Ref<HTMLVideoElement | null>,
+  audioRef: Ref<HTMLVideoElement | null>,
+  cameraRef: Ref<HTMLVideoElement | null>,
+  microStream: MediaStream | null,
+  remoteStream: MediaStream | null,
+  cameraStream: MediaStream | null,
+}
+
+export function useMediaStream(): UseMediaStreamType {
   const [remoteStream] = useState<MediaStream | null>(new MediaStream())
+  const [microStream] = useState<MediaStream | null>(new MediaStream())
+  const [cameraStream] = useState<MediaStream | null>(new MediaStream())
   const videoRef = useRef<HTMLVideoElement>(null);
-  const localStream = useRef<MediaStream | null>(null);
+  const audioRef = useRef<HTMLVideoElement>(null);
+  const cameraRef = useRef<HTMLVideoElement>(null);
 
-  const setVideoSrc = (stream: MediaStream) => {
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream
+  const setSrcObject = (stream: MediaStream, ref: HTMLVideoElement | null) => {
+    if (ref) {
+      ref.srcObject = stream
     }
-  }
-
-  const setLocalStream = (stream: MediaStream) => {
-    localStream.current = stream
-  }
-
-  const addTrackToRemote = (track: MediaStreamTrack) => {
-    remoteStream?.addTrack(track);
-  }
-
-  const clearRemoteStream = () => {
-    if (remoteStream) {
-      const tracks = remoteStream.getTracks()
-      tracks.forEach(v => {
-        v.stop()
-        remoteStream.removeTrack(v)
-      })
-    }
-  }
-
-  const clearLocalStream = () => {
-    localStream?.current?.getTracks().forEach(track => {
-      track.stop()
-      localStream.current?.removeTrack(track)
-    })
   }
 
   useEffect(() => {
     if (remoteStream) {
-      setVideoSrc(remoteStream)
+      setSrcObject(remoteStream, videoRef.current)
+    }
+    if(microStream) {
+      setSrcObject(microStream, audioRef.current)
+    }
+    if(cameraStream) {
+      setSrcObject(cameraStream, cameraRef.current)
     }
   }, []);
 
   return {
     videoRef,
-    setVideoSrc,
-    localStream,
+    audioRef,
+    cameraRef,
+    microStream,
     remoteStream,
-    setLocalStream,
-    addTrackToRemote,
-    clearRemoteStream,
-    clearLocalStream,
+    cameraStream,
   }
 }
 
-export function useLocalProducers() {
+export function useMediasoup({
+  streamControl
+}: {
+  streamControl: UseMediaStreamType
+}) {
   const [sendTransport, setSendTransport] = useState<Transport | null>(null)
   const [recvTransport, setRecvTransport] = useState<Transport | null>(null)
-  const localProducers = useRef<Map<string, Producer>>(new Map())
+  const producersMap = useRef<Map<string, ProducerMapItem>>(new Map())
+  const consumersMap = useRef<Map<string, {consumer: Consumer,type: ProducerTypes}>>(new Map())
+  const [microphoneTrack, setMicrophoneTrack] = useState<MediaStreamTrack | null>(null)
+  const [hasRemoteStreamTracks, setHasRemoteStreamTracks] = useState(false)
+  const [hasCameraStreamTracks, setHasCameraStreamTracksmTracks] = useState(false)
+  const {
+    remoteStream,
+    microStream,
+    cameraStream
+  } = streamControl
+  const getStream = (type: ProducerTypes) => {
+    return type === 'microphone' ? microStream : type === 'camera' ? cameraStream : remoteStream
+  }
 
-  const startLocalProducer = async (track: MediaStreamTrack, onTrackEnd: (producer: Producer) => void = () => {}) => {
-    try {
-      track.onended = async () => {
-        track.stop()
-        const producer = localProducers.current.get(track.kind)
-        if (producer) {
-          await producer?.close()
-          localProducers.current.delete(track.kind)
-          onTrackEnd(producer)
-        }
-        // await socket.emit('produceClose', { produceId: producer?.id }, () => {
-        //   clearLocalStream()
-        //   clearRemoteStream()
-        // })
-      }
-      // 目前功能只有一个讲师可以共享视频，暂时按track类型只有一个video和一个audio来保存producer
-      const oldProducer = localProducers.current.get(track.kind)
-      if (oldProducer) {
-        oldProducer.replaceTrack({track})
-      } else {
-        const producer = await sendTransport?.produce({ track }) as Producer;
-        localProducers.current.set(track.kind, producer)
-      }
-    } catch (e) {
-      console.error('produce error', e);
+  const resetStreamState = (type: ProducerTypes | undefined) => {
+    if(type && type === 'camera' && cameraStream) {
+      setHasCameraStreamTracksmTracks(cameraStream?.getTracks().length > 0)
+    }
+    if(type?.startsWith('screen') && remoteStream) {
+      setHasRemoteStreamTracks(remoteStream?.getTracks().length > 0)
     }
   }
 
-  const getLocalProducer = (id: string) => {
-    return localProducers.current.get(id)
+  const targetMicrophone = async (socketIo: Socket) => {
+    if(microphoneTrack) {
+      const producerItem = producersMap.current.values().find(v => {
+        return v.producer?.track?.id === microphoneTrack.id
+      })
+      const producer = producerItem?.producer
+      microphoneTrack.stop()
+      setMicrophoneTrack(null)
+      if(producer) {
+        producer.close()
+        producersMap.current.delete(producer.id)
+      }
+      return
+    }
+    const stream = await getMediaStream('user', 'audio')
+    const micTrack = stream.getTracks()[0]
+    await producerControl(socketIo, micTrack, 'microphone')
+    setMicrophoneTrack(micTrack)
   }
 
-  const clearLocalProducers = () => {
-    localProducers.current.values().forEach((producer: Producer) => {
-      producer?.close()
+  const targetShareScreen = async (socketIo: Socket) => {
+    if(hasRemoteStreamTracks) {
+      const producers = producersMap.current.values().filter(item => item.type.startsWith('screen'))
+      producers.forEach(item => {
+        item.producer.track?.stop()
+        item.producer.close()
+        producersMap.current.delete(item.producer.id)
+      })
+      return
+    }
+    const stream = await getMediaStream('display', 'both')
+    const tracks = stream.getTracks()
+    tracks.forEach(async track => {
+      const type = track.kind === 'video' ? 'screen-video' : 'screen-audio'
+      producerControl(socketIo ,track, type)
+      new Promise(resolve => {setTimeout(resolve, 500)}).then(() => {
+        resetStreamState(type)
+      })
+      track.onended = () => {
+        resetStreamState(type)
+      }
     })
-    localProducers.current.clear()
+  }
+
+  const targetCamera = async (socketIo: Socket) => {
+    if(hasCameraStreamTracks) {
+      const item = producersMap.current.values().find(item => item.type === 'camera')
+      item?.producer?.track?.stop()
+      item?.producer?.close()
+      if(item?.producer.id) {
+        producersMap.current.delete(item?.producer.id)
+      }
+      return
+    }
+    const stream = await getMediaStream('user', 'video')
+    const track = stream.getTracks()[0]
+    producerControl(socketIo, track, 'camera')
+    new Promise(resolve => {setTimeout(resolve, 500)}).then(() => {
+      resetStreamState('camera')
+    })
+    track.onended = () => {
+      resetStreamState('camera')
+    }
+  }
+
+  const producerControl = async (socketIo: Socket, track: MediaStreamTrack,type: ProducerTypes) => {
+    const producer = await sendTransport?.produce({ track , appData: {
+      type
+    }}) as Producer;
+    if(producer) {
+      producersMap.current.set(producer.id, {
+        type,
+        producer
+      })
+      producer.on('@close', () => {
+        console.log('closed')
+        socketIo.emit('closeProducer', {producerId: producer.id, appData: {
+          type
+        }})
+      });
+    }
+  }
+  
+  const removeConsumer = async (producerId: string) => {
+    const { consumer, type } = consumersMap.current.get(producerId) || {};
+    consumer?.close()
+    const stream = type && getStream(type)
+    if(consumer?.track) {
+      consumer?.track.stop()
+      stream?.removeTrack(consumer?.track)
+    }
+    resetStreamState(type)
+    consumersMap.current.delete(producerId)
+  }
+
+  const addConsumer = async (producerId: string, data: {
+      consumer: Consumer, 
+      type: ProducerTypes
+    }) => {
+    consumersMap.current.set(producerId, data)
+    resetStreamState(data.type)
   }
 
   return {
     sendTransport,
-    startLocalProducer,
     recvTransport,
     setSendTransport,
     setRecvTransport,
-    clearLocalProducers,
-    getLocalProducer,
+    microphoneTrack,
+    hasRemoteStreamTracks,
+    hasCameraStreamTracks,
+    targetMicrophone,
+    targetShareScreen,
+    targetCamera,
+    removeConsumer,
+    addConsumer,
   }
 }

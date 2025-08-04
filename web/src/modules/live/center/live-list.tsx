@@ -17,7 +17,7 @@ export default async function LiveList({title, page, pageSize}) {
         {
           liveList?.map(v => {
             return(
-              <Link href={`/course/${v._id}`} key={v._id}>
+              <Link href={`/live/${v._id}`} key={v._id}>
                 <CourseCard key={v._id} isLive={v.status === 'live'} info={{
                   title: v.title,
                   instructorName: v.instructor.username,

@@ -30,7 +30,7 @@ export default function LiveChat({liveDetail, userInfo}: PropType) {
   const chatIo = useRef<Socket | null>(null)
   const msgBoxRef = useRef<HTMLDivElement>(null)
   
-  chatIo.current = io('http://localhost:3000/ws/chat', {
+  chatIo.current = io(`${process.env.NEXT_PUBLIC_LIVE_HOST}/ws/chat`, {
     query: {
       roomId: id
     },

@@ -155,7 +155,7 @@ export default function Live() {
             </Popconfirm>
             {
               ((record.status === 'scheduled' && record.startTime && record.endTime && (dayjs() > dayjs(record.startTime).subtract(20, 'minutes') && dayjs() < dayjs(record.endTime)))
-              || record.status === 'live' || record.status === 'ended')
+              || record.status !== 'scheduled')
               && (userInfo._id === record.instructorId || userInfo.roleInfo?.code === 'SYSTEM')
               && <Link to={`/live/${record._id}`}><Button type="link">进入控制台</Button></Link>
             }

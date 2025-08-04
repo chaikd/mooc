@@ -1,3 +1,4 @@
+'use server'
 import LiveChat from "@/modules/live/chat";
 import LiveVideo from "@/modules/live/live";
 import { getAuthUserInfo, liveInfoAction } from "@/services/live";
@@ -12,7 +13,7 @@ export default async function LiveDetail({ params }) {
   return (
     <div className="live w-container mx-auto mt-6">
       <div className="head">
-        <span className="text-2xl font-[600]">{liveInfo.title}</span>
+        <span className="text-2xl font-[600]">{liveInfo?.title}</span>
         <div className="mt-4">
           <Avatar icon={<UserOutlined />}></Avatar>
           <span className="ml-2">{liveInfo?.instructor?.username || '--'}</span>
@@ -21,14 +22,14 @@ export default async function LiveDetail({ params }) {
           <span>直播时间：{dayjs(liveInfo?.startTime).format('YYYY-MM-DD HH:mm')} - {dayjs(liveInfo?.endTime).format('YYYY-MM-DD HH:mm')}</span>
         </div>
       </div>
-      <div className="grid xl:grid-cols-3 xl:grid-flow-rows gap-4 mt-4 sm:grid-cols-1 sm:grid-rows-2">
-        <div className="col-span-2 overflow-hidden max-h-[500px]">
+      <div className="flex">
+        <div className="flex-1 overflow-hidden min-h-[500px] max-h-[550px]">
           <LiveVideo {...{
             liveDetail: liveInfo,
-            userInfo
+            userInfo,
           }}></LiveVideo>
         </div>
-        <div className="max-h-[500px] border border-gray-100">
+        <div className="w-1/3 ml-10 max-h-[550px] border border-gray-100">
           <LiveChat {...{
             liveDetail: liveInfo,
             userInfo

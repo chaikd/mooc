@@ -12,11 +12,20 @@ import { useSelector } from "react-redux";
 import { StoreType } from "@/store";
 import dayjs from "dayjs";
 
+type LiveRefMethodType = {
+  closeLive: () => void
+  exchangeView: () => void
+  useCameraView: () => void
+  pauseLive: () => void
+} | null
+
+type LiveStatus = 'scheduled' | 'live' | 'ended' | 'paused'
+
 export default function LiveConsole() {
   const [isFullScreen, setIsFullScreen] = useState(false)
   const {id} = useParams()
   const [liveDetail, setLiveDetail] = useState<(LiveType & {duration?: string}) | null>(null)
-  const liveRef = useRef<{startLive: () => void, closeLive: () => void, exchangeView: () => void} | null>(null)
+  const liveRef = useRef<LiveRefMethodType>(null)
   const chatRef = useRef<{closeLive: () => void} | null>(null)
   const userInfo = useSelector((state: StoreType) => state.user.info)
   const getDetail = async () => {
@@ -36,7 +45,7 @@ export default function LiveConsole() {
     })
     if(res.success) {
       message.success('开始直播')
-      liveRef?.current?.startLive()
+      getDetail()
     }
   }
   const closeLive = async () => {
@@ -51,11 +60,8 @@ export default function LiveConsole() {
       chatRef?.current?.closeLive()
     }
   }
-  const exchangeView = async () => {
-    liveRef?.current?.exchangeView()
-  }
-  const isShowActionBtn = (status: 'scheduled' | 'live' | 'ended') => {
-    return liveDetail?.status !=='ended' && userInfo._id === liveDetail?.instructorId && liveDetail?.status === status
+  const isShow = (status: LiveStatus | Array<LiveStatus>) => {
+    return  typeof status === 'string' ? liveDetail?.status === status : (liveDetail?.status && status.includes(liveDetail?.status))
   }
   useEffect(() => {
     getDetail()
@@ -71,11 +77,17 @@ export default function LiveConsole() {
             <span className="ml-2 font-[600]">控制台</span>
           </div>
           <Space>
-            <Button onClick={() => setIsFullScreen(!isFullScreen)}>{isFullScreen ? `退出全屏` : '全屏'}</Button>
-            {/* <Button>设置</Button> */}
-            {isShowActionBtn('live') && <Button onClick={exchangeView}>切换画面</Button>}
-            {isShowActionBtn('scheduled') && <Button onClick={startLive}>开始直播</Button>}
-            {isShowActionBtn('live') && <Button onClick={closeLive}>结束直播</Button>}
+              <Button onClick={() => setIsFullScreen(!isFullScreen)}>{isFullScreen ? `退出全屏` : '全屏'}</Button>
+              {/* <Button>设置</Button> */}
+              {
+                userInfo._id === liveDetail?.instructorId && 
+                  <>
+                    {isShow('scheduled') && (
+                      (liveDetail?.status === 'scheduled' && liveDetail?.startTime && liveDetail?.endTime && (dayjs() > dayjs(liveDetail?.startTime).subtract(20, 'minutes') && dayjs() < dayjs(liveDetail?.endTime)))
+                    ) && <Button onClick={startLive}>开始直播</Button>}
+                    {isShow(['live', 'paused']) && <Button onClick={closeLive}>结束直播</Button>}
+                  </>
+              }
           </Space>
         </div>
         <div className="flex-1 h-0 mt-2">
@@ -85,7 +97,7 @@ export default function LiveConsole() {
                 liveDetail,
                 ref: liveRef,
                 getDetail,
-                userInfo
+                userInfo,
               }}></Live>
             </div>
             <div className="message-box border border-gray-100 h-full">

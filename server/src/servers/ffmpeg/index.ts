@@ -4,9 +4,16 @@ import { existsSync, mkdirSync } from "fs";
 import { Consumer, PlainTransport } from "mediasoup/node/lib/types";
 import { join } from "path";
 
+const ffmpegMap = new Map()
+
 export async function startFFmpeg({
   plainTransport, roomId, consumer
 }: {plainTransport: PlainTransport, roomId: string, consumer: Consumer}) {
+  if(ffmpegMap.has(roomId)) {
+    const cur = ffmpegMap.get(roomId)
+    cur.kill()
+    ffmpegMap.delete(roomId)
+  }
   const ffmpegPort = await findAvailableUdpPort(50000, 60000);
   const ffmpegRtcpPort = await findAvailableUdpPort(ffmpegPort + 1);
   const outputDir = join(process.cwd(), `/tmp/hls/${roomId}`)
@@ -60,6 +67,7 @@ export async function startFFmpeg({
 
   ffmpeg.stderr.on('data', (data) => {
     console.log(`FFmpeg data: ${data}`);
+    ffmpegMap.set(roomId, ffmpeg)
   });
 
   ffmpeg.on('error', (err) => {
@@ -72,7 +80,10 @@ export async function startFFmpeg({
     plainTransport.close();
   });
 
-  ffmpeg.on('exit', code => console.log('FFmpeg exit', code));
+  ffmpeg.on('exit', code => {
+    console.log('FFmpeg exit', code)
+    ffmpegMap.delete(roomId)
+  });
   return {
     ffmpeg,
     ffmpegPort,

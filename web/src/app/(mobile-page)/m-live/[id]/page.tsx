@@ -2,8 +2,8 @@
 import LiveVideo from "@/modules/live/live";
 import LiveChat from "@/modules/live/chat";
 import { liveInfoAction } from "@/services/live";
-import { useParams, usePathname } from "next/navigation";
-import {use, useEffect, useState} from 'react';
+import { useParams } from "next/navigation";
+import { useEffect, useState} from 'react';
 // import Cookies from 'js-cookie'
 
 export default function MLive({}) {
@@ -15,7 +15,7 @@ export default function MLive({}) {
     const liveInfo = await liveInfoAction(id)
     setLiveInfo(liveInfo)
   }
-  const onMessage = ({data: {type, token, userInfo}}) => {
+  const onMessage = ({data: {type, userInfo}}) => {
       // if(type === 'token'){
       //   Cookies.set('authorization', token, {
       //     path: pathname,

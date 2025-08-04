@@ -29,6 +29,7 @@ export default function LiveChat({ref, liveDetail}: PropType) {
   const [messageForm] = useForm()
   const { id } = useParams()
   const chatIo = useRef<Socket | null>(null)
+  const msgContainerRef = useRef<HTMLDivElement | null>(null)
   
   chatIo.current = io('http://localhost:3000/ws/chat', {
     query: {
@@ -38,6 +39,7 @@ export default function LiveChat({ref, liveDetail}: PropType) {
   })
   chatIo.current.on('message', (message) => {
     setMessageList(messageList.concat(JSON.parse(message)))
+    scrolltToBottom()
   })
   chatIo.current.on('messageList', (messages) => {
     const list: MessageType[] = []
@@ -45,7 +47,16 @@ export default function LiveChat({ref, liveDetail}: PropType) {
       list.push(JSON.parse(msg))
     }
     setMessageList((pre) => [...list, ...pre])
+    scrolltToBottom()
   })
+  const scrolltToBottom = () => {
+    new Promise(resolve => setTimeout(resolve, 100)).then(() => {
+      msgContainerRef.current?.scrollTo({
+        top: msgContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      })
+    })
+  }
 
   const getMessages = () => {
     chatIo.current?.emit('messageAll')
@@ -78,7 +89,7 @@ export default function LiveChat({ref, liveDetail}: PropType) {
   }, [])
   return (
     <div className="flex flex-col h-full">
-      <div className="w-full h-0 p-4 flex-1 overflow-y-auto">
+      <div ref={msgContainerRef} className="w-full h-0 p-4 flex-1 overflow-y-auto">
         {messageList?.length > 0 && messageList.map((v: MessageType) => {
           return(
             <div key={v.createTime} className={classNames('mt-2', {

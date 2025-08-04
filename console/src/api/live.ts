@@ -8,7 +8,7 @@ export type LiveType = {
   description?: string;
   instructorId: string;
   createUserId?: string;
-  status?: 'scheduled' | 'live' | 'ended';
+  status?: 'scheduled' | 'live' | 'ended' | 'paused';
   startTime: string | Date;
   endTime: string | Date;
   liveStartTime?: string | Date;

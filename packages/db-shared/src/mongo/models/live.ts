@@ -7,7 +7,7 @@ export interface LiveType {
   description: string;
   instructorId: ObjectId;
   createUserId: ObjectId;
-  status: "scheduled" | "live" | "ended";
+  status: "scheduled" | "live" | "paused" | "ended";
   startTime: Date;
   endTime: Date;
   liveStartTime: Date;

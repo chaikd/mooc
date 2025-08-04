@@ -1,48 +1,26 @@
-import { Router } from "mediasoup/node/lib/RouterTypes"
-import { Server } from "socket.io"
-import { createMesiasoupRouter } from "../mediasoup";
+import { redisRequest } from "@mooc/db-shared";
 import { Producer } from "mediasoup-client/lib/Producer";
 import { Transport } from "mediasoup/node/lib/types";
-import {redisRequest} from "@mooc/db-shared";
-import { startFFmpeg } from "../ffmpeg";
-import { createPipeTransport } from "../mediasoup/transcoder";
+import { Server } from "socket.io";
+// import { startFFmpeg } from "../ffmpeg";
+import { clearRoomDbMaps, getRoomDbMaps } from "../mediasoup";
+// import { createPipeTransport } from "../mediasoup/transcoder";
 
 export default async function createLiveIo(ioServer: Server) {
   const liveIo = ioServer.of('/ws/live')
   
-  const mediasoupRouters = new Map()
-  const weakData = new Map()
-  
   liveIo.on('connect', async (socket) => {
     const roomId: string = socket.handshake.query.roomId as string
     await socket.join(roomId)
-    let mediasoupRouter = mediasoupRouters.get(roomId)
-    if (!mediasoupRouter) {
-      try {
-        // 尝试创建 mediasoup router
-        const newMediasoupRouter: Router = await createMesiasoupRouter()
-        mediasoupRouters.set(roomId, newMediasoupRouter)
-        mediasoupRouter = newMediasoupRouter
-      } catch (error) {
-        if (error instanceof Error && error.message) {
-          console.warn(' Mediasoup not available:', error.message)
-        }
-      }
-    }
-    let roomWeakData = weakData.get(roomId)
-    if (!roomWeakData) {
-      roomWeakData = new Map()
-      weakData.set(roomId, roomWeakData)
-      roomWeakData.set('transportsMap', new WeakMap())
-      roomWeakData.set('recvTransportsMap', new WeakMap())
-      roomWeakData.set('rtpCapabilitiesMap', new WeakMap())
-      roomWeakData.set('producerMap', new Map())
-    }
-    const transportsMap = roomWeakData.get('transportsMap')
-    const recvTransportsMap = roomWeakData.get('recvTransportsMap')
-    const rtpCapabilitiesMap = roomWeakData.get('rtpCapabilitiesMap')
-    const producerMap = roomWeakData.get('producerMap')
-    
+    const {
+      transportsMap,
+      recvTransportsMap,
+      rtpCapabilitiesMap,
+      producerMap,
+      consumerMap,
+      // plainTransportMap,
+      mediasoupRouter
+    } = await getRoomDbMaps(roomId)
     const getLiveInfo = async () => {
       const room = liveIo.adapter.rooms.get(roomId);
       const numClients = room ? room.size : 0;
@@ -57,6 +35,7 @@ export default async function createLiveIo(ioServer: Server) {
     socket.emit('connected', { message: 'WebSocket connected successfully', socketId: socket.id })
     await liveIo.to(roomId).emit('liveRoomInfo', await getLiveInfo())
     
+    // transport 链接
     socket.on('getRtpCapabilities', (_, cb) => {
       if (mediasoupRouter) {
         cb({ routerRtpCapabilities: mediasoupRouter.rtpCapabilities });
@@ -64,7 +43,6 @@ export default async function createLiveIo(ioServer: Server) {
         cb({ error: 'Mediasoup not available' });
       }
     });
-
     socket.on('getReport', async ({direction}, cb) => {
       if (!mediasoupRouter) {
         cb({ error: 'Mediasoup not available' });
@@ -96,7 +74,6 @@ export default async function createLiveIo(ioServer: Server) {
         cb({ error: 'Failed to create transport' });
       }
     })
-
     socket.on('transportConnected', async ({transportId, recvTransportId, dtlsParameters, rtpCapabilities}, cb) => {
       try {
         if(transportId) {
@@ -114,51 +91,21 @@ export default async function createLiveIo(ioServer: Server) {
       }
     })
 
-    socket.on('produce', async ({ kind, rtpParameters, appData }, cb) => {
+    // producer 处理
+    socket.on('produce', async ({ kind, rtpParameters, appData }, cb) => { 
       const roomId: string = socket.handshake.query.roomId as string
       const transport = transportsMap.get(socket)
       const producer = await transport?.produce({kind, rtpParameters, appData})
       cb({ id: producer.id })
-      producerMap.set(producer.id, producer)
-      await liveIo.to(roomId).emit('produceReady')
-
-      const {plainTransport, consumer} = await createPipeTransport(mediasoupRouter, producer)
-      const {ffmpegPort, ffmpegRtcpPort} = await startFFmpeg({plainTransport, roomId, consumer})
-      // 连接 PlainTransport到FFmpeg指定的端口
-      await plainTransport.connect({
-        ip: '127.0.0.1',
-        port: ffmpegPort,
-        rtcpPort: ffmpegRtcpPort,
-      });
-      console.log('▶️ mediasoup → FFmpeg RTP/RTCP 发包已开启');
-    
+      producerMap.set(producer.id, {
+        producer,
+        type: appData.type,
+      })
+      await liveIo.to(roomId).emit('newProduce', { producerId: producer.id, kind, appData })
       socket.on('disconnect', () => {
         producerMap.clear()
-        liveIo.to(roomId).emit('produceReady')
+        liveIo.to(roomId).emit('producerClosed', {})
       })
-    })
-
-    socket.on('getProduces', (_, cb) => {
-      const producers = producerMap ? [...producerMap.values()] as Producer[] : []
-      const produces = producers.map((producer) => {
-        return {
-          id: producer.id
-        }
-      })
-      cb({produces})
-    })
-    socket.on('hlsStream', (_, cb) => {
-      const roomId: string = socket.handshake.query.roomId as string
-      cb({ type: 'hls-ready', url: `/hls/${roomId}/playlist_live.m3u8` });
-    })
-    socket.on('produceClose', ({ produceId }, cb) => {
-      const producer = producerMap.get(produceId)
-      if (producer) {
-        producer.close()
-      }
-      producerMap.delete(produceId)
-      liveIo.to(roomId).emit('produceClosed', {produceId})
-      cb()
     })
     socket.on('getConsumer', async ({producerId, rtpCapabilities}, cb) => {
       const rtp = rtpCapabilities ? rtpCapabilities : rtpCapabilitiesMap.get(socket)
@@ -170,6 +117,7 @@ export default async function createLiveIo(ioServer: Server) {
             rtpCapabilities: rtp,
             paused: false
           })
+          consumerMap.set(producerId, consum)
           // await consum.resume()
           cb({
             id: consum.id,
@@ -180,19 +128,79 @@ export default async function createLiveIo(ioServer: Server) {
         }
       }
     })
+    socket.on('closeProducer', ({producerId, appData}) => {
+      const producer = producerMap.get(producerId)?.producer
+      const consumer = consumerMap.get(producerId)
+      consumer?.close()
+      producer?.close()
+      producerMap.delete(producerId)
+      consumerMap.delete(producerId)
+      liveIo.to(roomId).emit('producerClosed', {producerId, appData})
+    })
+    socket.on('getProduces', (_, cb) => {
+      const producers = producerMap ? [...producerMap.values()] as {producer:Producer,type: string}[] : []
+      const produces = producers.map(({producer, type}) => {
+        return {
+          id: producer.id,
+          type
+        }
+      })
+      cb({produces})
+    })
+
+
+
+
+
+
+
+
+    
+
+    // socket.on('produce', async ({ kind, rtpParameters, appData }, cb) => {
+    //   const roomId: string = socket.handshake.query.roomId as string
+    //   const transport = transportsMap.get(socket)
+    //   const producer = await transport?.produce({kind, rtpParameters, appData})
+    //   cb({ id: producer.id })
+    //   producerMap.set(producer.id, producer)
+    //   console.log('producer tigong', producer)
+    //   await liveIo.to(roomId).emit('produceReady')
+
+    //   const curPlainTransport = plainTransportMap.get(roomId)
+    //   const {plainTransport, consumer} = await createPipeTransport(mediasoupRouter, producer, curPlainTransport)
+    //   plainTransportMap.set('roomId', plainTransport)
+    //   const {ffmpegPort, ffmpegRtcpPort} = await startFFmpeg({plainTransport, roomId, consumer})
+    //   // 连接 PlainTransport到FFmpeg指定的端口
+    //   await plainTransport.connect({
+    //     ip: '127.0.0.1',
+    //     port: ffmpegPort,
+    //     rtcpPort: ffmpegRtcpPort,
+    //   });
+    //   console.log('▶️ mediasoup → FFmpeg RTP/RTCP 发包已开启');
+    
+    //   socket.on('disconnect', () => {
+    //     producerMap.clear()
+    //     liveIo.to(roomId).emit('produceClosed')
+    //   })
+    // })
+
+    
+    socket.on('hlsStream', (_, cb) => {
+      const roomId: string = socket.handshake.query.roomId as string
+      cb({ type: 'hls-ready', url: `/hls/${roomId}/playlist_live.m3u8` });
+    })
     socket.on('closeLive', async (_, cb) => {
       const producers = producerMap.values()
       if (producers) {
-        for(const producer of producers) {
-          await producer.close()
+        for(const item of producers) {
+          await item.producer.close()
         }
       }
       producerMap.clear()
       await liveIo.to(roomId).emit('liveEnded')
       await liveIo.to(roomId).socketsLeave(roomId)
       await mediasoupRouter.close()
-      mediasoupRouters.delete(roomId)
-      weakData.delete(roomId)
+      clearRoomDbMaps(roomId)
       cb()
     })
     socket.on('recordUser', async (userInfo) => {

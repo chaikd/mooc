@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "dev": "nodemon",
+    "dev:web": "NODE_OPTIONS='--inspect' PORT=3001 next dev",
+    "dev:server": "nodemon",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
