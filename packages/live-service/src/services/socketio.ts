@@ -9,6 +9,23 @@ type LiveRoomInfo = {
   historyPersonCount?: number
 }
 
+export type UserType = {
+  username: string
+  role: string
+  _id?: string
+  roleInfo?: RoleType
+}
+
+export type RoleType = {
+  _id?: string;
+  name: string,
+  createTime: Date,
+  editUserId?: string,
+  code?: string,
+  createUserId: string
+  permissions: string[]
+}
+
 export type LiveType = {
   _id?: string;
   title: string;
@@ -27,23 +44,6 @@ export type LiveType = {
   maxViewerCount?: number;
   recordEnabled?: boolean;
   recordUrl?: string;
-}
-
-export type UserType = {
-  username: string
-  role: string
-  _id?: string
-  roleInfo?: RoleType
-}
-
-export type RoleType = {
-  _id?: string;
-  name: string,
-  createTime: Date,
-  editUserId?: string,
-  code?: string,
-  createUserId: string
-  permissions: string[]
 }
 
 export function useSocketIo({
@@ -76,6 +76,7 @@ export function useSocketIo({
       resetControlState,
       controlState,
       removeAllConsumer,
+      removeAllProducers,
     } = useMediasoup({
       streamControl
     })
@@ -165,7 +166,7 @@ export function useSocketIo({
         if(appData.type === 'camera') {
           stream = cameraStream
         }
-        stream?.addTrack(track)
+        stream?.current?.addTrack(track)
         resetStreamState(appData.type)
       }
     }
@@ -220,12 +221,19 @@ export function useSocketIo({
       getProduce()
     }
 
-    socket.on('liveEnded', () => {
-      sendTransport.close()
-      recvTransport.close()
-      socket.disconnect()
+    socket.on('liveEnded', async () => {
+      console.log('liveEnded')
+      removeAllConsumer()
+      await sendTransport.close()
+      await recvTransport.close()
+      // socket.disconnect()
       getDetail()
     })
+  }
+
+  function closeCurrentLive() {
+    removeAllProducers()
+    socketio.current?.emit('closeLive')
   }
 
   useEffect(() => {
@@ -245,6 +253,7 @@ export function useSocketIo({
     targetCamera,
     hasCameraStreamTracks,
     controlState,
+    closeCurrentLive,
   }
 }
 

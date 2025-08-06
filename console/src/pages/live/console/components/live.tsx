@@ -1,21 +1,21 @@
-import { LiveType } from "@/api/live";
 import { Space } from "antd";
-import { Ref, useMemo } from "react";
-import { UserType } from "@/api/user";
+import { Ref, useImperativeHandle, useMemo } from "react";
 import { useTimeCount } from "@/utils/date";
 import { useParams } from "react-router";
 import { AudioMutedOutlined, AudioOutlined, CameraOutlined, PauseOutlined, VideoCameraAddOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import classNames from 'classnames';
-import { useMediaStream, useSocketIo } from "@mooc/live-service";
+import { LiveType, useMediaStream, UserType, useSocketIo } from "@mooc/live-service";
 
 type PropType = {
-  ref?: Ref<object>,
+  ref?: Ref<{
+    closeLive: () => void
+  }>,
   userInfo?: UserType,
   liveDetail: (LiveType & {duration?: string}) | null,
   getDetail: () => void,
 }
-export default function Live({liveDetail, userInfo, getDetail}: PropType) {
+export default function Live({liveDetail, userInfo, getDetail, ref}: PropType) {
   const {id} = useParams()
   const [timeCount] = useTimeCount(liveDetail?.liveStartTime as Date)
   const isInLiveTime = useMemo(() => {
@@ -32,6 +32,7 @@ export default function Live({liveDetail, userInfo, getDetail}: PropType) {
 		}
   }, [liveDetail])
   const streamControl = useMediaStream()
+  
   const {
     videoRef,
     audioRef,
@@ -47,6 +48,7 @@ export default function Live({liveDetail, userInfo, getDetail}: PropType) {
     hasRemoteStreamTracks,
     hasCameraStreamTracks,
     controlState,
+    closeCurrentLive,
   } = useSocketIo({
     id,
     userInfo,
@@ -54,6 +56,7 @@ export default function Live({liveDetail, userInfo, getDetail}: PropType) {
     getDetail,
     streamControl
   })
+  
 
   const toTargetMicrophone = () => {
     if(socketIo) {
@@ -70,7 +73,13 @@ export default function Live({liveDetail, userInfo, getDetail}: PropType) {
       targetCamera(socketIo)
     }
   }
-  
+
+  const closeLive = () => {
+    closeCurrentLive()
+  }
+  useImperativeHandle(ref, () => ({
+    closeLive
+  }))
 
   return (
     <div className="video-box relative flex w-full h-full flex-col">
@@ -113,7 +122,10 @@ export default function Live({liveDetail, userInfo, getDetail}: PropType) {
           muted
         ></audio>
       </div>
-      {userInfo?._id === liveDetail?.instructorId && <div className="control w-full bg-black bottom-0 text-white text-center z-2">
+      {(
+        userInfo?._id === liveDetail?.instructorId
+        && liveDetail?.status === 'live'
+        ) && <div className="control w-full bg-black bottom-0 text-white text-center z-2">
         <Space>
           <div className="text-center">
             <span className="text-white p-4 text-lg cursor-pointer" onClick={toTargetMicrophone}>

@@ -1,5 +1,7 @@
 // 根据课程状态获取可用的操作按钮
-export const getActionsByStatus = (status): string[] => {
+export const getActionsByStatus = (status: {
+  statusCode: string
+}): string[] => {
   switch (status.statusCode) {
     case '2':
       return ['编辑', '下架', '删除']

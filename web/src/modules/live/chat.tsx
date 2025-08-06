@@ -1,5 +1,5 @@
 'use client'
-import { LiveType, UserType } from "@mooc/db-shared";
+import { LiveType, UserType } from "@mooc/live-service";
 import { Button, Form, message } from "antd";
 import { useForm } from "antd/es/form/Form";
 import TextArea from "antd/es/input/TextArea";

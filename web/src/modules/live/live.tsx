@@ -1,11 +1,10 @@
 'use client'
-import { useMediaStream } from "@/services/live/live-hook";
-import { useSocketIo } from "@/services/live/socketio";
-import { useTimeCount } from "@/utils/date";
-import { LiveType, UserType } from "@mooc/db-shared";
+import { formatMillisecondsToTime, useTimeCount } from "@/utils/date";
+import { LiveType, useMediaStream, UserType, useSocketIo } from "@mooc/live-service";
 import { Space } from "antd";
 import classNames from "classnames";
-import { useParams } from "next/navigation";
+import dayjs from "dayjs";
+import { useParams, useRouter } from "next/navigation";
 import { useMemo } from "react";
 
 type PropType = {
@@ -19,6 +18,8 @@ export default function LiveVideo({ liveDetail, userInfo, isMobile = false }: Pr
   const {id} = useParams() as {id: string}
   const streamControl = useMediaStream()
   const [timeCount] = useTimeCount(liveDetail?.liveStartTime as Date)
+  const duration = dayjs(liveDetail?.liveEndTime).valueOf() - dayjs(liveDetail?.liveStartTime).valueOf()
+  liveDetail.duration = formatMillisecondsToTime(duration)
   const tipText = useMemo(() => {
     switch(liveDetail?.status) {
 			case 'ended':
@@ -29,6 +30,10 @@ export default function LiveVideo({ liveDetail, userInfo, isMobile = false }: Pr
 				return '直播未开始'
 		}
   }, [liveDetail])
+  const router = useRouter()
+  const getDetail = () => {
+    router.refresh()
+  }
   const {
     videoRef,
     audioRef,
@@ -43,6 +48,7 @@ export default function LiveVideo({ liveDetail, userInfo, isMobile = false }: Pr
     id,
     userInfo,
     liveDetail,
+    getDetail,
     streamControl
   })
   
@@ -84,7 +90,7 @@ export default function LiveVideo({ liveDetail, userInfo, isMobile = false }: Pr
       <div className="info flex justify-between p-2 border-t border-t-gray-100">
         <span className="text-lg font-[600]">{liveDetail?.title}</span>
         <Space>
-          <span>时长：{liveDetail?.status === 'ended' ? liveDetail.duration : timeCount}</span>
+          <span>时长：{liveDetail?.status === 'live' ? timeCount : liveDetail.duration}</span>
           <span>看过：{liveRoomInfo.historyPersonCount || 0}</span>
           <span>在线：{liveRoomInfo.personCount || 0}</span>
         </Space>

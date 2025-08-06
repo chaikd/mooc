@@ -162,7 +162,7 @@ export default async function createLiveIo(ioServer: Server) {
       const producers = producerMap.values()
       if (producers) {
         for(const item of producers) {
-          await item.producer.close()
+          await item?.producer?.close()
         }
       }
       producerMap.clear()
@@ -170,7 +170,9 @@ export default async function createLiveIo(ioServer: Server) {
       await liveIo.to(roomId).socketsLeave(roomId)
       await mediasoupRouter.close()
       clearRoomDbMaps(roomId)
-      cb()
+      if(cb) {
+        cb()
+      }
     })
     socket.on('recordUser', async (userInfo) => {
       await redisRequest.redisClient?.sAdd(`${roomId}:userIds`, userInfo.id)
@@ -187,10 +189,18 @@ export default async function createLiveIo(ioServer: Server) {
     async function executeFFmpag() {
       await new Promise((resolve) => {setTimeout(resolve, 200)}).then(() => {})
       if(producerMap.size <= 0) {
+        console.log('close ffmpeg')
         await stopFFmpeg(roomId)
         return
       }
-      const producerList = [...producerMap.values()]
+      const allProducer = [...producerMap.values()]
+      const camera = allProducer.find(v => v.type === 'camera')
+      const producerList = [...producerMap.values()].filter(item => {
+        return item.type !== 'camera'
+      })
+      if(!producerList.some(v => v.type.startsWith('screen')) && camera) {
+        producerList.push(camera)
+      }
       const plainTransportList = await createPlainTransport(mediasoupRouter, producerList)
       plainTransportMap.set(roomId, plainTransportList)
       startFFmpeg({

@@ -1,6 +1,6 @@
 'use server'
 
-import { UserType } from "@mooc/db-shared"
+import { UserType } from "@mooc/live-service"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"

@@ -14,9 +14,9 @@ import dayjs from "dayjs";
 
 type LiveRefMethodType = {
   closeLive: () => void
-  exchangeView: () => void
-  useCameraView: () => void
-  pauseLive: () => void
+  exchangeView?: () => void
+  useCameraView?: () => void
+  pauseLive?: () => void
 } | null
 
 type LiveStatus = 'scheduled' | 'live' | 'ended' | 'paused'

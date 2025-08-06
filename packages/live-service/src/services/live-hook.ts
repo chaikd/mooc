@@ -1,6 +1,6 @@
 import { getMediaStream } from "@/utils/media/stream";
 import { Consumer, Producer, Transport } from "mediasoup-client/types";
-import { Ref, useEffect, useReducer, useRef, useState } from "react";
+import { RefObject, useEffect, useReducer, useRef, useState } from "react";
 import { Socket } from "socket.io-client";
 
 export type ProducerTypes = 'microphone' | 'camera' | 'screen-video' | 'screen-audio'
@@ -12,18 +12,18 @@ interface ProducerMapItem {
 export type ControlStateNamesType = 'microphoneState' | 'screenState' | 'cameraState'
 
 export interface UseMediaStreamType {
-  videoRef: Ref<HTMLVideoElement | null>,
-  audioRef: Ref<HTMLVideoElement | null>,
-  cameraRef: Ref<HTMLVideoElement | null>,
-  microStream: MediaStream | null,
-  remoteStream: MediaStream | null,
-  cameraStream: MediaStream | null,
+  videoRef: RefObject<HTMLVideoElement | null>,
+  audioRef: RefObject<HTMLVideoElement | null>,
+  cameraRef: RefObject<HTMLVideoElement | null>,
+  microStream: RefObject<MediaStream | null>,
+  remoteStream: RefObject<MediaStream | null>,
+  cameraStream: RefObject<MediaStream | null>,
 }
 
 export function useMediaStream(): UseMediaStreamType {
-  const [remoteStream] = useState<MediaStream | null>(new MediaStream())
-  const [microStream] = useState<MediaStream | null>(new MediaStream())
-  const [cameraStream] = useState<MediaStream | null>(new MediaStream())
+  const remoteStream = useRef<MediaStream | null>(null)
+  const microStream = useRef<MediaStream | null>(null)
+  const cameraStream = useRef<MediaStream | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLVideoElement>(null);
   const cameraRef = useRef<HTMLVideoElement>(null);
@@ -34,15 +34,29 @@ export function useMediaStream(): UseMediaStreamType {
     }
   }
 
+  const initStreams = () => {
+    if (remoteStream.current) {
+      setSrcObject(remoteStream.current, videoRef.current)
+    }
+    if(microStream.current) {
+      setSrcObject(microStream.current, audioRef.current)
+    }
+    if(cameraStream.current) {
+      setSrcObject(cameraStream.current, cameraRef.current)
+    }
+  }
+
   useEffect(() => {
-    if (remoteStream) {
-      setSrcObject(remoteStream, videoRef.current)
-    }
-    if(microStream) {
-      setSrcObject(microStream, audioRef.current)
-    }
-    if(cameraStream) {
-      setSrcObject(cameraStream, cameraRef.current)
+    remoteStream.current = new MediaStream()
+    microStream.current = new MediaStream()
+    cameraStream.current = new MediaStream()
+    new Promise(resolve => setTimeout(resolve, 100)).then(() => {
+      initStreams()
+    })
+    return () => {
+      remoteStream.current = null
+      microStream.current = null
+      cameraStream.current = null
     }
   }, []);
 
@@ -98,15 +112,17 @@ export function useMediasoup({
 
   const resetStreamState = (type: ProducerTypes | undefined) => {
     new Promise(resolve => {setTimeout(resolve, 500)}).then(() => {
-      if(type && type === 'camera' && cameraStream) {
-        setHasCameraStreamTracksmTracks(cameraStream?.getTracks().length > 0)
+    console.log(type)
+      if(type && type === 'camera' && cameraStream?.current) {
+    console.log(type, cameraStream?.current?.getTracks())
+        setHasCameraStreamTracksmTracks(cameraStream?.current?.getTracks().length > 0)
       }
-      if(type?.startsWith('screen') && remoteStream) {
-        setHasRemoteStreamTracks(remoteStream?.getTracks().length > 0)
+      if(type?.startsWith('screen') && remoteStream?.current) {
+        setHasRemoteStreamTracks(remoteStream?.current?.getTracks().length > 0)
       }
-      if(type === 'microphone') {
+      if(type === 'microphone' && microStream?.current) {
         if(microStream) {
-          setMicrophoneTrack(microStream?.getTracks().length > 0)
+          setMicrophoneTrack(microStream?.current?.getTracks().length > 0)
         }
       }
     })
@@ -127,16 +143,7 @@ export function useMediasoup({
 
   const targetMicrophone = async (socketIo: Socket) => {
     if(microphoneTrack) {
-      const producerItem = [...producersMap.current.values()].find(v => {
-        return v.type === 'microphone'
-      })
-      const producer = producerItem?.producer
-      producer?.track?.stop()
-      setMicrophoneTrack(false)
-      if(producer) {
-        producer.close()
-        producersMap.current.delete(producer.id)
-      }
+      removeProducer('microphone')
       resetControlState({
         type: 'microphoneState',
         stateType: false
@@ -150,12 +157,7 @@ export function useMediasoup({
 
   const targetShareScreen = async (socketIo: Socket) => {
     if(hasRemoteStreamTracks) {
-      const producers = [...producersMap.current.values()].filter(item => item.type.startsWith('screen'))
-      producers.forEach(item => {
-        item.producer.track?.stop()
-        item.producer.close()
-        producersMap.current.delete(item.producer.id)
-      })
+      removeProducer('screen')
       resetControlState({
         type: 'screenState',
         stateType: false
@@ -172,12 +174,7 @@ export function useMediasoup({
 
   const targetCamera = async (socketIo: Socket) => {
     if(hasCameraStreamTracks) {
-      const item = [...producersMap.current.values()].find(item => item.type === 'camera')
-      item?.producer?.track?.stop()
-      item?.producer?.close()
-      if(item?.producer.id) {
-        producersMap.current.delete(item?.producer.id)
-      }
+      removeProducer('camera')
       resetControlState({
         type: 'cameraState',
         stateType: false
@@ -205,15 +202,34 @@ export function useMediasoup({
       });
     }
   }
+
+  const removeProducer = (type: ProducerTypes | 'screen') => {
+    const producers = [...producersMap.current.values()].filter(item => item.type.startsWith(type))
+    producers.forEach(item => {
+      const stream = type && getStream(item.type)
+      if(item.producer.track) {
+        item.producer.track?.stop()
+        stream?.current?.removeTrack(item.producer.track)
+      }
+      item.producer.close()
+      producersMap.current.delete(item.producer.id)
+    })
+  }
+
+  const removeAllProducers = () => {
+    [...producersMap.current.values()].forEach(item => {
+      removeProducer(item.type)
+    })
+  }
   
-  const removeConsumer = async (producerId: string) => {
+  const removeConsumer = (producerId: string) => {
     const { consumer, type } = consumersMap.current.get(producerId) || {};
-    consumer?.close()
     const stream = type && getStream(type)
     if(consumer?.track) {
       consumer?.track.stop()
-      stream?.removeTrack(consumer?.track)
+      stream?.current?.removeTrack(consumer?.track)
     }
+    consumer?.close()
     resetStreamState(type)
     consumersMap.current.delete(producerId)
   }
@@ -224,7 +240,7 @@ export function useMediasoup({
     })
   }
 
-  const addConsumer = async (producerId: string, data: {
+  const addConsumer = (producerId: string, data: {
       consumer: Consumer, 
       type: ProducerTypes
     }) => {
@@ -249,5 +265,6 @@ export function useMediasoup({
     addConsumer,
     controlState,
     removeAllConsumer,
+    removeAllProducers,
   }
 }
