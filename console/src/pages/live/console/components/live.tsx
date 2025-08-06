@@ -1,14 +1,13 @@
 import { LiveType } from "@/api/live";
 import { Space } from "antd";
 import { Ref, useMemo } from "react";
-import { useSocketIo } from "../services/socketio";
 import { UserType } from "@/api/user";
 import { useTimeCount } from "@/utils/date";
 import { useParams } from "react-router";
 import { AudioMutedOutlined, AudioOutlined, CameraOutlined, PauseOutlined, VideoCameraAddOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
-import { useMediaStream } from "../services/live-hook";
 import classNames from 'classnames';
+import { useMediaStream, useSocketIo } from "@mooc/live-service";
 
 type PropType = {
   ref?: Ref<object>,
@@ -21,6 +20,16 @@ export default function Live({liveDetail, userInfo, getDetail}: PropType) {
   const [timeCount] = useTimeCount(liveDetail?.liveStartTime as Date)
   const isInLiveTime = useMemo(() => {
     return (liveDetail?.status === 'scheduled' && liveDetail?.startTime && liveDetail?.endTime && (dayjs() > dayjs(liveDetail?.startTime).subtract(20, 'minutes') && dayjs() < dayjs(liveDetail?.endTime)))
+  }, [liveDetail])
+  const tipText = useMemo(() => {
+    switch(liveDetail?.status) {
+			case 'ended':
+				return '直播结束'
+			case 'live':
+				return '直播暂停'
+			case 'scheduled':
+				return '直播未开始'
+		}
   }, [liveDetail])
   const streamControl = useMediaStream()
   const {
@@ -37,6 +46,7 @@ export default function Live({liveDetail, userInfo, getDetail}: PropType) {
     socketIo,
     hasRemoteStreamTracks,
     hasCameraStreamTracks,
+    controlState,
   } = useSocketIo({
     id,
     userInfo,
@@ -72,9 +82,9 @@ export default function Live({liveDetail, userInfo, getDetail}: PropType) {
           <span>在线：{liveRoomInfo.personCount || 0}</span>
         </Space>
       </div>
-      {(liveDetail?.status && ['ended', 'paused'].includes(liveDetail?.status)) && <div className="absolute left-0 top-0 w-full h-full text-center pt-30 z-10">
+      {(!hasRemoteStreamTracks && !hasCameraStreamTracks && !microphoneTrack) && <div className="absolute left-0 top-0 w-full h-full text-center pt-30 z-1">
         <span className="font-[600] text-xl">
-          {liveDetail?.status === 'ended' ? '直播结束' : '直播暂停'}
+          {tipText}
         </span>
       </div>}
       <div className="tv-box relative w-full bg-gray-100 flex-1 h-0">
@@ -89,7 +99,7 @@ export default function Live({liveDetail, userInfo, getDetail}: PropType) {
         ></video>
         <video 
           ref={cameraRef}
-          className={classNames('w-1/12 h-1/12 absolute bottom-0 right-0', {
+          className={classNames('w-1/6 h-1/6 absolute bottom-0 right-0', {
             'hidden': !hasCameraStreamTracks
           })}
           autoPlay
@@ -103,30 +113,30 @@ export default function Live({liveDetail, userInfo, getDetail}: PropType) {
           muted
         ></audio>
       </div>
-      {userInfo?._id === liveDetail?.instructorId && <div className="control w-full bg-black bottom-0 text-white text-center">
+      {userInfo?._id === liveDetail?.instructorId && <div className="control w-full bg-black bottom-0 text-white text-center z-2">
         <Space>
           <div className="text-center">
             <span className="text-white p-4 text-lg cursor-pointer" onClick={toTargetMicrophone}>
-              {microphoneTrack && <AudioOutlined /> || <AudioMutedOutlined />}
+              {(controlState.microphoneState && <AudioOutlined />) || <AudioMutedOutlined />}
             </span>
             <p>
-              {microphoneTrack ? '关闭麦克风' : '麦克风'}
+              {controlState.microphoneState ? '关闭麦克风' : '麦克风'}
             </p>
           </div>
           <div className="text-center">
             <span className="text-white p-4 text-lg cursor-pointer" onClick={toShareScreen}>
-              {hasRemoteStreamTracks && <PauseOutlined /> || <VideoCameraAddOutlined />}
+              {(controlState.screenState && <PauseOutlined />) || <VideoCameraAddOutlined />}
             </span>
             <p>
-              {hasRemoteStreamTracks ? '暂停共享' : '共享屏幕'}
+              {controlState.screenState ? '暂停共享' : '共享屏幕'}
             </p>
           </div>
           <div className="text-center">
             <span className="text-white p-4 text-lg cursor-pointer" onClick={toTargetCamera}>
-              {hasCameraStreamTracks && <PauseOutlined /> || <CameraOutlined />}
+              {(controlState.cameraState && <PauseOutlined />) || <CameraOutlined />}
             </span>
             <p>
-              {hasCameraStreamTracks ? '关闭摄像头' : '摄像头'}
+              {controlState.cameraState ? '关闭摄像头' : '摄像头'}
             </p>
           </div>
         </Space>

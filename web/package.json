@@ -16,6 +16,7 @@
   "dependencies": {
     "@ant-design/nextjs-registry": "^1.0.2",
     "@mooc/db-shared": "workspace:^",
+    "@mooc/live-service": "workspace:^",
     "next": "15.4.2-canary.9"
   },
   "devDependencies": {

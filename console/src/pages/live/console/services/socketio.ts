@@ -4,7 +4,7 @@ import { AppData, Consumer, Device, DtlsParameters, Producer, RtpCapabilities, T
 import { useEffect, useRef, useState } from "react"
 import { io, Socket } from "socket.io-client"
 import { generateUUID } from "./consumer-id"
-import { ProducerTypes, useMediasoup, UseMediaStreamType } from "./live-hook"
+import { ControlStateNamesType, ProducerTypes, useMediasoup, UseMediaStreamType } from "./live-hook"
 
 type LiveRoomInfo = {
   personCount?: number
@@ -37,6 +37,10 @@ export function useSocketIo({
       removeConsumer,
       hasRemoteStreamTracks,
       hasCameraStreamTracks,
+      resetStreamState,
+      resetControlState,
+      controlState,
+      removeAllConsumer,
     } = useMediasoup({
       streamControl
     })
@@ -103,6 +107,10 @@ export function useSocketIo({
     })
     sendTransport.on('produce', ({ kind, rtpParameters, appData }, cb: (obj: {id: string}) => void) => {
       socket.emit('produce', { transportId: sendTransport.id, recvTransportId: recvTransport.id,kind, rtpParameters, appData, rtpCapabilities: device.rtpCapabilities  }, ({id}: {id: string}) => cb({id}))
+      resetControlState({
+        type: (appData.type as string).split('-')[0] + 'State' as ControlStateNamesType,
+        stateType: true
+      })
     })
 
     const addTrackToStream = async ({producerId, appData}: {
@@ -112,18 +120,18 @@ export function useSocketIo({
     }) => {
       const track = await parseConsumer(producerId, appData)
       if (track) {
+        let stream
         if (appData.type === 'microphone') {
-          microStream?.addTrack(track)
-          return
+          stream = microStream
         }
         if (appData.type?.startsWith('screen')) {
-          remoteStream?.addTrack(track)
-          return 
+          stream = remoteStream
         }
         if(appData.type === 'camera') {
-          cameraStream?.addTrack(track)
-          return
+          stream = cameraStream
         }
+        stream?.addTrack(track)
+        resetStreamState(appData.type)
       }
     }
     
@@ -140,7 +148,11 @@ export function useSocketIo({
       return localConsumer.track
     }
     socket.on('producerClosed', async ({producerId}) => {
-      await removeConsumer(producerId)
+      if(producerId) {
+        await removeConsumer(producerId)
+      } else {
+        removeAllConsumer()
+      }
     })
 
     const produceReadyFn = () => {
@@ -197,6 +209,7 @@ export function useSocketIo({
     targetShareScreen,
     targetCamera,
     hasCameraStreamTracks,
+    controlState,
   }
 }
 

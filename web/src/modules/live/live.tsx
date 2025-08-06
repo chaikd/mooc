@@ -6,17 +6,29 @@ import { LiveType, UserType } from "@mooc/db-shared";
 import { Space } from "antd";
 import classNames from "classnames";
 import { useParams } from "next/navigation";
+import { useMemo } from "react";
 
 type PropType = {
   liveDetail: (LiveType & {duration?: string}) | null
   userInfo?: UserType | undefined
+  isMobile?: boolean
   // refrashPage: () => void
 }
 
-export default function LiveVideo({ liveDetail, userInfo }: PropType) {
+export default function LiveVideo({ liveDetail, userInfo, isMobile = false }: PropType) {
   const {id} = useParams() as {id: string}
   const streamControl = useMediaStream()
   const [timeCount] = useTimeCount(liveDetail?.liveStartTime as Date)
+  const tipText = useMemo(() => {
+    switch(liveDetail?.status) {
+			case 'ended':
+				return '直播结束'
+			case 'live':
+				return '直播暂停'
+			case 'scheduled':
+				return '直播未开始'
+		}
+  }, [liveDetail])
   const {
     videoRef,
     audioRef,
@@ -24,6 +36,7 @@ export default function LiveVideo({ liveDetail, userInfo }: PropType) {
   } = streamControl
   const {
     liveRoomInfo,
+    microphoneTrack,
     hasRemoteStreamTracks,
     hasCameraStreamTracks,
   } = useSocketIo({
@@ -36,8 +49,10 @@ export default function LiveVideo({ liveDetail, userInfo }: PropType) {
 
   return (
     <div className="video-box relative flex w-full h-full flex-col">
-      {liveDetail?.status === 'ended' && <div className="absolute left-0 top-0 w-full h-full text-center pt-20">
-        <span className="font-[600] text-xl">直播已结束</span>
+      {(!hasRemoteStreamTracks && !hasCameraStreamTracks && !microphoneTrack) && <div className="absolute left-0 top-0 w-full h-full text-center pt-20 z-1">
+        <span className="font-[600] text-xl">
+          {tipText}
+        </span>
       </div>}
       <div className="relative w-full bg-gray-100 flex-1 h-0">
         <video
@@ -48,10 +63,11 @@ export default function LiveVideo({ liveDetail, userInfo }: PropType) {
           autoPlay
           muted
           playsInline
+          controls={isMobile}
         ></video>
         <video 
           ref={cameraRef}
-          className={classNames('w-1/12 h-1/12 absolute bottom-0 right-0', {
+          className={classNames('w-1/6 h-1/6 absolute bottom-0 right-0', {
             'hidden': !hasCameraStreamTracks
           })}
           autoPlay

@@ -2,9 +2,9 @@ import { redisRequest } from "@mooc/db-shared";
 import { Producer } from "mediasoup-client/lib/Producer";
 import { Transport } from "mediasoup/node/lib/types";
 import { Server } from "socket.io";
-// import { startFFmpeg } from "../ffmpeg";
+import { isFFmpeg, startFFmpeg, stopFFmpeg } from "../ffmpeg";
 import { clearRoomDbMaps, getRoomDbMaps } from "../mediasoup";
-// import { createPipeTransport } from "../mediasoup/transcoder";
+import { createPlainTransport } from "../mediasoup/transcoder";
 
 export default async function createLiveIo(ioServer: Server) {
   const liveIo = ioServer.of('/ws/live')
@@ -18,7 +18,7 @@ export default async function createLiveIo(ioServer: Server) {
       rtpCapabilitiesMap,
       producerMap,
       consumerMap,
-      // plainTransportMap,
+      plainTransportMap,
       mediasoupRouter
     } = await getRoomDbMaps(roomId)
     const getLiveInfo = async () => {
@@ -33,7 +33,6 @@ export default async function createLiveIo(ioServer: Server) {
 
     // 发送连接确认消息
     socket.emit('connected', { message: 'WebSocket connected successfully', socketId: socket.id })
-    await liveIo.to(roomId).emit('liveRoomInfo', await getLiveInfo())
     
     // transport 链接
     socket.on('getRtpCapabilities', (_, cb) => {
@@ -101,8 +100,12 @@ export default async function createLiveIo(ioServer: Server) {
         producer,
         type: appData.type,
       })
+      await executeFFmpag()
       await liveIo.to(roomId).emit('newProduce', { producerId: producer.id, kind, appData })
       socket.on('disconnect', () => {
+        [...producerMap.values()].forEach((item) => {
+          item.producer.close()
+        })
         producerMap.clear()
         liveIo.to(roomId).emit('producerClosed', {})
       })
@@ -128,13 +131,14 @@ export default async function createLiveIo(ioServer: Server) {
         }
       }
     })
-    socket.on('closeProducer', ({producerId, appData}) => {
+    socket.on('closeProducer', async ({producerId, appData}) => {
       const producer = producerMap.get(producerId)?.producer
       const consumer = consumerMap.get(producerId)
       consumer?.close()
       producer?.close()
       producerMap.delete(producerId)
       consumerMap.delete(producerId)
+      await executeFFmpag()
       liveIo.to(roomId).emit('producerClosed', {producerId, appData})
     })
     socket.on('getProduces', (_, cb) => {
@@ -147,47 +151,12 @@ export default async function createLiveIo(ioServer: Server) {
       })
       cb({produces})
     })
-
-
-
-
-
-
-
-
-    
-
-    // socket.on('produce', async ({ kind, rtpParameters, appData }, cb) => {
-    //   const roomId: string = socket.handshake.query.roomId as string
-    //   const transport = transportsMap.get(socket)
-    //   const producer = await transport?.produce({kind, rtpParameters, appData})
-    //   cb({ id: producer.id })
-    //   producerMap.set(producer.id, producer)
-    //   console.log('producer tigong', producer)
-    //   await liveIo.to(roomId).emit('produceReady')
-
-    //   const curPlainTransport = plainTransportMap.get(roomId)
-    //   const {plainTransport, consumer} = await createPipeTransport(mediasoupRouter, producer, curPlainTransport)
-    //   plainTransportMap.set('roomId', plainTransport)
-    //   const {ffmpegPort, ffmpegRtcpPort} = await startFFmpeg({plainTransport, roomId, consumer})
-    //   // 连接 PlainTransport到FFmpeg指定的端口
-    //   await plainTransport.connect({
-    //     ip: '127.0.0.1',
-    //     port: ffmpegPort,
-    //     rtcpPort: ffmpegRtcpPort,
-    //   });
-    //   console.log('▶️ mediasoup → FFmpeg RTP/RTCP 发包已开启');
-    
-    //   socket.on('disconnect', () => {
-    //     producerMap.clear()
-    //     liveIo.to(roomId).emit('produceClosed')
-    //   })
-    // })
-
     
     socket.on('hlsStream', (_, cb) => {
       const roomId: string = socket.handshake.query.roomId as string
-      cb({ type: 'hls-ready', url: `/hls/${roomId}/playlist_live.m3u8` });
+      if(isFFmpeg(roomId)) {
+        cb({ type: 'hls-ready', url: `/hls/${roomId}/playlist_live.m3u8?v=${new Date().getTime()}` });
+      }
     })
     socket.on('closeLive', async (_, cb) => {
       const producers = producerMap.values()
@@ -212,7 +181,45 @@ export default async function createLiveIo(ioServer: Server) {
       transportsMap.delete(socket)
       recvTransportsMap.delete(socket)
       rtpCapabilitiesMap.delete(socket)
+      await liveIo.to(roomId).emit('liveRoomInfo', await getLiveInfo())
     })
+    //  执行ffmpag
+    async function executeFFmpag() {
+      await new Promise((resolve) => {setTimeout(resolve, 200)}).then(() => {})
+      if(producerMap.size <= 0) {
+        await stopFFmpeg(roomId)
+        return
+      }
+      const producerList = [...producerMap.values()]
+      const plainTransportList = await createPlainTransport(mediasoupRouter, producerList)
+      plainTransportMap.set(roomId, plainTransportList)
+      startFFmpeg({
+        plainTransportList,
+        roomId,
+        onStart: () => {
+          // 连接 PlainTransport到FFmpeg指定的端口
+          plainTransportList.forEach(item => {
+            item.plainTransport.connect({
+              ip: '127.0.0.1',
+              port: item.ffmpegPort,
+              rtcpPort: item.ffmpegRtcpPort,
+            });
+          })
+        },
+        onOpening: () => {
+          socket.to(roomId).emit('ffmpegReady')
+        },
+        onExit: () => {
+          plainTransportList.forEach(item => {
+            item.consumer.close()
+            item.plainTransport.close();
+          })
+          plainTransportMap.delete(roomId)
+          liveIo.to(roomId).emit('ffmpegStoped')
+        }
+      })
+      console.log('▶️ mediasoup → FFmpeg RTP/RTCP 发包已开启');
+    }
   })
   return liveIo
 }

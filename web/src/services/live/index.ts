@@ -1,13 +1,13 @@
 'use server'
 
 import { UserType } from "@mooc/db-shared"
-import request from "../request"
+import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { revalidatePath } from "next/cache"
+import request from "../request"
 
 export async function liveInfoAction(id) {
-  return request(`/api/live/${id}`).then(res => {
+  return request.get(`/api/live/${id}`).then(res => {
     return res?.data
   })
 }

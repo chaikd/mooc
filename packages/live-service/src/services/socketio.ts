@@ -1,24 +1,62 @@
-import { generateUUID } from "@/utils/uuid"
-import { LiveType, UserType } from "@mooc/db-shared"
-import { AppData, Consumer, Device, DtlsParameters, RtpCapabilities, Transport, TransportOptions } from "mediasoup-client/types"
+import { AppData, Consumer, Device, DtlsParameters, Producer, RtpCapabilities, Transport, TransportOptions } from "mediasoup-client/types"
 import { useEffect, useRef, useState } from "react"
 import { io, Socket } from "socket.io-client"
-import { ProducerTypes, useMediasoup, UseMediaStreamType } from "./live-hook"
+import { generateUUID } from "./consumer-id"
+import { ControlStateNamesType, ProducerTypes, useMediasoup, UseMediaStreamType } from "./live-hook"
 
 type LiveRoomInfo = {
   personCount?: number
   historyPersonCount?: number
 }
 
+export type LiveType = {
+  _id?: string;
+  title: string;
+  description?: string;
+  instructorId: string;
+  createUserId?: string;
+  status?: 'scheduled' | 'live' | 'ended' | 'paused';
+  startTime: string | Date;
+  endTime: string | Date;
+  liveStartTime?: string | Date;
+  liveEndTime?: string | Date;
+  createTime?: string | Date;
+  liveDataId?: string;
+  roomToken?: string;
+  chatEnabled?: boolean;
+  maxViewerCount?: number;
+  recordEnabled?: boolean;
+  recordUrl?: string;
+}
+
+export type UserType = {
+  username: string
+  role: string
+  _id?: string
+  roleInfo?: RoleType
+}
+
+export type RoleType = {
+  _id?: string;
+  name: string,
+  createTime: Date,
+  editUserId?: string,
+  code?: string,
+  createUserId: string
+  permissions: string[]
+}
+
 export function useSocketIo({
     id,
     userInfo,
     liveDetail,
+    getDetail,
     streamControl,
   }: {
     id: string | undefined,
     userInfo?: UserType,
     liveDetail?: (LiveType & {duration?: string}) | null,
+    getDetail: () => void,
     streamControl: UseMediaStreamType
   }) {
   const socketio = useRef<Socket | null>(null)
@@ -35,6 +73,8 @@ export function useSocketIo({
       hasRemoteStreamTracks,
       hasCameraStreamTracks,
       resetStreamState,
+      resetControlState,
+      controlState,
       removeAllConsumer,
     } = useMediasoup({
       streamControl
@@ -59,7 +99,7 @@ export function useSocketIo({
     const socket = socketio.current
 
     socket.on('connected', () => {
-      let user: Partial<UserType> = {
+      let user = {
         ...userInfo,
         role: userInfo?.roleInfo?.code,
       }
@@ -100,9 +140,12 @@ export function useSocketIo({
     recvTransport.on('connect', ({ dtlsParameters }: { dtlsParameters: DtlsParameters }, cb: () => void) => {
       socket.emit('transportConnected', { recvTransportId: recvTransport.id, dtlsParameters }, cb);
     })
-    // eslint-disable-next-line no-unused-vars
     sendTransport.on('produce', ({ kind, rtpParameters, appData }, cb: (obj: {id: string}) => void) => {
       socket.emit('produce', { transportId: sendTransport.id, recvTransportId: recvTransport.id,kind, rtpParameters, appData, rtpCapabilities: device.rtpCapabilities  }, ({id}: {id: string}) => cb({id}))
+      resetControlState({
+        type: (appData.type as string).split('-')[0] + 'State' as ControlStateNamesType,
+        stateType: true
+      })
     })
 
     const addTrackToStream = async ({producerId, appData}: {
@@ -122,7 +165,7 @@ export function useSocketIo({
         if(appData.type === 'camera') {
           stream = cameraStream
         }
-        stream?.current?.addTrack(track)
+        stream?.addTrack(track)
         resetStreamState(appData.type)
       }
     }
@@ -157,7 +200,7 @@ export function useSocketIo({
           const { produces } = await getProduces(socket)
           produces.forEach(async item => {
             if(item) {
-              const producerId = item?.id
+              const producerId = item.producer.id
               if(item.type) {
                 addTrackToStream({
                   producerId,
@@ -172,7 +215,7 @@ export function useSocketIo({
       }
     }
 
-    if(liveDetail?.status === 'live') {
+    if(liveDetail?.status === 'live' && userInfo?._id !== liveDetail.instructorId) {
       const getProduce = produceReadyFn()
       getProduce()
     }
@@ -181,6 +224,7 @@ export function useSocketIo({
       sendTransport.close()
       recvTransport.close()
       socket.disconnect()
+      getDetail()
     })
   }
 
@@ -189,7 +233,7 @@ export function useSocketIo({
     return () => {
       socketio.current?.disconnect()
     }
-  }, [id, liveDetail])
+  }, [id])
 
   return {
     liveRoomInfo,
@@ -200,6 +244,7 @@ export function useSocketIo({
     targetShareScreen,
     targetCamera,
     hasCameraStreamTracks,
+    controlState,
   }
 }
 
@@ -211,7 +256,7 @@ export function getReport(socket: Socket, direction: 'send' | 'recv') {
   return requestWs(socket, 'getReport', {direction})
 }
 
-export function getProduces(socket: Socket): Promise<{produces: {id: string, type: ProducerTypes}[]}> {
+export function getProduces(socket: Socket): Promise<{produces: {producer: Producer, type: ProducerTypes}[]}> {
   return requestWs(socket, 'getProduces')
 }
 

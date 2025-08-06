@@ -28,6 +28,7 @@
     "vite-plugin-eslint": "^1.8.1"
   },
   "dependencies": {
+    "@mooc/live-service": "workspace:^",
     "@reduxjs/toolkit": "^2.8.2",
     "dayjs": "^1.11.13",
     "qiniu-js": "4.0.0-beta.6",

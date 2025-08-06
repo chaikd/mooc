@@ -1,18 +1,18 @@
 'use client'
 import LiveVideo from "@/modules/live/live";
 import LiveChat from "@/modules/live/chat";
-import { liveInfoAction } from "@/services/live";
 import { useParams } from "next/navigation";
 import { useEffect, useState} from 'react';
-// import Cookies from 'js-cookie'
+import request from "@/services/request";
 
 export default function MLive({}) {
   const {id} = useParams()
-  // const pathname = usePathname()
   const [liveInfo, setLiveInfo] = useState(undefined)
   const [userInfo, setUserInfo] = useState(undefined)
   const getCourseInfo = async () => {
-    const liveInfo = await liveInfoAction(id)
+    const liveInfo = await request.get(`/api/live/${id}`).then(res => {
+      return res?.data
+    })
     setLiveInfo(liveInfo)
   }
   const onMessage = ({data: {type, userInfo}}) => {
@@ -29,6 +29,7 @@ export default function MLive({}) {
       }
     }
   useEffect(() => {
+    console.log('in mobile-page')
     getCourseInfo()
     window.addEventListener('message', onMessage)
     window.parent.postMessage({
@@ -36,15 +37,15 @@ export default function MLive({}) {
     }, '*');
     return () => {
       window.removeEventListener('message', onMessage)
-      // Cookies.remove('authorization')
     }
   }, [])
   return (
     <div className="flex flex-col h-screen">
-      <div className="live-container">
+      <div className="live-container min-h-[250px]">
         <LiveVideo {...{
           liveDetail: liveInfo,
-          userInfo
+          userInfo,
+          isMobile: true
         }}></LiveVideo>
       </div>
       <div className="chat-container flex-1 h-0">

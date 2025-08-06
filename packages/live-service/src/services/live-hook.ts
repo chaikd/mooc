@@ -1,7 +1,6 @@
-'use client'
 import { getMediaStream } from "@/utils/media/stream";
 import { Consumer, Producer, Transport } from "mediasoup-client/types";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { Ref, useEffect, useReducer, useRef, useState } from "react";
 import { Socket } from "socket.io-client";
 
 export type ProducerTypes = 'microphone' | 'camera' | 'screen-video' | 'screen-audio'
@@ -10,19 +9,21 @@ interface ProducerMapItem {
   producer: Producer
 }
 
+export type ControlStateNamesType = 'microphoneState' | 'screenState' | 'cameraState'
+
 export interface UseMediaStreamType {
-  videoRef: RefObject<HTMLVideoElement | null>,
-  audioRef: RefObject<HTMLVideoElement | null>,
-  cameraRef: RefObject<HTMLVideoElement | null>,
-  microStream: RefObject<MediaStream | null>,
-  remoteStream: RefObject<MediaStream | null>,
-  cameraStream: RefObject<MediaStream | null>,
+  videoRef: Ref<HTMLVideoElement | null>,
+  audioRef: Ref<HTMLVideoElement | null>,
+  cameraRef: Ref<HTMLVideoElement | null>,
+  microStream: MediaStream | null,
+  remoteStream: MediaStream | null,
+  cameraStream: MediaStream | null,
 }
 
 export function useMediaStream(): UseMediaStreamType {
-  const remoteStream = useRef<MediaStream | null>(null)
-  const microStream = useRef<MediaStream | null>(null)
-  const cameraStream = useRef<MediaStream | null>(null)
+  const [remoteStream] = useState<MediaStream | null>(new MediaStream())
+  const [microStream] = useState<MediaStream | null>(new MediaStream())
+  const [cameraStream] = useState<MediaStream | null>(new MediaStream())
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLVideoElement>(null);
   const cameraRef = useRef<HTMLVideoElement>(null);
@@ -32,29 +33,16 @@ export function useMediaStream(): UseMediaStreamType {
       ref.srcObject = stream
     }
   }
-  const initStreams = () => {
-    if (remoteStream.current) {
-      setSrcObject(remoteStream.current, videoRef.current)
-    }
-    if(microStream.current) {
-      setSrcObject(microStream.current, audioRef.current)
-    }
-    if(cameraStream.current) {
-      setSrcObject(cameraStream.current, cameraRef.current)
-    }
-  }
 
   useEffect(() => {
-    remoteStream.current = new MediaStream()
-    microStream.current = new MediaStream()
-    cameraStream.current = new MediaStream()
-    new Promise(resolve => setTimeout(resolve, 100)).then(() => {
-      initStreams()
-    })
-    return () => {
-      remoteStream.current = null
-      microStream.current = null
-      cameraStream.current = null
+    if (remoteStream) {
+      setSrcObject(remoteStream, videoRef.current)
+    }
+    if(microStream) {
+      setSrcObject(microStream, audioRef.current)
+    }
+    if(cameraStream) {
+      setSrcObject(cameraStream, cameraRef.current)
     }
   }, []);
 
@@ -65,6 +53,20 @@ export function useMediaStream(): UseMediaStreamType {
     microStream,
     remoteStream,
     cameraStream,
+  }
+}
+
+function stateReducer(state: {
+  microphoneState: boolean,
+  screenState: boolean,
+  cameraState: boolean,
+}, action: {
+  type: ControlStateNamesType,
+  stateType: boolean
+}) {
+  return {
+    ...state,
+    [action.type]: action.stateType
   }
 }
 
@@ -80,6 +82,11 @@ export function useMediasoup({
   const [microphoneTrack, setMicrophoneTrack] = useState(false)
   const [hasRemoteStreamTracks, setHasRemoteStreamTracks] = useState(false)
   const [hasCameraStreamTracks, setHasCameraStreamTracksmTracks] = useState(false)
+  const [controlState, dispatchState] = useReducer(stateReducer, {
+    microphoneState: false,
+    screenState: false,
+    cameraState: false
+  })
   const {
     remoteStream,
     microStream,
@@ -92,43 +99,66 @@ export function useMediasoup({
   const resetStreamState = (type: ProducerTypes | undefined) => {
     new Promise(resolve => {setTimeout(resolve, 500)}).then(() => {
       if(type && type === 'camera' && cameraStream) {
-        setHasCameraStreamTracksmTracks(cameraStream?.current?.getTracks().length > 0)
+        setHasCameraStreamTracksmTracks(cameraStream?.getTracks().length > 0)
       }
       if(type?.startsWith('screen') && remoteStream) {
-        setHasRemoteStreamTracks(remoteStream?.current?.getTracks().length > 0)
+        setHasRemoteStreamTracks(remoteStream?.getTracks().length > 0)
       }
       if(type === 'microphone') {
-        setMicrophoneTrack(microStream?.current?.getTracks().length > 0)
+        if(microStream) {
+          setMicrophoneTrack(microStream?.getTracks().length > 0)
+        }
       }
+    })
+  }
+
+  const resetControlState = ({
+    type,
+    stateType
+  }: {
+    type: ControlStateNamesType,
+    stateType: boolean
+  }) => {
+    dispatchState({
+      type,
+      stateType
     })
   }
 
   const targetMicrophone = async (socketIo: Socket) => {
     if(microphoneTrack) {
-      const producerItem = producersMap.current.values().find(v => {
+      const producerItem = [...producersMap.current.values()].find(v => {
         return v.type === 'microphone'
       })
       const producer = producerItem?.producer
-      producer.track.stop()
+      producer?.track?.stop()
       setMicrophoneTrack(false)
       if(producer) {
         producer.close()
         producersMap.current.delete(producer.id)
       }
+      resetControlState({
+        type: 'microphoneState',
+        stateType: false
+      })
       return
     }
     const stream = await getMediaStream('user', 'audio')
-    const micTrack = stream.getTracks()[0]
+    const micTrack = stream?.getTracks()[0]
     await producerControl(socketIo, micTrack, 'microphone')
   }
 
   const targetShareScreen = async (socketIo: Socket) => {
     if(hasRemoteStreamTracks) {
-      const producers = producersMap.current.values().filter(item => item.type.startsWith('screen'))
+      const producers = [...producersMap.current.values()].filter(item => item.type.startsWith('screen'))
       producers.forEach(item => {
         item.producer.track?.stop()
         item.producer.close()
         producersMap.current.delete(item.producer.id)
+      })
+      resetControlState({
+        type: 'screenState',
+        stateType: false
       })
       return
     }
@@ -142,12 +172,16 @@ export function useMediasoup({
 
   const targetCamera = async (socketIo: Socket) => {
     if(hasCameraStreamTracks) {
-      const item = producersMap.current.values().find(item => item.type === 'camera')
+      const item = [...producersMap.current.values()].find(item => item.type === 'camera')
       item?.producer?.track?.stop()
       item?.producer?.close()
       if(item?.producer.id) {
         producersMap.current.delete(item?.producer.id)
       }
+      resetControlState({
+        type: 'cameraState',
+        stateType: false
+      })
       return
     }
     const stream = await getMediaStream('user', 'video')
@@ -174,17 +208,18 @@ export function useMediasoup({
   
   const removeConsumer = async (producerId: string) => {
     const { consumer, type } = consumersMap.current.get(producerId) || {};
+    consumer?.close()
     const stream = type && getStream(type)
     if(consumer?.track) {
       consumer?.track.stop()
-      stream?.current?.removeTrack(consumer?.track)
+      stream?.removeTrack(consumer?.track)
     }
     resetStreamState(type)
     consumersMap.current.delete(producerId)
   }
 
   const removeAllConsumer = () => {
-    consumersMap.current.keys().forEach(async id => {
+    [...consumersMap.current.keys()].forEach(async id => {
       await removeConsumer(id)
     })
   }
@@ -209,8 +244,10 @@ export function useMediasoup({
     targetShareScreen,
     targetCamera,
     removeConsumer,
-    addConsumer,
     resetStreamState,
+    resetControlState,
+    addConsumer,
+    controlState,
     removeAllConsumer,
   }
 }

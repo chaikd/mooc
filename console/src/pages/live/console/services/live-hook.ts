@@ -1,6 +1,6 @@
 import { getMediaStream } from "@/utils/media/stream";
 import { Consumer, Producer, Transport } from "mediasoup-client/types";
-import { Ref, useEffect, useRef, useState } from "react";
+import { Ref, useEffect, useReducer, useRef, useState } from "react";
 import { Socket } from "socket.io-client";
 
 export type ProducerTypes = 'microphone' | 'camera' | 'screen-video' | 'screen-audio'
@@ -8,6 +8,8 @@ interface ProducerMapItem {
   type: ProducerTypes,
   producer: Producer
 }
+
+export type ControlStateNamesType = 'microphoneState' | 'screenState' | 'cameraState'
 
 export interface UseMediaStreamType {
   videoRef: Ref<HTMLVideoElement | null>,
@@ -54,6 +56,20 @@ export function useMediaStream(): UseMediaStreamType {
   }
 }
 
+function stateReducer(state: {
+  microphoneState: boolean,
+  screenState: boolean,
+  cameraState: boolean,
+}, action: {
+  type: ControlStateNamesType,
+  stateType: boolean
+}) {
+  return {
+    ...state,
+    [action.type]: action.stateType
+  }
+}
+
 export function useMediasoup({
   streamControl
 }: {
@@ -63,9 +79,14 @@ export function useMediasoup({
   const [recvTransport, setRecvTransport] = useState<Transport | null>(null)
   const producersMap = useRef<Map<string, ProducerMapItem>>(new Map())
   const consumersMap = useRef<Map<string, {consumer: Consumer,type: ProducerTypes}>>(new Map())
-  const [microphoneTrack, setMicrophoneTrack] = useState<MediaStreamTrack | null>(null)
+  const [microphoneTrack, setMicrophoneTrack] = useState(false)
   const [hasRemoteStreamTracks, setHasRemoteStreamTracks] = useState(false)
   const [hasCameraStreamTracks, setHasCameraStreamTracksmTracks] = useState(false)
+  const [controlState, dispatchState] = useReducer(stateReducer, {
+    microphoneState: false,
+    screenState: false,
+    cameraState: false
+  })
   const {
     remoteStream,
     microStream,
@@ -76,32 +97,55 @@ export function useMediasoup({
   }
 
   const resetStreamState = (type: ProducerTypes | undefined) => {
-    if(type && type === 'camera' && cameraStream) {
-      setHasCameraStreamTracksmTracks(cameraStream?.getTracks().length > 0)
-    }
-    if(type?.startsWith('screen') && remoteStream) {
-      setHasRemoteStreamTracks(remoteStream?.getTracks().length > 0)
-    }
+    new Promise(resolve => {setTimeout(resolve, 500)}).then(() => {
+      if(type && type === 'camera' && cameraStream) {
+        setHasCameraStreamTracksmTracks(cameraStream?.getTracks().length > 0)
+      }
+      if(type?.startsWith('screen') && remoteStream) {
+        setHasRemoteStreamTracks(remoteStream?.getTracks().length > 0)
+      }
+      if(type === 'microphone') {
+        if(microStream) {
+          setMicrophoneTrack(microStream?.getTracks().length > 0)
+        }
+      }
+    })
+  }
+
+  const resetControlState = ({
+    type,
+    stateType
+  }: {
+    type: ControlStateNamesType,
+    stateType: boolean
+  }) => {
+    dispatchState({
+      type,
+      stateType
+    })
   }
 
   const targetMicrophone = async (socketIo: Socket) => {
     if(microphoneTrack) {
       const producerItem = producersMap.current.values().find(v => {
-        return v.producer?.track?.id === microphoneTrack.id
+        return v.type === 'microphone'
       })
       const producer = producerItem?.producer
-      microphoneTrack.stop()
-      setMicrophoneTrack(null)
+      producer?.track?.stop()
+      setMicrophoneTrack(false)
       if(producer) {
         producer.close()
         producersMap.current.delete(producer.id)
       }
+      resetControlState({
+        type: 'microphoneState',
+        stateType: false
+      })
       return
     }
     const stream = await getMediaStream('user', 'audio')
-    const micTrack = stream.getTracks()[0]
+    const micTrack = stream?.getTracks()[0]
     await producerControl(socketIo, micTrack, 'microphone')
-    setMicrophoneTrack(micTrack)
   }
 
   const targetShareScreen = async (socketIo: Socket) => {
@@ -112,6 +156,10 @@ export function useMediasoup({
         item.producer.close()
         producersMap.current.delete(item.producer.id)
       })
+      resetControlState({
+        type: 'screenState',
+        stateType: false
+      })
       return
     }
     const stream = await getMediaStream('display', 'both')
@@ -119,12 +167,6 @@ export function useMediasoup({
     tracks.forEach(async track => {
       const type = track.kind === 'video' ? 'screen-video' : 'screen-audio'
       producerControl(socketIo ,track, type)
-      new Promise(resolve => {setTimeout(resolve, 500)}).then(() => {
-        resetStreamState(type)
-      })
-      track.onended = () => {
-        resetStreamState(type)
-      }
     })
   }
 
@@ -136,17 +178,15 @@ export function useMediasoup({
       if(item?.producer.id) {
         producersMap.current.delete(item?.producer.id)
       }
+      resetControlState({
+        type: 'cameraState',
+        stateType: false
+      })
       return
     }
     const stream = await getMediaStream('user', 'video')
     const track = stream.getTracks()[0]
     producerControl(socketIo, track, 'camera')
-    new Promise(resolve => {setTimeout(resolve, 500)}).then(() => {
-      resetStreamState('camera')
-    })
-    track.onended = () => {
-      resetStreamState('camera')
-    }
   }
 
   const producerControl = async (socketIo: Socket, track: MediaStreamTrack,type: ProducerTypes) => {
@@ -159,7 +199,6 @@ export function useMediasoup({
         producer
       })
       producer.on('@close', () => {
-        console.log('closed')
         socketIo.emit('closeProducer', {producerId: producer.id, appData: {
           type
         }})
@@ -177,6 +216,12 @@ export function useMediasoup({
     }
     resetStreamState(type)
     consumersMap.current.delete(producerId)
+  }
+
+  const removeAllConsumer = () => {
+    consumersMap.current.keys().forEach(async id => {
+      await removeConsumer(id)
+    })
   }
 
   const addConsumer = async (producerId: string, data: {
@@ -199,6 +244,10 @@ export function useMediasoup({
     targetShareScreen,
     targetCamera,
     removeConsumer,
+    resetStreamState,
+    resetControlState,
     addConsumer,
+    controlState,
+    removeAllConsumer,
   }
 }

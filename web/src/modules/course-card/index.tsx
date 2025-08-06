@@ -18,7 +18,7 @@ export default function CourseCard({ isLive = false, info }: {
       {isLive && <div className="absolute top-0 left-0 pl-4 pt-4">
         <Button size="small" variant="solid" color="red">直播中</Button>
       </div>}
-      <div className="w-full">
+      <div className="w-full w-[420px] h-[240px]">
         <Image width={500} height={300} className="w-full h-full" src={info?.cover || `https://picsum.photos/500/300?random=${Math.random()}`} priority alt="" />
       </div>
       <div className="info p-2 text-xs text-gray-400">

@@ -31,7 +31,7 @@ export default function LiveConsole() {
   const getDetail = async () => {
     if (!id) return
     const res = await getLiveDetail(id)
-    const duration = dayjs(res.liveEndTime).valueOf() - dayjs(res.liveStartTime).valueOf()
+    const duration = dayjs(res?.liveEndTime).valueOf() - dayjs(res?.liveStartTime).valueOf()
     setLiveDetail({
       ...res,
       duration: formatMillisecondsToTime(duration)

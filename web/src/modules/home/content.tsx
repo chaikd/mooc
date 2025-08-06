@@ -7,7 +7,7 @@ import dayjs from "dayjs";
 export default async function HomeContent() {
   let homeInfo = {lives: [], courses: []}
   const res = await getHomeInfo();
-  if (res.success) {
+  if (res?.success) {
     homeInfo = res.data as { lives: []; courses: [] }
   }
   return (
