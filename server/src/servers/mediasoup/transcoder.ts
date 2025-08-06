@@ -4,8 +4,8 @@ import { Consumer, PlainTransport, Producer, Router } from "mediasoup/node/lib/t
 export interface PlainTransportListItemType {
   consumer: Consumer,
   plainTransport: PlainTransport,
-  ffmpegPort: Number,
-  ffmpegRtcpPort: Number
+  ffmpegPort: number,
+  ffmpegRtcpPort: number
 }
 
 export async function createPlainTransport(mediasoupRouter: Router, producerList: {producer: Producer, type: string}[]) {

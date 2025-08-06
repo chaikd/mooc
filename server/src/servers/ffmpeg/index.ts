@@ -65,18 +65,24 @@ export function startFFmpeg({
 
   let onData: (() => void) | null = () => {
     ffmpegMap.set(roomId, ffmpeg)
-    onStart && onStart()
+    if(onStart) {
+      onStart()
+    }
     onData = null
   }
 
   let onWriteFile: (() => void) | null = () => {
-    onOpening && onOpening()
+    if(onOpening) {
+      onOpening()
+    }
     onWriteFile = null
   }
 
   ffmpeg.stderr.on('data', (data) => {
     console.log(`FFmpeg data: ${data}`);
-    onData && onData()
+    if(onData) {
+      onData()
+    }
     if(data.toString().includes('Opening')) {
       onWriteFile && onWriteFile()
     }
@@ -88,12 +94,16 @@ export function startFFmpeg({
 
   ffmpeg.on('close', (code) => {
     console.log(`FFmpeg 退出，代码: ${code}`);
-    onExit && onExit()
+    if(onExit) {
+      onExit()
+    }
   });
 
   ffmpeg.on('exit', code => {
     console.log('FFmpeg exit', code)
-    onExit && onExit()
+    if(onExit) {
+      onExit()
+    }
   });
   return {
     ffmpeg,
