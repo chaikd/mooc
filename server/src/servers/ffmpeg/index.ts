@@ -84,7 +84,9 @@ export function startFFmpeg({
       onData()
     }
     if(data.toString().includes('Opening')) {
-      onWriteFile && onWriteFile()
+      if(onWriteFile) {
+        onWriteFile()
+      }
     }
   });
 
