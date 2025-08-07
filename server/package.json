@@ -39,6 +39,7 @@
   "dependencies": {
     "@mooc/db-shared": "workspace:^",
     "cookie-parser": "^1.4.7",
+    "dgram": "^1.0.1",
     "dotenv": "^17.0.1",
     "express": "^5.1.0",
     "http-errors": "^2.0.0",
@@ -47,7 +48,7 @@
     "mediasoup-client": "^3.12.5",
     "mongoose": "^8.16.1",
     "qiniu": "^7.14.0",
-    "winston": "^3.17.0"
+    "socket.io": "^4.8.1"
   },
   "_moduleAliases": {
     "@": "src"
