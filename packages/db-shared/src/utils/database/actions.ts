@@ -1,4 +1,4 @@
-import { Model } from "mongoose"
+import type { Model } from "mongoose"
 
 // 通用增删改查操作函数
 export const createDoc = async <T>(model: Model<T>, data: Partial<T>) => {

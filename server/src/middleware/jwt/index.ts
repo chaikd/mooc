@@ -1,8 +1,11 @@
-import { Request,Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
+import { readFileSync } from 'fs';
 import jwt from 'jsonwebtoken';
-import {readFileSync} from 'fs'
-import { join } from 'path';
+import path, { join } from 'path';
+import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 export interface RequestTypeWithJWT extends Request {
   userId?: string
 }
@@ -38,4 +41,4 @@ function generateToken(data: string) {
 export {
   authenticateToken,
   generateToken
-}
+};

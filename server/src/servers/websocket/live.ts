@@ -1,6 +1,6 @@
 import { redisRequest } from "@mooc/db-shared";
-import { Producer } from "mediasoup-client/lib/Producer";
-import { Transport } from "mediasoup/node/lib/types";
+import { Producer } from "mediasoup-client/types";
+import { Transport } from "mediasoup/types";
 import { Server } from "socket.io";
 import { isFFmpeg, startFFmpeg, stopFFmpeg } from "../ffmpeg";
 import { clearRoomDbMaps, getRoomDbMaps } from "../mediasoup";

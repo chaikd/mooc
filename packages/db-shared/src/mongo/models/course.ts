@@ -1,5 +1,6 @@
-import mongoose, { model, Schema } from "mongoose";
+import mongoose from "mongoose";
 import { UserType } from "./user";
+const { model, Schema } = mongoose
 
 // 课程状态接口
 export interface CourseStatusType {
@@ -183,10 +184,6 @@ const CourseStudyRecord =
   model<CourseStudyRecordType>("cursorStudyRecord", CourseStudyRecordSchema);
 
 export {
-  CourseStatus,
-  CourseChapter,
-  Course,
-  CourseEnrollmentStatus,
-  CourseEnrollment,
-  CourseStudyRecord,
+  Course, CourseChapter, CourseEnrollment, CourseEnrollmentStatus, CourseStatus, CourseStudyRecord
 };
+

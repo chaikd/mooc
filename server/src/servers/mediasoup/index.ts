@@ -1,5 +1,5 @@
 import * as mediasoup from 'mediasoup'
-import { Router } from 'mediasoup/node/lib/types'
+import { Router } from 'mediasoup/types'
 
 let worker: mediasoup.types.Worker | undefined
 const mediasoupRouters = new Map()

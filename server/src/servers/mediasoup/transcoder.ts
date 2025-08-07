@@ -1,5 +1,5 @@
 import { findAvailableUdpPort } from "@/utils/visiblePort";
-import { Consumer, PlainTransport, Producer, Router } from "mediasoup/node/lib/types";
+import { Consumer, PlainTransport, Producer, Router } from "mediasoup/types";
 
 export interface PlainTransportListItemType {
   consumer: Consumer,

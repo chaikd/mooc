@@ -1,10 +1,9 @@
-import 'module-alias/register'
-import express, { NextFunction, Request, Response } from 'express';
 import cookieParser from 'cookie-parser';
-import registRouters, { isWhiteList } from './routers';
+import express, { NextFunction, Request, Response } from 'express';
+import { join } from 'path';
 import { errorHandler } from './middleware';
 import { authenticateToken } from './middleware/jwt';
-import { join } from 'path';
+import registRouters, { isWhiteList } from './routers';
 
 const app = express();
 

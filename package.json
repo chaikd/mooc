@@ -8,6 +8,7 @@
     "console:dev": "pnpm --filter ./console dev",
     "server:dev": "pnpm --filter ./server dev",
     "web:dev": "pnpm --filter ./web dev:web",
+    "server:build": "pnpm --filter ./server build",
     "lint": "pnpm --filter ./server lint && pnpm --filter ./console lint && pnpm --filter ./web lint && pnpm --filter ./packages/db-shared lint && pnpm --filter ./packages/live-service lint",
     "prepare": "husky"
   },

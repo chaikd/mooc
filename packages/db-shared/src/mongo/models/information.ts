@@ -1,4 +1,5 @@
-import mongoose, { model, Schema } from "mongoose";
+import mongoose from "mongoose";
+const { model, Schema } = mongoose
 
 // 资料类型接口
 export interface InformationTypeType {
@@ -46,6 +47,6 @@ const InformationTypeModel = mongoose.models.informationType || model<Informatio
 const Information = mongoose.models.information || model<InformationType>('information', InformationSchema);
 
 export {
-  InformationTypeModel,
-  Information
+  Information, InformationTypeModel
 };
+

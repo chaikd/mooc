@@ -1,5 +1,5 @@
-import mongoose, { model, Schema } from "mongoose";
-
+import mongoose from "mongoose";
+const { model, Schema } = mongoose
 export interface PermissionType {
   _id?: string,
   parentId: string,

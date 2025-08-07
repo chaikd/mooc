@@ -1,5 +1,6 @@
-import { model, Schema, models } from "mongoose"
+import mongoose from "mongoose";
 import { RoleType } from "./role";
+const { model, Schema, models } = mongoose
 
 export interface UserType {
   _id?: string;

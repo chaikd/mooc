@@ -1,5 +1,7 @@
-import mongoose, { model, ObjectId, Schema } from "mongoose";
+import mongoose, { type ObjectId } from "mongoose";
 import { UserType } from "./user";
+
+const { model, Schema } = mongoose
 
 export interface LiveType {
   _id?: string;

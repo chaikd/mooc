@@ -1,9 +1,9 @@
 .vscode
 
 node_modules
-
-*/.next/*
-*/.env
-*/pem/*
-*/tmp/*
-**/**/logs/**
+dist
+logs
+pem
+tmp
+.env
+.next
