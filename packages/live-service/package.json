@@ -11,6 +11,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.7.1",
   "dependencies": {
+    "mediasoup-client": "^3.12.5",
     "socket.io-client": "^4.8.1"
   }
 }

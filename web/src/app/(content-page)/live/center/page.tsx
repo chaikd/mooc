@@ -1,13 +1,12 @@
-"use server"
 import LiveList from "@/modules/live/center/live-list";
 import { searchLiveAction } from "@/services/live";
 import { SearchOutlined } from "@ant-design/icons";
 import { Button, Input } from "antd";
-
+export const revalidate = 60
 export default async function CourseCenter({
   searchParams,
 }: {
-  searchParams: { title?: string; page?: string; pageSize?: string; };
+  searchParams: Promise<{ title?: string; page?: string; pageSize?: string; }>;
 }) {
   const params = await searchParams
   const title = params.title || ''

@@ -1,8 +1,8 @@
 import js from "@eslint/js";
-import globals from "globals";
-import tseslint from "typescript-eslint";
 import pluginReact from "eslint-plugin-react";
 import { defineConfig } from "eslint/config";
+import globals from "globals";
+import tseslint from "typescript-eslint";
 
 
 export default defineConfig([
@@ -12,7 +12,8 @@ export default defineConfig([
   pluginReact.configs.flat.recommended,
   {
     ignores: [
-      'node_modules',
+      'node_modules/**',
+      '**/dist/**'
     ],
     rules: {
       'react/react-in-jsx-scope': 'off'

@@ -1,6 +1,6 @@
+import React from '@vitejs/plugin-react';
+import { resolve } from 'node:path';
 import { defineConfig, PluginOption } from 'vite';
-import { resolve } from 'node:path'
-import React from '@vitejs/plugin-react'
 // import vitePluginEslint from 'vite-plugin-eslint'
 
 export default defineConfig({
@@ -35,19 +35,6 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true
       },
-      // '/ws': {
-      //   target: 'http://localhost:3000',
-      //   ws: true,
-      //   changeOrigin: true,
-      //   configure: (proxy, options) => {
-      //     proxy.on('error', (err, req, res) => {
-      //       console.log('proxy error', err);
-      //     });
-      //     proxy.on('proxyReqWs', (proxyReq, req, socket) => {
-      //       console.log('proxyReqWs', req.url);
-      //     });
-      //   }
-      // },
     }
   }
 })

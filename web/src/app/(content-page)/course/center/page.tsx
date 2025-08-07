@@ -7,7 +7,7 @@ import { Button, Input } from "antd";
 export default async function CourseCenter({
   searchParams,
 }: {
-  searchParams: { courseName?: string; page?: string; pageSize?: string; };
+  searchParams: Promise<{ courseName?: string; page?: string; pageSize?: string; }>;
 }) {
   const params = await searchParams
   const courseName = params.courseName || ''

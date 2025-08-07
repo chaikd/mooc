@@ -3,9 +3,8 @@ import { addRole, deleteRole, editRole, getRoleList, RoleType } from "@/api/role
 import BreadcrumbChain from "@/components/breadcrumb-chain";
 import { StoreType } from "@/store";
 import { Button, Form, Input, message, Modal, PaginationProps, Popconfirm, Table, TableProps, Tree, TreeProps, Typography } from "antd";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { Fragment } from "react/jsx-runtime";
 const { Paragraph } = Typography;
 export default function Role() {
   const [searchForm] = Form.useForm()
@@ -91,7 +90,7 @@ export default function Role() {
   }
   const handleOk = async () => {
     editForm.validateFields().then(async value => {
-       if(isEdit) {
+      if(isEdit) {
         Reflect.deleteProperty(value, 'createUserId')
         await editRole({
           ...isEdit,
@@ -172,7 +171,6 @@ export default function Role() {
   };
   useEffect(() => {
     fetchList()
-     
   }, [tablePagination.current, tablePagination.pageSize])
   return (
     <Fragment>

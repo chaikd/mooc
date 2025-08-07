@@ -29,7 +29,6 @@ export default function MLive({}) {
       }
     }
   useEffect(() => {
-    console.log('in mobile-page')
     getCourseInfo()
     window.addEventListener('message', onMessage)
     window.parent.postMessage({
@@ -38,7 +37,7 @@ export default function MLive({}) {
     return () => {
       window.removeEventListener('message', onMessage)
     }
-  }, [])
+  }, [id])
   return (
     <div className="flex flex-col h-screen">
       <div className="live-container min-h-[250px]">
