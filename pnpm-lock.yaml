@@ -11,6 +11,9 @@ importers:
       mediasoup:
         specifier: ^3.16.6
         version: 3.16.6
+      react-dom:
+        specifier: ^19.1.0
+        version: 19.1.0(react@19.1.0)
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.3.1
