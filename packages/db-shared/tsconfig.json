@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
     /* Language and Environment */
-    "target": "es2016",
+    "target": "ES2020",
     /* Modules */
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist",
-    "module": "system", /* Specify how TypeScript looks up a file from a given module specifier. */
-    "moduleResolution": "node",
+    "module": "NodeNext", /* Specify how TypeScript looks up a file from a given module specifier. */
+    "moduleResolution": "NodeNext",
     "baseUrl": "./", /* Specify the base directory to resolve non-relative module names. */
     "paths": {
       "@/*": [
@@ -17,6 +17,8 @@
     "forceConsistentCasingInFileNames": true, /* Ensure that casing is correct in imports. */
     /* Type Checking */
     "strict": true, /* Enable all strict type-checking options. */
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
   "ts-node": {

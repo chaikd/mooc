@@ -1,12 +1,12 @@
 import { Express } from 'express';
-import authRouter from './auth'
-import userRouter from './user'
-import roleRouter from './role'
-import permissionRouter from './permission'
-import courseRouter from './course'
-import qiniuRouter from './qiniu'
-import informationRouter from './information'
-import liveRouter from './live'
+import authRouter from './auth.ts';
+import courseRouter from './course/index.ts';
+import informationRouter from './information.ts';
+import liveRouter from './live.ts';
+import permissionRouter from './permission.ts';
+import qiniuRouter from './qiniu.ts';
+import roleRouter from './role.ts';
+import userRouter from './user.ts';
 
 const whiteList = [
   '/api/auth/regist',

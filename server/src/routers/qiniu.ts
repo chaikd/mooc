@@ -1,5 +1,5 @@
-import {uploadQiniuToken} from "@/utils/qiniu"
-import {Router, Request, Response} from "express"
+import { uploadQiniuToken } from "@/utils/qiniu.ts"
+import { Request, Response, Router } from "express"
 const router = Router()
 
 router.get('/token', async (req: Request, res: Response) => {

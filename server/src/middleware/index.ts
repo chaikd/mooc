@@ -1,5 +1,5 @@
-import { errorHandler } from "./errorHandler";
+import { errorHandler } from "./errorHandler.ts";
 
 export {
   errorHandler
-}
+};

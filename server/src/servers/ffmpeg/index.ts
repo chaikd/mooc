@@ -1,7 +1,7 @@
 import { spawn } from "child_process";
 import { existsSync, mkdirSync, rm } from "fs";
 import { join } from "path";
-import { PlainTransportListItemType } from "../mediasoup/transcoder";
+import { PlainTransportListItemType } from "../mediasoup/transcoder.ts";
 interface StartFFmpegParams {
   plainTransportList: PlainTransportListItemType[], 
   roomId: string, 

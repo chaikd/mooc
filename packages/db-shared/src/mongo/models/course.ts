@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { UserType } from "./user";
+import { UserType } from "./user.ts";
 const { model, Schema } = mongoose
 
 // 课程状态接口

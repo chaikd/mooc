@@ -1,6 +1,7 @@
-import {Role, User, RoleType, UserType, mdaction} from "@mooc/db-shared";
-import { md5 } from "@/utils";
-import { Response, Request, Router } from "express";
+import { md5 } from "@/utils/index.ts";
+import { Role, RoleType, User, UserType, mdaction } from "@mooc/db-shared/index.ts";
+import { Request, Response, Router } from "express";
+import { Document } from "mongoose";
 
 // type Req = Request & {userId: string}
 const router = Router()
@@ -13,16 +14,16 @@ router.get('/selfinfo', async (req: Request & {userId?: string}, res: Response) 
       message: '请传入用户id'
     })
   }
-  const userInfo = await mdaction.findOneDoc(User, {_id}, 'username createTime _id role')
+  const userInfo = await mdaction.findOneDoc<UserType>(User, {_id}, 'username createTime _id role')
   let result: UserType | null = null
   if(userInfo?.role) {
     const role = await mdaction.findOneDoc(Role, {_id: userInfo.role})
     if (role) {
-      result = userInfo.toObject()
+      result = (userInfo as unknown as Document).toObject()
       if (result) {
         result.roleInfo = {
-          ...role.toObject(),
-          permissions: (role.permissions as string).split(',')
+          ...(role as Document).toObject(),
+          permissions: ((role as RoleType).permissions as string).split(',')
         }
       }
     }
@@ -70,14 +71,14 @@ router.post('/add', async (req: Request, res: Response) => {
 
 router.post('/edit', async (req: Request, res: Response) => {
   const {_id, ...reqData} = req.body
-  const exist = await mdaction.findOneDoc(User, {_id})
+  const exist = await mdaction.findOneDoc<UserType>(User, {_id})
   if(exist) {
     if(!exist.roleCode) {
       const theRole = await mdaction.findOneDoc(Role, {_id: exist.role}) as RoleType
       exist.roleCode = theRole.code
     }
     const data = {
-      ...exist.toObject(),
+      ...(exist as unknown as Document).toObject(),
       ...reqData,
     }
     await mdaction.updateDoc(User, _id, data)

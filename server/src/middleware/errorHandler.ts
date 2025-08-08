@@ -1,6 +1,6 @@
+import {logger} from '@mooc/db-shared/index.ts';
 import { Request, Response } from 'express';
 import createHttpError from 'http-errors';
-import {logger} from '@mooc/db-shared';
 export const errorHandler = (
   err: Error,
   req: Request,

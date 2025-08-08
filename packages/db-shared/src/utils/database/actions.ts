@@ -9,12 +9,12 @@ export const createDoc = async <T>(model: Model<T>, data: Partial<T>) => {
   return await model.create(data)
 }
 
-export const findOneDoc = async <T>(model: Model<T>, filter: Partial<T>, select?: string) => {
+export const findOneDoc = async <T>(model: Model<T>, filter: Partial<T>, select?: string): Promise<T> => {
   let query = model.findOne(filter)
   if (select) {
     query = query.select(select)
   }
-  return await query.exec()
+  return await query.exec() as T
 }
 
 export const findDocs = async <T>(model: Model<T>, filter: Partial<T> = {}, limit = 10, page = 0, select?: string) => {

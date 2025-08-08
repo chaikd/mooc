@@ -1,5 +1,5 @@
-import { Router, Request, Response } from 'express';
-import { Information, InformationTypeModel, mdaction } from '@mooc/db-shared';
+import { Information, InformationTypeModel, mdaction } from '@mooc/db-shared/index.ts';
+import { Request, Response, Router } from 'express';
 
 const router = Router();
 

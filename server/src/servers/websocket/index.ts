@@ -1,7 +1,7 @@
 import { Server } from "http";
 import { Server as SocketServer } from "socket.io";
-import createLiveIo from "./live";
-import createChatIo from "./chat";
+import createChatIo from "./chat.ts";
+import createLiveIo from "./live.ts";
 
 
 const createWebsocketServer = async (appServer: Server) => {
@@ -17,4 +17,5 @@ const createWebsocketServer = async (appServer: Server) => {
 
 export {
   createWebsocketServer
-}
+};
+

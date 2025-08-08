@@ -1,7 +1,6 @@
-import connectDB from './database'
-import logger from './logger'
+// import connectDB from './database/index.ts'
+import logger from './logger/index.ts'
 
 export {
-  logger,
-  connectDB,
+  logger
 }

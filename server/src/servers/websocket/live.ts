@@ -1,10 +1,10 @@
-import { redisRequest } from "@mooc/db-shared";
+import { redisRequest } from "@mooc/db-shared/index.ts";
 import { Producer } from "mediasoup-client/types";
 import { Transport } from "mediasoup/types";
 import { Server } from "socket.io";
-import { isFFmpeg, startFFmpeg, stopFFmpeg } from "../ffmpeg";
-import { clearRoomDbMaps, getRoomDbMaps } from "../mediasoup";
-import { createPlainTransport } from "../mediasoup/transcoder";
+import { isFFmpeg, startFFmpeg, stopFFmpeg } from "../ffmpeg/index.ts";
+import { clearRoomDbMaps, getRoomDbMaps } from "../mediasoup/index.ts";
+import { createPlainTransport } from "../mediasoup/transcoder.ts";
 
 export default async function createLiveIo(ioServer: Server) {
   const liveIo = ioServer.of('/ws/live')

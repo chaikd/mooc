@@ -1,5 +1,5 @@
-export { default as connectDB } from "./mongo";
-export { default as redisRequest } from "./redis";
-export * from './mongo/models';
-export * as mdaction from './utils/database/actions';
-export * from './utils';
+export { default as connectDB } from "./mongo/index.ts";
+export * from './mongo/models/index.ts';
+export { default as redisRequest } from "./redis/index.ts";
+export * as mdaction from './utils/database/actions.ts';
+export * from './utils/index.ts';

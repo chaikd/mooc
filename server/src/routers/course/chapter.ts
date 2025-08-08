@@ -1,5 +1,5 @@
-import { Router, Request, Response } from 'express';
-import { CourseChapter, Information, CourseChapterType, InformationType, mdaction } from '@mooc/db-shared';
+import { CourseChapter, CourseChapterType, Information, InformationType, mdaction } from '@mooc/db-shared/index.ts';
+import { Request, Response, Router } from 'express';
 import { Document } from 'mongoose';
 type chaptersType = CourseChapterType & Partial<{materials?: Array<InformationType>}>
 

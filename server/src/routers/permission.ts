@@ -1,5 +1,5 @@
-import { Permission, mdaction } from "@mooc/db-shared"
-import Express from "express"
+import { Permission, mdaction } from "@mooc/db-shared/index.ts";
+import Express from "express";
 
 const router = Express.Router()
 

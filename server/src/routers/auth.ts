@@ -1,8 +1,7 @@
-import { Router, Response, Request } from "express";
-import { md5 } from "@/utils/md5";
-import { User, mdaction } from "@mooc/db-shared";
-import { generateToken } from "@/middleware/jwt";
-const router = Router()
+import { generateToken } from '@/middleware/jwt/index.ts'
+import { md5 } from '@/utils/index.ts'
+import { User, mdaction } from '@mooc/db-shared/index.ts'
+import { Request, Response, Router } from 'express'
 
 type UserCreateInput = {
   id?: string
@@ -10,6 +9,8 @@ type UserCreateInput = {
   password: string
   role?: string
 }
+
+const router = Router()
 
 router.post('/regist', async (_req: Request, _res: Response) => {
   const userInfo: UserCreateInput = _req.body

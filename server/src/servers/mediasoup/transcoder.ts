@@ -1,4 +1,4 @@
-import { findAvailableUdpPort } from "@/utils/visiblePort";
+import { findAvailableUdpPort } from "@/utils/visiblePort.ts";
 import { Consumer, PlainTransport, Producer, Router } from "mediasoup/types";
 
 export interface PlainTransportListItemType {

@@ -1,6 +1,6 @@
-import { Router, Request, Response } from 'express';
-import { CourseStatus, CourseStatusType, mdaction } from '@mooc/db-shared';
-import { RequestTypeWithJWT } from '@/middleware/jwt';
+import { RequestTypeWithJWT } from '@/middleware/jwt/index.ts';
+import { CourseStatus, CourseStatusType, mdaction } from '@mooc/db-shared/index.ts';
+import { Request, Response, Router } from 'express';
 // import { createDoc, findOneDoc, findDocs, updateDoc, deleteDoc, countDocs } from '@/utils/database/actions';
 
 const router = Router();

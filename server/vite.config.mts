@@ -17,8 +17,21 @@ export default defineConfig({
         preserveModulesRoot: 'src',
       },
       preserveEntrySignatures: 'strict',
-      external: ['mongoose']
+      external: [
+        'mongoose',
+        'winston',
+        'redis',
+        'jsonwebtoken',
+        'http-errors',
+        'express',
+        'cookie-parser',
+        'socket.io',
+      ],
     },
+    // assetsInlineLimit(filePath) {
+    //     console.log(filePath)
+    //     return filePath
+    // },
   },
   resolve: {
     extensions: ['.ts', '.js'],

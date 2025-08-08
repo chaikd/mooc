@@ -1,5 +1,6 @@
-import { Router, Request, Response } from 'express';
-import { mdaction, User, Live } from '@mooc/db-shared';
+import { Live, type LiveType, mdaction, User, UserType } from '@mooc/db-shared/index.ts';
+import { Request, Response, Router } from 'express';
+import { Document } from 'mongoose';
 
 const router = Router();
 
@@ -14,19 +15,19 @@ router.get('/list', async (req: Request, res: Response) => {
     .sort(sortConfig)
     .limit(limit)
     .skip((skip - 1) * limit);
-  const userIds = lives.map(v => v.instructorId)
+  const userIds = lives.map((v: LiveType) => v.instructorId)
   const instructorMap: Record<string, string> = {};
   if (userIds?.length > 0) {
     const users = await User.find({ _id: { $in: userIds }}, 'username')
-    users.reduce<Record<string, string>>((pre, cur) => {
+    users.reduce<Record<string, string>>((pre: Record<string, string>, cur: UserType) => {
       const id = cur._id as string
       pre[id] = cur.username
       return pre
     }, instructorMap)
   }
-  const data = lives.map(v => {
+  const data = lives.map((v: LiveType) => {
     const obj = {
-      ...v.toObject(),
+      ...(v as unknown as Document).toObject(),
       instructorName: instructorMap[String(v.instructorId)]
     }
     return obj

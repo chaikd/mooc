@@ -1,5 +1,5 @@
+import { redisRequest } from "@mooc/db-shared/index.ts";
 import { Server } from "socket.io";
-import {redisRequest} from "@mooc/db-shared";
 
 export default async function createChatIo(ioServer: Server) {
   const chatIo = ioServer.of('/ws/chat')

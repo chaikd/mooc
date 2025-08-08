@@ -1,5 +1,5 @@
-import { Router, Request, Response } from 'express';
-import {Role, User, mdaction} from '@mooc/db-shared';
+import { Role, User, type UserType, mdaction } from '@mooc/db-shared/index.ts';
+import { Request, Response, Router } from 'express';
 
 const router = Router();
 
@@ -13,7 +13,7 @@ router.get('/list', async (req: Request, res: Response) => {
   let userMap: Record<string, string> = {};
   if (userIds.length > 0) {
     const users = await User.find({ _id: { $in: userIds } }, 'username');
-    userMap = users.reduce<Record<string, string>>((acc, cur) => {
+    userMap = users.reduce<Record<string, string>>((acc: Record<string, string>, cur: UserType) => {
       acc[String(cur._id)] = cur.username;
       return acc;
     }, {});

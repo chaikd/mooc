@@ -1,9 +1,9 @@
 import cookieParser from 'cookie-parser';
 import express, { NextFunction, Request, Response } from 'express';
 import { join } from 'path';
-import { errorHandler } from './middleware';
-import { authenticateToken } from './middleware/jwt';
-import registRouters, { isWhiteList } from './routers';
+import { errorHandler } from './middleware/index.ts';
+import { authenticateToken } from './middleware/jwt/index.ts';
+import registRouters, { isWhiteList } from './routers/index.ts';
 
 const app = express();
 

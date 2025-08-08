@@ -1,7 +1,7 @@
-import { Router, Request, Response } from 'express';
-import { Course, CourseStatus, User, CourseType, mdaction } from '@mooc/db-shared';
-import statusRouter from './status';
-import chapterRouter from './chapter'
+import { Course, CourseStatus, CourseType, mdaction, User } from '@mooc/db-shared/index.ts';
+import { Request, Response, Router } from 'express';
+import chapterRouter from './chapter.ts';
+import statusRouter from './status.ts';
 
 const router = Router();
 
