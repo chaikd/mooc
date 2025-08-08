@@ -6,7 +6,7 @@ import { connectDB } from '@mooc/db-shared/index.ts';
 import { createWebsocketServer } from './servers/websocket/index.ts';
 
 const server = createServer(app)
-server.listen(env.serverPort, () => {
+server.listen(env.serverPort || '3001', () => {
   connectDB()
   createWebsocketServer(server)
   console.log(`Server running at http://localhost:${env.serverPort}`);
