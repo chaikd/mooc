@@ -5,5 +5,5 @@ dist
 logs
 pem
 tmp
-.env
+.env**
 .next
