@@ -4,10 +4,8 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const env = process.env.NODE_ENV || 'development';
-const envPath = env === 'development' ? '../../.env' : '../../.env.production'
-dotenv.config({ path: path.join(__dirname, envPath) });
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 export default {
-  serverPort: process.env.PORT || 3000,
+  serverPort: process.env.PORT || 3004,
   // mongoUri: process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/mooc',
 };
