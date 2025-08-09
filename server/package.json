@@ -6,7 +6,7 @@
   "main": "./src/server.ts",
   "scripts": {
     "dev": "tsx ./src/server.ts",
-    "build": "vite build",
+    "build": "NODE_ENV=production vite build",
     "start": "node ./dist/server.mjs",
     "lint": "eslint ./src --ext .ts,.tsx"
   },
