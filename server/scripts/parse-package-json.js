@@ -1,4 +1,5 @@
 import { readFile, writeFileSync } from "fs";
+import { resolve } from "path";
 
 const packagePath = resolve(__dirname, '../package.json')
 readFile(packagePath, {encoding: 'utf-8'}, (err, data) => {
