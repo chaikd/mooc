@@ -43,13 +43,11 @@ export default function User() {
   useEffect(() => {
     fetchRoles();
     fetchList();
-     
   }, []);
 
   const handleAdd = () => {
     setEditing(null);
     setModalOpen(true);
-    // editForm.resetFields()
   };
 
   const handleEdit = (record: UserType) => {
@@ -78,7 +76,7 @@ export default function User() {
       await addUser(values);
       message.success('添加成功');
     }
-    setModalOpen(false);
+    handleCancel()
     fetchList();
   };
 

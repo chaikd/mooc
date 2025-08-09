@@ -1,4 +1,5 @@
 import React from '@vitejs/plugin-react';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { defineConfig, PluginOption } from 'vite';
 // import vitePluginEslint from 'vite-plugin-eslint'
@@ -30,10 +31,15 @@ export default defineConfig({
     }
   },
   server: {
+    https: {
+      key: readFileSync(resolve(__dirname, './local/pem/server.key')),
+      cert: readFileSync(resolve(__dirname, './local/pem/server.crt')),
+    },
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
-        // target: 'http://console.mooc.chaikd.com',
+        target: 'https://localhost:3000',
+        // target: 'https://console.mooc.chaikd.com',
+        secure: false,
         changeOrigin: true
       },
     }

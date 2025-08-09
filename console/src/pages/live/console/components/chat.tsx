@@ -31,7 +31,7 @@ export default function LiveChat({ref, liveDetail}: PropType) {
   const chatIo = useRef<Socket | null>(null)
   const msgContainerRef = useRef<HTMLDivElement | null>(null)
   
-  chatIo.current = io('http://localhost:3000/ws/chat', {
+  chatIo.current = io(`${import.meta.env.VITE_SOCKETIO_HOST}/ws/chat`, {
     query: {
       roomId: id
     },

@@ -91,7 +91,7 @@ export function useSocketIo({
     if(!id) {
       return
     }
-    socketio.current = io('http://localhost:3000/ws/live', {
+    socketio.current = io(`${import.meta.env.VITE_SOCKETIO_HOST}/ws/live`, {
       query: {
         roomId: id
       },
