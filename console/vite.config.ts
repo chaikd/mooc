@@ -32,8 +32,8 @@ export default defineConfig({
   },
   server: {
     https: {
-      key: readFileSync(resolve(__dirname, './local/pem/server.key')),
-      cert: readFileSync(resolve(__dirname, './local/pem/server.crt')),
+      key: readFileSync(resolve(__dirname, './local/ssl/server.key')),
+      cert: readFileSync(resolve(__dirname, './local/ssl/server.crt')),
     },
     proxy: {
       '/api': {
