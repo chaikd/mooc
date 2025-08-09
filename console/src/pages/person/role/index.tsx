@@ -163,6 +163,7 @@ export default function Role() {
       setLoading(false)
     } else {
       setCheckedKeys([])
+      handleCancel()
     }
   }
   const onCheck: TreeProps['onCheck'] = (checkedKeysValue, check) => {

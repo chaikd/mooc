@@ -16,7 +16,7 @@ export default function User() {
 
   const fetchRoles = async () => {
     const res = await getRoleList({ size: 100 });
-    setRoleOptions((res.data || []).map(r => ({ value: r._id, label: r.name })));
+    setRoleOptions((res?.data || []).map(r => ({ value: r._id, label: r.name })));
   };
 
   const fetchList = async (params = {}) => {
@@ -35,8 +35,8 @@ export default function User() {
       ...searchProp,
       ...params
     });
-    setList(res.data || []);
-    setPagination(p => ({ ...p, total: res.total ?? (res.data ? res.data.length : 0) }));
+    setList(res?.data || []);
+    setPagination(p => ({ ...p, total: res?.total ?? (res?.data ? res?.data.length : 0) }));
     setLoading(false);
   };
 
@@ -49,7 +49,7 @@ export default function User() {
   const handleAdd = () => {
     setEditing(null);
     setModalOpen(true);
-    editForm.resetFields()
+    // editForm.resetFields()
   };
 
   const handleEdit = (record: UserType) => {

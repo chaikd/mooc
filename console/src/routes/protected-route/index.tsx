@@ -23,7 +23,7 @@ export default function ProtectedRoute({children}: {children: ReactNode}): React
     if(!permissions || permissions?.length <= 0) {
       const userInfo = await getSelfInfo()
       dispatch(setUserInfo(userInfo.data))
-      permis = userInfo.data.roleInfo.permissions
+      permis = userInfo.data?.roleInfo?.permissions
     }
     const menus = parseRouters('', permis)
     dispatch(setMenus(menus))

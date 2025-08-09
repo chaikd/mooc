@@ -5,13 +5,13 @@ import { createContext, useEffect, useState } from "react"
 import CourseTile from "../components/tile"
 import CourseList from "../components/list"
 import { Link } from "react-router"
-import { getCourseList } from "@/api/course"
+import { CourseListItemType, getCourseList } from "@/api/course"
 
 export const CourseContext = createContext({})
 
 export default function Course() {
   const [style, setStyle] = useState('tile')
-  const [list, setList] = useState([])
+  const [list, setList] = useState<CourseListItemType[]>([])
   const fetchList = async () => {
     const res = await getCourseList({
       page: 1,
