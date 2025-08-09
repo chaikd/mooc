@@ -1,5 +1,5 @@
 // start.cjs
-const serverPath = resolve(__dirname, '../dist/server.mjs')
+const serverPath = resolve(__dirname, '../server.mjs')
 import(serverPath)
   .then(mod => mod.default?.())
   .catch(err => {
