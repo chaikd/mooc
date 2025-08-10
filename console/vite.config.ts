@@ -14,6 +14,7 @@ export default defineConfig({
     }
   },
   build: {
+    minify:false,
     rollupOptions: {
       output: {
         entryFileNames: '[name]-[hash].js',
@@ -36,7 +37,7 @@ export default defineConfig({
     // },
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:3004',
         // target: 'https://console.mooc.chaikd.com',
         secure: false,
         changeOrigin: true

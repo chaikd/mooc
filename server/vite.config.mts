@@ -9,6 +9,7 @@ export default defineConfig({
   build: {
     target: 'node16',
     outDir: 'dist',
+    minify: false,
     rollupOptions: {
       input: './src/server.ts',
       output: {
