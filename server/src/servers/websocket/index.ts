@@ -1,4 +1,4 @@
-import { Server } from "https";
+import { Server } from "http";
 import { Server as SocketServer } from "socket.io";
 import createChatIo from "./chat.ts";
 import createLiveIo from "./live.ts";

@@ -5,7 +5,7 @@
   "type": "module",
   "main": "./src/server.ts",
   "scripts": {
-    "dev": "tsx ./src/server.ts",
+    "dev": "tsx ./src/server.ts --watch",
     "build": "NODE_ENV=production vite build",
     "start": "node ./dist/server.mjs",
     "lint": "eslint ./src --ext .ts,.tsx"
