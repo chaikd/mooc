@@ -50,7 +50,17 @@ export default async function createLiveIo(ioServer: Server) {
       
       try {
         const transport = await mediasoupRouter.createWebRtcTransport({
-          listenIps: [{ ip: '127.0.0.1' }],
+          listenInfos: [{ 
+            protocol: 'udp',
+            ip: '0.0.0.0',
+            announcedAddress: '47.94.84.178',
+            exposeInternalIp: true
+          },{ 
+            protocol: 'tcp',
+            ip: '0.0.0.0',
+            announcedAddress: '47.94.84.178',
+            exposeInternalIp: true
+          }],
           enableUdp: true,
           enableTcp: true,
           appData: {direction}

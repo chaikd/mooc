@@ -5,22 +5,76 @@ let worker: mediasoup.types.Worker | undefined
 const mediasoupRouters = new Map()
 const weakData = new Map()
 
-const createMesiasoupRouter = async (): Promise<mediasoup.types.Router> => {
+const createMediasoupRouter = async (): Promise<mediasoup.types.Router> => {
   if (!worker) {
     worker = await mediasoup.createWorker()
+    worker.on('died', () => {
+      console.error('mediasoup Worker died, exiting...');
+      process.exit(1);
+    });
   }
   const reouter = await worker.createRouter({
     mediaCodecs: [
-      { kind: 'audio', mimeType: 'audio/opus', clockRate: 48000, channels: 2 },
-      { kind: 'video', mimeType: 'video/VP8', clockRate: 90000 },
-      // { kind: 'video', mimeType: 'video/H264', clockRate: 90000,
-      //   parameters: {
-      //     'packetization-mode': 1,
-      //     'profile-level-id': '42e01f'
-      //   }
-      // }
-    ]
+				{
+					kind      : 'audio',
+					mimeType  : 'audio/opus',
+					clockRate : 48000,
+					channels  : 2
+				},
+				{
+					kind       : 'video',
+					mimeType   : 'video/VP8',
+					clockRate  : 90000,
+					parameters :
+					{
+						'x-google-start-bitrate' : 1000
+					}
+				},
+				{
+					kind       : 'video',
+					mimeType   : 'video/VP9',
+					clockRate  : 90000,
+					parameters :
+					{
+						'profile-id'             : 2,
+						'x-google-start-bitrate' : 1000
+					}
+				},
+				{
+					kind       : 'video',
+					mimeType   : 'video/h264',
+					clockRate  : 90000,
+					parameters :
+					{
+						'packetization-mode'      : 1,
+						'profile-level-id'        : '4d0032',
+						'level-asymmetry-allowed' : 1,
+						'x-google-start-bitrate'  : 1000
+					}
+				},
+				{
+					kind       : 'video',
+					mimeType   : 'video/h264',
+					clockRate  : 90000,
+					parameters :
+					{
+						'packetization-mode'      : 1,
+						'profile-level-id'        : '42e01f',
+						'level-asymmetry-allowed' : 1,
+						'x-google-start-bitrate'  : 1000
+					}
+				}
+			]
   })
+  process.on('SIGINT', async () => {
+    await worker?.close();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', async () => {
+    await worker?.close();
+    process.exit(0);
+  });
   return reouter
 }
 
@@ -29,7 +83,7 @@ const getRoomDbMaps = async (roomId: string) => {
   if (!mediasoupRouter) {
     try {
       // 尝试创建 mediasoup router
-      const newMediasoupRouter: Router = await createMesiasoupRouter()
+      const newMediasoupRouter: Router = await createMediasoupRouter()
       mediasoupRouters.set(roomId, newMediasoupRouter)
       mediasoupRouter = newMediasoupRouter
     } catch (error) {

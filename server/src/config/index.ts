@@ -8,5 +8,6 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 export default {
   serverPort: process.env.PORT || 3004,
+  webrtcTransportIp: process.env.WEBRTC_TRANSPORT_IP || '127.0.0.1'
   // mongoUri: process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/mooc',
 };
