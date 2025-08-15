@@ -53,12 +53,12 @@ export default async function createLiveIo(ioServer: Server) {
           listenInfos: [{ 
             protocol: 'udp',
             ip: '0.0.0.0',
-            announcedAddress: '47.94.84.178',
+            announcedAddress: process.env.WEBRTC_TRANSPORT_IP,
             exposeInternalIp: true
           },{ 
             protocol: 'tcp',
             ip: '0.0.0.0',
-            announcedAddress: '47.94.84.178',
+            announcedAddress: process.env.WEBRTC_TRANSPORT_IP,
             exposeInternalIp: true
           }],
           enableUdp: true,

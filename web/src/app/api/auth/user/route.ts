@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   const userId = req.headers.get('userId')
   if (userId) {
     const userInfo = await findOneDoc(User, { _id: userId })
-    if (userInfo._id) {
+    if (userInfo?._id) {
       return NextResponse.json({
         success: true,
         data: userInfo

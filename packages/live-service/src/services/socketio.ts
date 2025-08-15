@@ -87,11 +87,23 @@ export function useSocketIo({
     cameraStream,
   } = streamControl
 
+  function getEnvSocketHost(): string {
+    // console
+    if (import.meta?.env?.VITE_SOCKETIO_HOST) {
+      return import.meta.env.VITE_SOCKETIO_HOST;
+    }
+    // web
+    if (process.env.NEXT_PUBLIC_SOCKETIO_HOST) {
+      return process.env.NEXT_PUBLIC_SOCKETIO_HOST;
+    }
+    return 'http://localhost:3004'; // 或 throw new Error('SOCKETIO_HOST not defined');
+  }
+
   const ioConnect = async () => {
     if(!id) {
       return
     }
-    socketio.current = io(`${import.meta.env.VITE_SOCKETIO_HOST}/ws/live`, {
+    socketio.current = io(`${getEnvSocketHost()}/ws/live`, {
       query: {
         roomId: id
       },

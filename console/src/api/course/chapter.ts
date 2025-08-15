@@ -105,6 +105,8 @@ export async function getParseChapterTree(courseId: string): Promise<{
         key: v._id,
         children: children?.length > 0 ? children : undefined
       }
+    }).sort((a, b) => {
+      return (a.sort || 0) - (b.sort || 0)
     })
   }
   const trees = findChildren(data, roots)

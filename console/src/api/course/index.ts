@@ -5,12 +5,14 @@ export interface CourseType {
   _id?: string;
   courseName: string;      // 课程名称
   instructorId: string;    // 讲师id
+  instructorDesc: string;    // 讲师描述
   courseDesc?: string;     // 课程描述
   courseCover?: string;    // 课程封面
   courseDuration?: number; // 课程时长（分钟）
   price?: number;          // 价格
   sort?: number;           // 排序
   statusId: string;        // 课程状态id
+  statusCode: number;
   createTime?: Date;       // 创建时间
   createUserId?: string;   // 创建用户id
 }

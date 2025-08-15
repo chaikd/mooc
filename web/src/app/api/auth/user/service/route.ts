@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   const userId = await parseToken(token)
   if (userId) {
     const userInfo = await findOneDoc(User, { _id: userId })
-    if (userInfo._id) {
+    if (userInfo?._id) {
       return NextResponse.json({
         success: true,
         data: userInfo

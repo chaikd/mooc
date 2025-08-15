@@ -37,7 +37,7 @@ export default defineConfig({
     // },
     proxy: {
       '/api': {
-        target: 'http://localhost:3004',
+        target: 'http://localhost:3000',
         // target: 'https://console.mooc.chaikd.com',
         secure: false,
         changeOrigin: true

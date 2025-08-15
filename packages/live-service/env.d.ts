@@ -1,8 +1,3 @@
-declare module '*.svg' {
-  const str: string
-  export default str
-}
-
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
@@ -18,3 +13,4 @@ declare global {
     readonly env: ImportMetaEnv;
   }
 }
+export { };

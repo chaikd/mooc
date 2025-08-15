@@ -1,13 +1,6 @@
 import dotenv from 'dotenv';
-import path from 'path';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.join(__dirname, '../../.env') });
-
-export default {
-  serverPort: process.env.PORT || 3004,
-  webrtcTransportIp: process.env.WEBRTC_TRANSPORT_IP || '127.0.0.1'
-  // mongoUri: process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/mooc',
-};
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: join(__dirname, '../../.env') });

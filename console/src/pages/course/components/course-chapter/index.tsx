@@ -7,6 +7,7 @@ import { Link } from "react-router"
 import ChapterUpload from "../chapter-upload"
 import { addInformation, InformationType } from "@/api/information"
 import { BasicDataNode } from "antd/es/tree"
+import { numberToChinese } from "@/utils/chinese-number"
 
 interface CourseChapterProps {
   courseId: string | undefined;
@@ -132,12 +133,12 @@ export default function CourseChapter({ courseId, isEdit = false, ref }: CourseC
   };
 
   // 渲染树节点
-  const renderTreeNodes = (nodes: ChapterTreeNodeType[]): BasicDataNode[] => {
-    return nodes?.map(node => ({
+  const renderTreeNodes = (nodes: ChapterTreeNodeType[], isChildren: boolean = false): BasicDataNode[] => {
+    return nodes?.map((node, key) => ({
       key: node._id,
       title: (
         <div className={`flex items-center justify-between w-full ${node.parentChapterId ? 'ml-8' : ''}`}>
-          <span>{node.chapterName}</span>
+          <span>第{numberToChinese(key + 1)}{isChildren ? '节' : '章'}：{node.chapterName}</span>
           {isEdit && <Space size="small">
             <Button
               type="text"
@@ -178,7 +179,7 @@ export default function CourseChapter({ courseId, isEdit = false, ref }: CourseC
         </div>
       ),
       icon: node.children && node.children.length > 0 ? <FolderOutlined className={node.parentChapterId ? 'ml-8' : ''}/> : <FileOutlined  className={node.parentChapterId ? 'ml-8' : ''}/>,
-      children: node.children ? renderTreeNodes(node.children) : undefined,
+      children: node.children ? renderTreeNodes(node.children, true) : undefined,
       data: node
     }));
   };

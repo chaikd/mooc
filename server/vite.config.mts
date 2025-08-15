@@ -1,10 +1,17 @@
 import { resolve } from 'path';
+import copy from 'rollup-plugin-copy';
 import nodeExternals from 'rollup-plugin-node-externals';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [
     nodeExternals(),
+    (copy as any)({
+      targets: [
+        { src: 'src/middleware/jwt/pem', dest: 'dist/middleware/jwt' }
+      ],
+      hook: 'writeBundle'
+    })
   ],
   build: {
     target: 'node16',
@@ -29,17 +36,12 @@ export default defineConfig({
         'socket.io',
       ],
     },
-    // assetsInlineLimit(filePath) {
-    //     console.log(filePath)
-    //     return filePath
-    // },
   },
   resolve: {
     extensions: ['.ts', '.js'],
     alias: {
       "@": resolve(__dirname, './src'),
       "@mooc/db-shared": resolve(__dirname, '../packages/db-shared/src'),
-      "@mooc/live-service": resolve(__dirname, '../packages/live-service/src')
     }
   }
 })

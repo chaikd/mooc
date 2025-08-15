@@ -53,7 +53,10 @@ export default function AddCourse() {
     if(res.success) {
       const msg = param.id ? '编辑成功' : '添加成功'
       message.success(msg)
-      navigate(-1)
+      if(param.id) {
+        return
+      }
+      navigate('/course')
     }
   }
 
@@ -122,7 +125,7 @@ export default function AddCourse() {
       </div>}
 
       {/* 底部按钮 */}
-      <div className="flex justify-end mt-8 gap-4">
+      <div className="flex justify-end mt-8 gap-4 pb-8">
         <Button onClick={() => submit(1)}>保存草稿</Button>
         <Button type="primary" onClick={() => submit(2)}>发布课程</Button>
       </div>

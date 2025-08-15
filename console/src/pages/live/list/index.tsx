@@ -1,6 +1,6 @@
 import { getAllUser, UserType } from "@/api/user";
 import BreadcrumbChain from "@/components/breadcrumb-chain";
-import { Button, DatePicker, Form, Input, message, Modal, Popconfirm, Select, Table } from "antd";
+import { Button, DatePicker, Form, Input, message, Modal, PaginationProps, Popconfirm, Select, Table } from "antd";
 import { useForm } from "antd/es/form/Form";
 import { ColumnProps } from "antd/es/table";
 import { ReactNode, useEffect, useState } from "react";
@@ -78,18 +78,23 @@ export default function Live() {
       }
     }))
   }
-  const getList = async () => {
-    const {current, pageSize} = pagination
+  const getList = async (paginationInfo?: PaginationProps) => {
+    const pageInfo: {
+      current: number, pageSize: number, total: number
+    } = (paginationInfo || pagination) as {
+      current: number, pageSize: number, total: number
+    }
+    const {current, pageSize} = pageInfo
     const {searchValue} = await searchForm.getFieldsValue()
     const res = await getLiveList({
       searchValue,
-      page: current,
-      size: pageSize
+      page: current as number,
+      size: pageSize as number
     })
     if (res.success) {
       setDataSource(res.data as LiveType[])
       setPagination({
-        ...pagination,
+        ...pageInfo,
         total: res.total as number
       })
     }
@@ -113,6 +118,13 @@ export default function Live() {
   const modalCancel = () => {
     setIsOpen(false)
     setIsEdit(null)
+  }
+  const onPageChange = (pageInfo: PaginationProps) => {
+    getList({
+      current: pageInfo.current, 
+      pageSize: pageInfo.pageSize,
+      total: pageInfo.total
+    })
   }
   useEffect(() => {
     getList()
@@ -181,7 +193,7 @@ export default function Live() {
             </Form.Item>
           </Form>
         </div>
-        <Table rowKey="_id" columns={columns} dataSource={dataSource} pagination={pagination}></Table>
+        <Table rowKey="_id" columns={columns} dataSource={dataSource} pagination={pagination} onChange={onPageChange}></Table>
       </div>
 
       <Modal {...{
