@@ -1,6 +1,6 @@
+import LazyImage from "@/components/lazy-image";
 import { TeamOutlined, UserOutlined } from "@ant-design/icons";
 import { Button } from "antd";
-import Image from 'next/image'
 
 export type courseInfo = {
   title: string,
@@ -19,7 +19,8 @@ export default function CourseCard({ isLive = false, info }: {
         <Button size="small" variant="solid" color="red">直播中</Button>
       </div>}
       <div className="w-full w-[420px] h-[240px]">
-        <Image width={500} height={300} className="w-full h-full" src={info?.cover || `https://picsum.photos/500/300?random=${Math.random()}`} priority alt="" />
+        <LazyImage src={info?.cover || `https://picsum.photos/500/300?random=${Math.random()}`}></LazyImage>
+        {/* <Image width={500} height={300} className="w-full h-full" src={info?.cover || `https://picsum.photos/500/300?random=${Math.random()}`} priority alt="" /> */}
       </div>
       <div className="info p-2 text-xs text-gray-400">
         <p className="font-[600] text-xl text-black">

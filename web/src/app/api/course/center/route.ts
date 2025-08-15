@@ -1,8 +1,9 @@
-import { Course, User } from "@mooc/db-shared";
+import { connectDB, Course, User } from "@mooc/db-shared";
 import { countDocs, findAll, findDocs } from "@mooc/db-shared/src/utils/database/actions";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
+  await connectDB()
   // eslint-disable-next-line prefer-const
   let {query, page, pageSize} = await req.json()
   const filter = {statusCode: 2}

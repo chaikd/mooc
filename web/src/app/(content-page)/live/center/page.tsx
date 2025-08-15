@@ -2,7 +2,9 @@ import LiveList from "@/modules/live/center/live-list";
 import { searchLiveAction } from "@/services/live";
 import { SearchOutlined } from "@ant-design/icons";
 import { Button, Input } from "antd";
-export const revalidate = 60
+import ListFallback from "@/components/fallback";
+import { Suspense } from "react";
+export const experimental_ppr = true
 export default async function CourseCenter({
   searchParams,
 }: {
@@ -21,11 +23,13 @@ export default async function CourseCenter({
         </form>
       </div>
       <div className="course-list mt-4">
-        <LiveList {...{
-          page,
-          title,
-          pageSize
-        }}></LiveList>
+        <Suspense fallback={<ListFallback/>}>
+          <LiveList {...{
+            page,
+            title,
+            pageSize
+          }}></LiveList>
+        </Suspense>
       </div>
     </div>
   )

@@ -9,8 +9,8 @@ export default async function CourseList({courseName, page, pageSize}) {
     courseList: CourseType[],
     total: number
   }>(courseName, page, pageSize)
-  const courseList = res.courseList
-  const total = res.total
+  const courseList = res?.courseList
+  const total = res?.total
   return (
     <>
       <div className="grid grid-cols-3 grid-flow-rows gap-4">

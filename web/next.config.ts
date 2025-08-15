@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   experimental: {
     nodeMiddleware: true,
+    ppr: 'incremental'
   },
   images: {
     remotePatterns: [

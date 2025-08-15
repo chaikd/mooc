@@ -1,8 +1,11 @@
-"use server"
 import CourseList from "@/modules/course/center/course-list";
+import ListFallback from "@/components/fallback";
 import { searchCourseAction } from "@/services/course";
 import { SearchOutlined } from "@ant-design/icons";
 import { Button, Input } from "antd";
+import { Suspense } from "react";
+
+export const experimental_ppr = true
 
 export default async function CourseCenter({
   searchParams,
@@ -22,11 +25,13 @@ export default async function CourseCenter({
         </form>
       </div>
       <div className="course-list mt-4">
-        <CourseList {...{
-          page,
-          courseName,
-          pageSize
-        }}></CourseList>
+        <Suspense fallback={<ListFallback/>}>
+          <CourseList {...{
+            page,
+            courseName,
+            pageSize
+          }}></CourseList>
+        </Suspense>
       </div>
     </div>
   )

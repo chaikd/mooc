@@ -1,7 +1,9 @@
 import { Fragment, Suspense } from "react";
 import Banner from "@/modules/banner";
-import { Skeleton } from "antd";
 import HomeContent from "@/modules/home/content";
+import ListFallback from "@/components/fallback";
+
+export const revalidate = 60
 
 const infos = [
   {
@@ -27,19 +29,7 @@ export default async function Home() {
     <Fragment>
       <Banner infos={infos}></Banner>
       <div className="container mx-auto mt-6">
-        <Suspense
-          fallback={
-            <>
-              <div className="grid-cols-3">
-                {[1, 2, 3].map((k) => (
-                  <div key={k} className="mt-4">
-                    <Skeleton></Skeleton>
-                  </div>
-                ))}
-              </div>
-            </>
-          }
-        >
+        <Suspense fallback={<ListFallback/>}>
           <HomeContent></HomeContent>
         </Suspense>
       </div>
