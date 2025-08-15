@@ -10,6 +10,7 @@
     "skipLibCheck": true,
     "strict": false,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "incremental": true,
     "module": "esnext",
     "esModuleInterop": true,
@@ -28,7 +29,6 @@
         "src/*"
       ]
     },
-    "allowImportingTsExtensions": true
   },
   "include": [
     "next-env.d.ts",

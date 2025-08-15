@@ -89,14 +89,14 @@ export function useSocketIo({
 
   function getEnvSocketHost(): string {
     // console
-    if (import.meta?.env?.VITE_SOCKETIO_HOST) {
-      return import.meta.env.VITE_SOCKETIO_HOST;
+    if (process.env.SOCKETIO_HOST) {
+      return process.env.SOCKETIO_HOST;
     }
     // web
     if (process.env.NEXT_PUBLIC_SOCKETIO_HOST) {
       return process.env.NEXT_PUBLIC_SOCKETIO_HOST;
     }
-    return 'http://localhost:3004'; // 或 throw new Error('SOCKETIO_HOST not defined');
+    throw new Error('SOCKETIO_HOST not defined')
   }
 
   const ioConnect = async () => {
@@ -213,7 +213,7 @@ export function useSocketIo({
           const { produces } = await getProduces(socket)
           produces.forEach(async item => {
             if(item) {
-              const producerId = item.producer.id
+              const producerId = item?.producer?.id
               if(item.type) {
                 addTrackToStream({
                   producerId,

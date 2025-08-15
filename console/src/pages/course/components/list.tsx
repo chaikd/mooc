@@ -1,12 +1,11 @@
 import { Table, Image, PaginationProps } from "antd"
 import CourseStatus from "@/pages/course/components/cursor-status"
 import CourseActions from "@/pages/course/components/course-actions"
-import { getTablePaginationConfig } from "@/utils/pagination-config"
 import { CourseListItemType } from "@/api/course"
 import { ListDataType } from "../list"
 import { useCallback } from "react"
 
-export default function CourseList({list, fetchList}: {list: ListDataType, fetchList: (pagination?: PaginationProps) => void}) {
+export default function CourseList({list, fetchList}: {list: ListDataType, fetchList: (pagination?: {current: number, pageSize: number}) => void}) {
   const columns = [
     {
       title: '课程封面',
@@ -62,15 +61,15 @@ export default function CourseList({list, fetchList}: {list: ListDataType, fetch
       title: '操作',
       key: 'actions',
       width: 200,
-      render: (_: string, record: CourseListItemType) => <CourseActions status={record.statusInfo} course={record}/>
+      render: (_: string, record: CourseListItemType) => <CourseActions status={record.statusInfo} course={record} fetchList={fetchList}/>
     }
   ]
 
   const fetchFn = useCallback(fetchList, [])
   const paginationChange = (pagination: PaginationProps) => {
     fetchFn({
-      current: pagination.current,
-      pageSize: pagination.pageSize
+      current: pagination.current as number,
+      pageSize: pagination.pageSize as number
     })
   }
 
@@ -79,7 +78,9 @@ export default function CourseList({list, fetchList}: {list: ListDataType, fetch
       columns={columns}
       dataSource={list.data}
       rowKey="_id"
-      pagination={getTablePaginationConfig(list ? list.total : 0, 10, 1, () => {})}
+      pagination={{
+        current: list.page, pageSize: list.size, total: list.total,
+      }}
       scroll={{ x: 1200 }}
       onChange={paginationChange}
     />

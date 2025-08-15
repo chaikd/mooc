@@ -9,7 +9,7 @@ function getEnvMONGOURI(): string {
   if (process.env.NEXT_PUBLIC_MONGO_URI) {
     return process.env.NEXT_PUBLIC_MONGO_URI;
   }
-  return 'mongodb://127.0.0.1:27017/mooc'
+  throw new Error('mongo-uri is not found')
 }
 const connectDB = async () => {
   if (mongoose.connection.readyState !== 1) {

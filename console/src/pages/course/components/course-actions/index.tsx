@@ -2,8 +2,6 @@ import { Button, message, Modal, Space } from "antd"
 import { getActionsByStatus, getButtonType, isDangerButton } from "@/utils/course-actions"
 import { useNavigate } from "react-router"
 import { CourseType, deleteCourse, updateCourse } from "@/api/course"
-import { useContext } from "react"
-import { CourseContext } from "../../list"
 
 interface CourseActionsProps {
   status: {
@@ -12,14 +10,13 @@ interface CourseActionsProps {
   }
   size?: 'small' | 'middle' | 'large'
   course: CourseType
+  fetchList: () => void
 }
 
-type contextType = {fetchList: () => void}
 
-export default function CourseActions({ status, size = 'small', course }: CourseActionsProps) {
+export default function CourseActions({ status, size = 'small', course, fetchList }: CourseActionsProps) {
   const actions = getActionsByStatus(status)
   const navigate = useNavigate()
-  const context: contextType = useContext(CourseContext) as contextType
   const actionTouch = async (action: string) => {
     switch(action) {
       case '编辑':{
@@ -33,7 +30,7 @@ export default function CourseActions({ status, size = 'small', course }: Course
         })
         if(res.success) {
           message.success('发布成功')
-          context.fetchList()
+          fetchList()
         }
         break;
       }
@@ -44,7 +41,7 @@ export default function CourseActions({ status, size = 'small', course }: Course
         })
         if(success) {
           message.success('下架成功')
-          context.fetchList()
+          fetchList()
         }
         break;
       }
@@ -55,7 +52,7 @@ export default function CourseActions({ status, size = 'small', course }: Course
             const res = await deleteCourse(course?._id || '')
             if (res.success) {
               message.success('删除成功')
-              context.fetchList()
+              fetchList()
             }
           }
         })

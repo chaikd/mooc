@@ -53,7 +53,7 @@ export default function AddCourse() {
     if(res.success) {
       const msg = param.id ? '编辑成功' : '添加成功'
       message.success(msg)
-      if(param.id) {
+      if(param.id && statusCode === 1) {
         return
       }
       navigate('/course')

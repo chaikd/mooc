@@ -15,7 +15,7 @@ router.get('/list', async (req: Request, res: Response) => {
   try {
     const { size = 10, page = 1, courseName, statusId, instructorId, ...filter } = req.query;
     const limit = Number(size);
-    const skip = (Number(page) - 1) * limit;
+    const skip = Number(page);
     
     // 构建查询条件
     const queryFilter = { ...filter };

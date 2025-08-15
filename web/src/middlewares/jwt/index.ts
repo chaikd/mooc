@@ -23,7 +23,7 @@ async function authenticateToken(req: NextRequest) {
   try {
     const tokenValue = typeof token === 'string' ? token : token.value;
     const userInd = await parseToken(tokenValue)
-    newHeaders.set('userId', userInd)
+    newHeaders.set('userId', userInd as string)
   } catch (err) {
     return NextResponse.json({ message: '请重新登陆' , err}, { status: 403 });
   }

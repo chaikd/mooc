@@ -1,4 +1,4 @@
-import { Pagination, PaginationProps } from "antd"
+import { Pagination } from "antd"
 import { useCallback } from "react"
 import CourseStatus from "@/pages/course/components/cursor-status"
 import CourseActions from "@/pages/course/components/course-actions"
@@ -6,12 +6,18 @@ import dayjs from "dayjs"
 import LazyImage from "@/components/lazy-image"
 import { ListDataType } from "../list"
 
-export default function CourseTile({list, fetchList}: {list: ListDataType, fetchList: (pagination?: PaginationProps) => void}) {
+export default function CourseTile({list, fetchList}: {list: ListDataType, fetchList: (pagination?: {current: number, pageSize: number}) => void}) {
   const fetchFn = useCallback(fetchList, [])
   const paginationChange = (page: number, pageSize: number) => {
     fetchFn({
       current: page,
       pageSize
+    })
+  }
+  const fetchData = () => {
+    fetchFn({
+      current: list.page,
+      pageSize: list.size
     })
   }
   return (
@@ -34,7 +40,7 @@ export default function CourseTile({list, fetchList}: {list: ListDataType, fetch
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs text-gray-500">{dayjs(item.createTime).format('YYYY-MM-DD')}</span>
-              <CourseActions status={item.statusInfo} course={item}/>
+              <CourseActions status={item.statusInfo} course={item} fetchList={fetchData}/>
             </div>
           </div>
         ))}

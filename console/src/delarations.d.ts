@@ -11,7 +11,7 @@ declare global {
   }
 
   interface ImportMetaEnv {
-    VITE_SOCKETIO_HOST?: string;
+    SOCKETIO_HOST?: string;
   }
 
   interface ImportMeta {

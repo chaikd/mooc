@@ -7,7 +7,7 @@ interface ViteTypeOptions {
 }
 
 interface ImportMetaEnv {
-  readonly VITE_SOCKETIO_HOST: string
+  readonly SOCKETIO_HOST: string
   // 更多环境变量...
 }
 

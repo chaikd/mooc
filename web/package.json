@@ -2,7 +2,6 @@
   "name": "web",
   "version": "1.0.0",
   "description": "",
-  "type": "module",
   "scripts": {
     "dev:web": "NODE_OPTIONS='--inspect' PORT=3001 next dev",
     "dev:server": "nodemon",
