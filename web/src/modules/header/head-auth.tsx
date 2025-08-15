@@ -9,6 +9,8 @@ import { logOut } from "@/services/auth";
 import { Avatar, Dropdown } from "antd";
 import { Spin } from "antd";
 import { redirect, usePathname } from "next/navigation";
+import { tryFn } from "@/utils/try";
+import { responseType } from "@/services/request";
 
 function HeadAvatar({ userInfo, outFn }) {
   const [pending, setPending] = useState(false);
@@ -101,8 +103,10 @@ export default function HeadAuth() {
   const submit = async () => {
     setPending(true);
     const datas = loginForm.getFieldsValue();
-    const res = await login(datas);
-    if (res.success) {
+    const res = await tryFn(() => login(datas)).catch(() => {
+      setPending(false);
+    })
+    if ((res as responseType).success) {
       messageApi.success("登陆成功");
       setOpen(0);
       await getUser();

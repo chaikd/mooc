@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import {User, connectDB, mdaction} from '@mooc/db-shared'
-import { md5 } from "@/utils/md5";
 import { generateToken } from "@/middlewares/jwt";
+import { md5 } from "@/utils/md5";
+import { User, connectDB, mdaction } from '@mooc/db-shared';
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   await connectDB()
@@ -13,11 +13,11 @@ export async function POST(req: NextRequest) {
         message: '用户名或密码错误'
       }, {status: 401})
     if (userInfo?.toObject()?._id) {
-      const token = generateToken(userInfo.id)
+      const token = generateToken(userInfo._id)
       response = NextResponse.json({
         success: true,
         token,
-        userId: userInfo.id,
+        userId: userInfo._id,
         message: '登陆成功'
       })
       response.cookies.set('authorization', token, {
