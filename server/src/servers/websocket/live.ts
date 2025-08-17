@@ -157,7 +157,9 @@ export default async function createLiveIo(ioServer: Server) {
       const producers = producerMap ? [...producerMap.values()] as {producer:Producer,type: string}[] : []
       const produces = producers.map(({producer, type}) => {
         return {
-          id: producer.id,
+          producer: {
+            id: producer.id
+          },
           type
         }
       })

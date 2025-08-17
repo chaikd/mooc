@@ -205,6 +205,14 @@ export function useSocketIo({
       }
     })
 
+    socket.on('liveEnded', async () => {
+      removeAllConsumer()
+      await sendTransport.close()
+      await recvTransport.close()
+      // socket.disconnect()
+      getDetail()
+    })
+
     const produceReadyFn = () => {
       let timer: null | NodeJS.Timeout = null
       return () => {
@@ -234,15 +242,6 @@ export function useSocketIo({
       const getProduce = produceReadyFn()
       getProduce()
     }
-
-    socket.on('liveEnded', async () => {
-      console.log('liveEnded')
-      removeAllConsumer()
-      await sendTransport.close()
-      await recvTransport.close()
-      // socket.disconnect()
-      getDetail()
-    })
   }
 
   function closeCurrentLive() {
