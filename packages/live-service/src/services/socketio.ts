@@ -77,6 +77,7 @@ export function useSocketIo({
       controlState,
       removeAllConsumer,
       removeAllProducers,
+      setMediasoupDevice,
     } = useMediasoup({
       streamControl
     })
@@ -139,6 +140,7 @@ export function useSocketIo({
     const device = new Device()
     const routerRtpCapabilities = await getRouterRtpCapabilities(socket)
     await device.load(routerRtpCapabilities)
+    setMediasoupDevice(device)
     // 创建发送report
     const sendTransportInfo = await getReport(socket, 'send') as TransportOptions
     const sendTransport: Transport = device.createSendTransport(sendTransportInfo)

@@ -2,7 +2,6 @@ import { getHomeInfo } from "@/services/home";
 import { Button } from "antd";
 import Link from "next/link";
 import CourseCard from "../course-card";
-import dayjs from "dayjs";
 
 export default async function HomeContent() {
   let homeInfo = {lives: [], courses: []}
@@ -32,8 +31,7 @@ export default async function HomeContent() {
                   cover: v.liveCover,
                 }}
                 isLive={
-                  dayjs(v.startTime).valueOf() < dayjs().valueOf() &&
-                  dayjs(v.endTime).valueOf() > dayjs().valueOf()
+                  v.status === 'live'
                 }
               ></CourseCard>
             </Link>

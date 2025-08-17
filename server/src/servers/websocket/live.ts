@@ -105,20 +105,22 @@ export default async function createLiveIo(ioServer: Server) {
       const roomId: string = socket.handshake.query.roomId as string
       const transport = transportsMap.get(socket)
       const producer = await transport?.produce({kind, rtpParameters, appData})
-      cb({ id: producer.id })
-      producerMap.set(producer.id, {
-        producer,
-        type: appData.type,
-      })
-      await executeFFmpag()
-      await liveIo.to(roomId).emit('newProduce', { producerId: producer.id, kind, appData })
-      socket.on('disconnect', () => {
-        [...producerMap.values()].forEach((item) => {
-          item.producer.close()
+      if(producer) {
+        cb({ id: producer?.id })
+        producerMap.set(producer.id, {
+          producer,
+          type: appData.type,
         })
-        producerMap.clear()
-        liveIo.to(roomId).emit('producerClosed', {})
-      })
+        await executeFFmpag()
+        await liveIo.to(roomId).emit('newProduce', { producerId: producer.id, kind, appData })
+        socket.on('disconnect', () => {
+          [...producerMap.values()].forEach((item) => {
+            item.producer.close()
+          })
+          producerMap.clear()
+          liveIo.to(roomId).emit('producerClosed', {})
+        })
+      }
     })
     socket.on('getConsumer', async ({producerId, rtpCapabilities}, cb) => {
       const rtp = rtpCapabilities ? rtpCapabilities : rtpCapabilitiesMap.get(socket)
@@ -213,6 +215,11 @@ export default async function createLiveIo(ioServer: Server) {
       }
       const plainTransportList = await createPlainTransport(mediasoupRouter, producerList)
       plainTransportMap.set(roomId, plainTransportList)
+      try{
+        await Promise.all(plainTransportList.map(item => item.consumer.resume()))
+      }catch(err) {
+        console.log('consumer start error:', err)
+      }
       startFFmpeg({
         plainTransportList,
         roomId,

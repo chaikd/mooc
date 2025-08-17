@@ -25,7 +25,7 @@ export async function createPlainTransport(mediasoupRouter: Router, producerList
       rtpCapabilities: mediasoupRouter.rtpCapabilities,
       paused: true
     });
-    await consumer.resume();
+    // await consumer.resume();
     item.producer.on('@close', () => {
       consumer.close()
       plainTransport.close()

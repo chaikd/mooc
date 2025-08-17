@@ -1,3 +1,4 @@
+import { logger } from "@mooc/db-shared/index.ts";
 import { spawn } from "child_process";
 import { existsSync, mkdirSync, rm } from "fs";
 import { join } from "path";
@@ -34,25 +35,39 @@ export function startFFmpeg({
     '-c:v', 'libx264',
     '-c:a', 'aac',
 
-    '-preset', 'veryfast',
+    '-crf', '23', // 恒定质量，平衡质量和性能
+    '-preset', 'ultrafast',
     '-tune', 'zerolatency',
     '-profile:v', 'main',
     '-level:v', '3.1',
     '-b:v', '1500k',
-    '-maxrate', '1500k',
-    '-bufsize', '3000k',
+    '-maxrate', '2000k',
+    '-bufsize', '4000k',
+    '-keyint_min', '30',
+    '-sc_threshold', '0', // 禁用场景检测
+    // '-vbv_maxrate', '2000', // 显式VBV maxrate (kbps)
+    // '-vbv_bufsize', '6000', // VBV缓冲大小 (kbits)
+    // '-vbv_init', '0.9', // 初始缓冲填充 (0.9=90%)
     '-g', '60',
     '-r', '30',
     '-f', 'hls',
-    '-vf', 'scale=1280:720',
-    '-fflags', 'nobuffer',
-    '-fflags', '+genpts',
+    '-vf', 'scale=1280:720:force_original_aspect_ratio=decrease',
+    '-vsync', '1',
+
+    '-reconnect', '1', // 启用重连
+    '-reconnect_streamed', '1',
+    '-reconnect_delay_max', '5',
+
+    '-reorder_queue_size', '2000', // 增加重排序队列
+    '-pkt_size', '1316', // 匹配常见MTU (1500-184)
+    '-fflags', 'nobuffer+genpts+discardcorrupt',
     '-flags', 'low_delay',
-    '-probesize', '1000000',
+    '-max_delay', '2000000',
+    '-probesize', '50000000',
     '-analyzeduration','5000000',
-    '-probesize', '32',
+
     '-hls_time', '4',
-    '-hls_list_size', '10',
+    '-hls_list_size', '15',
     '-hls_flags', 'delete_segments+append_list',
     '-hls_segment_filename', 
     join(outputDir, `segment_${fileId}_%03d.ts`),
@@ -92,6 +107,7 @@ export function startFFmpeg({
 
   ffmpeg.on('error', (err) => {
     console.error('FFmpeg error:', err);
+    logger.error('FFmpeg error:', err);
   });
 
   ffmpeg.on('close', (code) => {

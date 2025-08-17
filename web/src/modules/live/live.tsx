@@ -19,7 +19,9 @@ export default function LiveVideo({ liveDetail, userInfo, isMobile = false }: Pr
   const streamControl = useMediaStream()
   const [timeCount] = useTimeCount(liveDetail?.liveStartTime as Date)
   const duration = dayjs(liveDetail?.liveEndTime).valueOf() - dayjs(liveDetail?.liveStartTime).valueOf()
-  liveDetail.duration = formatMillisecondsToTime(duration)
+  if(liveDetail) {
+    liveDetail.duration = formatMillisecondsToTime(duration)
+  }
   const tipText = useMemo(() => {
     switch(liveDetail?.status) {
 			case 'ended':
@@ -90,7 +92,7 @@ export default function LiveVideo({ liveDetail, userInfo, isMobile = false }: Pr
       <div className="info flex justify-between p-2 border-t border-t-gray-100">
         <span className="text-lg font-[600]">{liveDetail?.title}</span>
         <Space>
-          <span>时长：{liveDetail?.status === 'live' ? timeCount : liveDetail.duration}</span>
+          <span>时长：{liveDetail?.status === 'live' ? timeCount : liveDetail?.duration}</span>
           <span>看过：{liveRoomInfo.historyPersonCount || 0}</span>
           <span>在线：{liveRoomInfo.personCount || 0}</span>
         </Space>

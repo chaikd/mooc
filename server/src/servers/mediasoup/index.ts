@@ -21,26 +21,7 @@ const createMediasoupRouter = async (): Promise<mediasoup.types.Router> => {
 					clockRate : 48000,
 					channels  : 2
 				},
-				{
-					kind       : 'video',
-					mimeType   : 'video/VP8',
-					clockRate  : 90000,
-					parameters :
-					{
-						'x-google-start-bitrate' : 1000
-					}
-				},
-				{
-					kind       : 'video',
-					mimeType   : 'video/VP9',
-					clockRate  : 90000,
-					parameters :
-					{
-						'profile-id'             : 2,
-						'x-google-start-bitrate' : 1000
-					}
-				},
-				{
+        {
 					kind       : 'video',
 					mimeType   : 'video/h264',
 					clockRate  : 90000,
@@ -63,7 +44,26 @@ const createMediasoupRouter = async (): Promise<mediasoup.types.Router> => {
 						'level-asymmetry-allowed' : 1,
 						'x-google-start-bitrate'  : 1000
 					}
-				}
+				},
+				{
+					kind       : 'video',
+					mimeType   : 'video/VP8',
+					clockRate  : 90000,
+					parameters :
+					{
+						'x-google-start-bitrate' : 1500
+					}
+				},
+				{
+					kind       : 'video',
+					mimeType   : 'video/VP9',
+					clockRate  : 90000,
+					parameters :
+					{
+						'profile-id'             : 2,
+						'x-google-start-bitrate' : 1000
+					}
+				},
 			]
   })
   process.on('SIGINT', async () => {

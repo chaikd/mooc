@@ -1,5 +1,5 @@
 import { getMediaStream } from "@/utils/media/stream";
-import { Consumer, Producer, Transport } from "mediasoup-client/types";
+import { Consumer, Device, Producer, Transport } from "mediasoup-client/types";
 import { RefObject, useEffect, useReducer, useRef, useState } from "react";
 import { Socket } from "socket.io-client";
 
@@ -96,6 +96,7 @@ export function useMediasoup({
   const [microphoneTrack, setMicrophoneTrack] = useState(false)
   const [hasRemoteStreamTracks, setHasRemoteStreamTracks] = useState(false)
   const [hasCameraStreamTracks, setHasCameraStreamTracksmTracks] = useState(false)
+  const [mediasoupDevice, setMediasoupDevice] = useState<ReturnType<() => Device> | null>(null)
   const [controlState, dispatchState] = useReducer(stateReducer, {
     microphoneState: false,
     screenState: false,
@@ -112,9 +113,7 @@ export function useMediasoup({
 
   const resetStreamState = (type: ProducerTypes | undefined) => {
     new Promise(resolve => {setTimeout(resolve, 500)}).then(() => {
-    console.log(type)
       if(type && type === 'camera' && cameraStream?.current) {
-    console.log(type, cameraStream?.current?.getTracks())
         setHasCameraStreamTracksmTracks(cameraStream?.current?.getTracks().length > 0)
       }
       if(type?.startsWith('screen') && remoteStream?.current) {
@@ -187,9 +186,23 @@ export function useMediasoup({
   }
 
   const producerControl = async (socketIo: Socket, track: MediaStreamTrack,type: ProducerTypes) => {
-    const producer = await sendTransport?.produce({ track , appData: {
-      type
-    }}) as Producer;
+    const producer = await sendTransport?.produce({ 
+      track,
+      codec: getCodec(),
+      encodings: [
+        {
+          scaleResolutionDownBy: 1,
+          maxBitrate: 5000000,
+          scalabilityMode: 'L1T3',
+        },
+      ],
+      codecOptions: {
+				videoGoogleStartBitrate: 1000,
+			},
+      appData: {
+        type
+      }}
+    ) as Producer;
     if(producer) {
       producersMap.current.set(producer.id, {
         type,
@@ -201,6 +214,16 @@ export function useMediasoup({
         }})
       });
     }
+  }
+
+  const getCodec = () => {
+    const codec = mediasoupDevice?.rtpCapabilities?.codecs?.find(
+      c => c.mimeType.toLowerCase() === 'video/h264'
+    );
+    if (!codec) {
+      throw new Error('desired H264 codec+configuration is not supported');
+    }
+    return codec
   }
 
   const removeProducer = (type: ProducerTypes | 'screen') => {
@@ -266,5 +289,6 @@ export function useMediasoup({
     controlState,
     removeAllConsumer,
     removeAllProducers,
+    setMediasoupDevice,
   }
 }
