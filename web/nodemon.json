@@ -1,5 +1,8 @@
 {
   "watch": "./*",
   "ext": "ts,js,json",
+  "env": {
+    "NODE_SERVER_API_HOST": "http://localhost:3002"
+  },
   "exec": "node ./server.mjs"
 }

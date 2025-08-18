@@ -7,8 +7,7 @@ export interface responseType {
   data?: object | [];
 }
 
-
-const host = process.env.NEXT_PUBLIC_API_HOST;
+const host = process.env.NODE && (process.env.NODE_SERVER_API_HOST || process.env.NEXT_PUBLIC_API_HOST) || ''
 
 const nextFetchConfig = {
   revalidate: 60
