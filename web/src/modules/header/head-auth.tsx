@@ -48,15 +48,17 @@ function LoginForm({ loginForm, submit, pending }) {
     <Form className="!mt-2" form={loginForm} onFinish={onFinish}>
       <FormItem
         name="username"
+        initialValue="yiyi"
         rules={[{ required: true, message: "请输入用户名" }]}
       >
         <Input placeholder="请输入用户名" prefix={<UserOutlined />}></Input>
       </FormItem>
       <FormItem
         name="password"
+        initialValue="123456"
         rules={[
           { required: true, message: "请输入密码" },
-          { min: 6, message: "最少6位地黄丸" },
+          { min: 6, message: "最少6位" },
         ]}
       >
         <Password
