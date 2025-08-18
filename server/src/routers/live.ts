@@ -1,14 +1,23 @@
-import { Live, type LiveType, mdaction, User, UserType } from '@mooc/db-shared/index.ts';
+import { RequestTypeWithJWT } from '@/middleware/jwt/index.ts';
+import { Live, type LiveType, mdaction, Role, User, UserType } from '@mooc/db-shared/index.ts';
+import { findOneDoc } from '@mooc/db-shared/utils/database/actions.ts';
 import { Request, Response, Router } from 'express';
 import { Document } from 'mongoose';
 
 const router = Router();
 
 // 直播列表
-router.get('/list', async (req: Request, res: Response) => {
+router.get('/list', async (req: RequestTypeWithJWT, res: Response) => {
   const { size = 10, page = 1, ...filter } = req.query;
   const limit = Number(size);
   const skip = Number(page);
+  const userInfo = await findOneDoc(User, {_id: req.userId})
+  if(userInfo) {
+    const roleInfo = await findOneDoc(Role, {_id: userInfo.role})
+    if(roleInfo.code !== 'SYSTEM') {
+      filter.instructorId = userInfo._id
+    }
+  }
   // 按 startTime 降序排序
   const sortConfig = {}
   const lives = await Live.find(filter)

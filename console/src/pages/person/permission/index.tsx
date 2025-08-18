@@ -71,6 +71,11 @@ export default function Permission() {
       key: 'type'
     },
     {
+      title: 'Code',
+      dataIndex: 'code',
+      key: 'code'
+    },
+    {
       title: '操作',
       dataIndex: 'action',
       key: 'action',

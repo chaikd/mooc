@@ -3,9 +3,11 @@ import { removeToken } from "@/utils/token";
 import { removeUserInfo } from "@/utils/user-info";
 import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from "@ant-design/icons";
 import { Avatar, Button, Dropdown, Layout } from "antd";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 import { setUserInfo } from "@/store/modules/user";
+import { StoreType } from "@/store";
+import { UserType } from "@/api/user";
 
 const { Header } = Layout;
 
@@ -22,6 +24,7 @@ export default function LayoutHeader({
   headerStyle,
   colorBgContainer,
 }: LayoutHeaderProps) {
+  const userInfo = useSelector((state: StoreType) => state.user.info) as UserType
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const logout = async () => {
@@ -53,7 +56,10 @@ export default function LayoutHeader({
         style={headerStyle}
       />
       <Dropdown menu={{ items: dropdownItems }} placement="bottom" arrow>
-        <Avatar size={58} icon={<UserOutlined />} />
+        <div>
+          <span className="mr-5">{userInfo?.username}</span>
+          <Avatar size={58} icon={<UserOutlined />} />
+        </div>
       </Dropdown>
     </Header>
   )

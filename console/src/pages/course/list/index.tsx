@@ -6,6 +6,7 @@ import CourseTile from "../components/tile"
 import CourseList from "../components/list"
 import { Link } from "react-router"
 import { CourseListItemType, getCourseList } from "@/api/course"
+import Promission from "@/components/promission"
 
 export const CourseContext = createContext({})
 
@@ -58,9 +59,11 @@ export default memo(function Course() {
     <div className="flex flex-col h-full">
       <div className="head flex justify-between">
         <BreadcrumbChain></BreadcrumbChain>
-        <Link to="/course/add">
-          <Button>新建课程</Button>
-        </Link>
+        <Promission authToken="AddCourse">
+          <Link to="/course/add">
+            <Button>新建课程</Button>
+          </Link>
+        </Promission>
       </div>
       <div className="action flex justify-between mt-4">
         <Form onFinish={search} layout="inline">

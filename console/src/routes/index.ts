@@ -82,7 +82,7 @@ const router = createBrowserRouter([
         meta: {
           label: '人员管理',
           icon: 'UserOutlined',
-          // permissions: ['PersonManage']
+          permissions: ['PersonManage']
         },
         children: [
           {
@@ -90,7 +90,7 @@ const router = createBrowserRouter([
             Component: User,
             meta: {
               label: '用户管理',
-              // permissions: ['UserManage']
+              permissions: ['UserManage']
             },
           },
           {
@@ -98,7 +98,7 @@ const router = createBrowserRouter([
             Component: Role,
             meta: {
               label: '角色管理',
-              // permissions: ['RoleManage']
+              permissions: ['RoleManage']
             },
             // lazy: async () => {
             //   const { default: RoleComponent } = await import('../pages/person/role/index.js')
@@ -110,7 +110,7 @@ const router = createBrowserRouter([
             Component: Permission,
             meta: {
               label: '权限管理',
-              // permissions: ['PermissionManage']
+              permissions: ['PermissionManage']
             }
           },
         ]
@@ -121,7 +121,7 @@ const router = createBrowserRouter([
         meta: {
           label: '直播管理',
           icon: 'VideoCameraOutlined',
-          // permissions: ['LiveManage']
+          permissions: ['LiveManage']
         },
         children: [
           {
@@ -142,7 +142,8 @@ const router = createBrowserRouter([
         Component: System,
         meta: {
           label: '系统管理',
-          icon: 'SettingOutlined'
+          icon: 'SettingOutlined',
+          permissions: ['SystemManage']
         },
         children: [
           {

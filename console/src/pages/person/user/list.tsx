@@ -3,6 +3,7 @@ import { Table, Button, Modal, Form, Input, Select, message, Popconfirm, TablePa
 import { getUserList, addUser, editUser, deleteUser, UserType } from '@/api/user';
 import { getRoleList } from '@/api/role';
 import BreadcrumbChain from '@/components/breadcrumb-chain';
+import Promission, { checkPromission } from '@/components/promission';
 
 export default function User() {
   const [list, setList] = useState<UserType[]>([]);
@@ -98,6 +99,7 @@ export default function User() {
     { title: '创建时间', dataIndex: 'createTime', key: 'createTime', render: (t: string) => t ? new Date(t).toLocaleString() : '' },
     {
       title: '操作',
+      hidden: !checkPromission('EditUser'),
       key: 'action',
       render: (_: string, record: UserType) => (
         <>
@@ -121,7 +123,9 @@ export default function User() {
           <Button type="primary" onClick={handleSearch}>搜索</Button>
         </Form.Item>
       </Form>
-      <Button type="primary" onClick={handleAdd} style={{ marginBottom: 16 }}>添加用户</Button>
+      <Promission authToken="AddUser">
+        <Button type="primary" onClick={handleAdd} style={{ marginBottom: 16 }}>添加用户</Button>
+      </Promission>
       <Table
         rowKey="_id"
         columns={columns}

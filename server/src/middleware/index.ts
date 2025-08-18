@@ -1,5 +1,5 @@
 import { errorHandler } from "./errorHandler.ts";
+import { checkPromssion } from "./permissionAuth.ts";
 
-export {
-  errorHandler
-};
+export { checkPromssion, errorHandler };
+

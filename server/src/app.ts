@@ -1,7 +1,7 @@
 import cookieParser from 'cookie-parser';
 import express, { NextFunction, Request, Response } from 'express';
 import { join } from 'path';
-import { errorHandler } from './middleware/index.ts';
+import { checkPromssion, errorHandler } from './middleware/index.ts';
 import { authenticateToken } from './middleware/jwt/index.ts';
 import registRouters, { isWhiteList } from './routers/index.ts';
 
@@ -22,6 +22,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   }
   authenticateToken(req, res, next);
 });
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  checkPromssion(req, res, next)
+})
 
 // 静态资源访问
 const tmpHlsPath = join(process.cwd(), 'tmp', 'hls')
