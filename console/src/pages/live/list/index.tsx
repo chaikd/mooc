@@ -16,6 +16,7 @@ export default function Live() {
   const [isOpen, setIsOpen] = useState(false)
   const [isEdit, setIsEdit] = useState<EditLiveType | null>(null)
   const [instructors, setInstructors] = useState([])
+  const [loading, setLoading] = useState(false)
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
   const [form] = useForm()
   const [searchForm] = useForm()
@@ -79,6 +80,7 @@ export default function Live() {
     }))
   }
   const getList = async (paginationInfo?: PaginationProps) => {
+    setLoading(true)
     const pageInfo: {
       current: number, pageSize: number, total: number
     } = (paginationInfo || pagination) as {
@@ -98,6 +100,7 @@ export default function Live() {
         total: res.total as number
       })
     }
+    setLoading(false)
   }
   const searchFinish = async () => {
     setPagination({
@@ -193,7 +196,7 @@ export default function Live() {
             </Form.Item>
           </Form>
         </div>
-        <Table rowKey="_id" columns={columns} dataSource={dataSource} pagination={pagination} onChange={onPageChange}></Table>
+        <Table rowKey="_id" loading={loading} columns={columns} dataSource={dataSource} pagination={pagination} onChange={onPageChange}></Table>
       </div>
 
       <Modal {...{
