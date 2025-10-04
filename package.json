@@ -34,6 +34,26 @@
     "rollup-plugin-copy": "^3.5.0",
     "winston": "^3.17.0"
   },
+  "lint-staged": {
+    "console/**/*.{ts,tsx,js,jsx}": [
+      "pnpm --filter console lint"
+    ],
+    "server/**/*.{ts,tsx,js,jsx}": [
+      "pnpm --filter server lint"
+    ],
+    "web/**/*.{ts,tsx,js,jsx}": [
+      "pnpm --filter web lint"
+    ],
+    "packages/db-shared/**/*.{ts,tsx,js,jsx}": [
+      "pnpm --filter @mooc/db-shared lint"
+    ],
+    "packages/live-service/**/*.{ts,tsx,js,jsx}": [
+      "pnpm --filter @mooc/live-service lint"
+    ],
+    "*.{json,js,ts,md}": [
+      "echo 'Root configuration files changed - consider running full lint check'"
+    ]
+  },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.31.0",
@@ -53,6 +73,7 @@
     "eslint-plugin-react": "^7.37.5",
     "globals": "^16.3.0",
     "husky": "^9.1.7",
+    "lint-staged": "^16.2.3",
     "nodemon": "^3.1.10",
     "sass": "^1.89.2",
     "tailwindcss": "^4.1.11",

@@ -150,7 +150,7 @@ export default function Live() {
       render: (status) => {return status}
     },
     {
-      title: '计划时间',
+      title: '直播时间',
       dataIndex: 'startTime',
       key: 'startTime',
       render: (_, record) => {
