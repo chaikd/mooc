@@ -1,6 +1,7 @@
 import { generateUUID } from "@/utils/uuid"
 import { LiveType, UserType } from "@mooc/db-shared"
-import { AppData, Consumer, Device, DtlsParameters, RtpCapabilities, Transport, TransportOptions } from "mediasoup-client/types"
+import { Device as DeviceFn } from 'mediasoup-client'
+import { AppData, Consumer, DtlsParameters, RtpCapabilities, Transport, TransportOptions } from "mediasoup-client/types"
 import { useEffect, useRef, useState } from "react"
 import { io, Socket } from "socket.io-client"
 import { ProducerTypes, useMediasoup, UseMediaStreamType } from "./live-hook"
@@ -83,7 +84,7 @@ export function useSocketIo({
         ...data
       }))
     })
-    const device = new Device()
+    const device = new DeviceFn()
     const routerRtpCapabilities = await getRouterRtpCapabilities(socket)
     await device.load(routerRtpCapabilities)
     // 创建发送report

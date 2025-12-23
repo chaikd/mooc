@@ -17,7 +17,7 @@
     "server:lint": "pnpm --filter server lint",
     "console:lint": "pnpm --filter console lint",
     "web:lint": "pnpm --filter web lint",
-    "build": "pnpm run server:build & pnpm run consle:build & pnpm run web:build",
+    "build": "pnpm run server:build & pnpm run console:build & pnpm run web:build",
     "lint": "pnpm run server:lint && pnpm run console:lint && pnpm run web:lint && pnpm --filter db-shared lint && pnpm --filter live-service lint",
     "prepare": "husky"
   },
@@ -29,7 +29,7 @@
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "mediasoup": "^3.16.6",
-    "react-dom": "^19.1.0",
+    "react-dom": "^19.2.3",
     "redis": "^5.6.0",
     "rollup-plugin-copy": "^3.5.0",
     "winston": "^3.17.0"

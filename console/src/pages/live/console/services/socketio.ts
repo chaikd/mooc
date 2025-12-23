@@ -1,6 +1,7 @@
 import { LiveType } from "@/api/live"
 import { UserType } from "@/api/user"
-import { AppData, Consumer, Device, DtlsParameters, Producer, RtpCapabilities, Transport, TransportOptions } from "mediasoup-client/types"
+import { Device as DeviceFn } from 'mediasoup-client'
+import { AppData, Consumer, DtlsParameters, Producer, RtpCapabilities, Transport, TransportOptions } from "mediasoup-client/types"
 import { useEffect, useRef, useState } from "react"
 import { io, Socket } from "socket.io-client"
 import { generateUUID } from "./consumer-id"
@@ -88,7 +89,7 @@ export function useSocketIo({
         ...data
       }))
     })
-    const device = new Device()
+    const device = new DeviceFn()
     const routerRtpCapabilities = await getRouterRtpCapabilities(socket)
     await device.load(routerRtpCapabilities)
     // 创建发送report

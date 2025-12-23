@@ -3,8 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: false,
   experimental: {
-    nodeMiddleware: true,
-    ppr: 'incremental'
+    // nodeMiddleware: true,
+    // ppr: 'incremental'
   },
   images: {
     remotePatterns: [
