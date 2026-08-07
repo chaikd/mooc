@@ -1,7 +1,7 @@
 import { connectDB } from '@mooc/db-shared/index.ts';
 import { createServer } from 'http';
 import app from './app.ts';
-import './config/index';
+import './config/index.ts';
 import { createWebsocketServer } from './servers/websocket/index.ts';
 
 const server = createServer(app)
