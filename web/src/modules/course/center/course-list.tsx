@@ -4,7 +4,13 @@ import { CourseType } from "@mooc/db-shared"
 import CourseListPagination from "./pagination"
 import Link from "next/link"
 
-export default async function CourseList({courseName, page, pageSize}) {
+interface CourseListProps {
+  courseName: string;
+  page: number;
+  pageSize: number;
+}
+
+export default async function CourseList({courseName, page, pageSize}: CourseListProps) {
   const res = await fetchCourse<{
     courseList: CourseType[],
     total: number
@@ -20,9 +26,9 @@ export default async function CourseList({courseName, page, pageSize}) {
               <Link href={`/course/${v._id}`} key={v._id}>
                 <CourseCard key={v._id} info={{
                   title: v.courseName,
-                  instructorName: v.instructor.username,
-                  studentsCount: v.totalCount,
-                  cover: v.courseCover,
+                  instructorName: v.instructor?.username ?? '',
+                  studentsCount: v.totalCount ?? 0,
+                  cover: v.courseCover ?? '',
                 }}></CourseCard>
               </Link>
             )

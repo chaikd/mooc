@@ -1,6 +1,6 @@
 import request, { responseType } from "./request"
 
-export async function login(data): Promise<responseType> {
+export async function login(data: Record<string, unknown>): Promise<responseType> {
   return request.post('/api/auth/login', data)
 }
 

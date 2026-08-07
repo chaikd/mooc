@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   await connectDB()
   // eslint-disable-next-line prefer-const
   let {query, page, pageSize} = await req.json()
-  const filter = {statusCode: 2}
+  const filter: Record<string, unknown> = {statusCode: 2}
   query = query || {}
   Object.keys(query).forEach(prop => {
     filter[prop] = {

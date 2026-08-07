@@ -4,17 +4,17 @@ import { revalidatePath } from "next/cache";
 import request from "./request";
 import { redirect } from "next/navigation";
 
-export async function getCourseDetail<T>(id): Promise<T> {
+export async function getCourseDetail<T>(id: string): Promise<T> {
   return request.get(`/api/course/${id}`).then((res) => res?.data);
 }
 
-export async function getCourseChapters<T>(id): Promise<T> {
+export async function getCourseChapters<T>(id: string): Promise<T> {
   return request
     .get(`/api/course/${id}/chapter`)
     .then((res) => (res?.data));
 }
 
-export async function parseChapter(data) {
+export async function parseChapter(data: CourseChapterType[]) {
   const roots = data.filter((v) => !v.parentChapterId);
   const keys: Array<string> = [];
   const findChildren = (
@@ -41,21 +41,21 @@ export async function parseChapter(data) {
   return trees;
 }
 
-export async function searchCourseAction(formData) {
+export async function searchCourseAction(formData: FormData) {
   const {courseName} = Object.fromEntries(formData)
   // revalidatePath(`/course/center`)
-  const query = courseName ? `?courseName=${encodeURIComponent(courseName)}` : ''
+  const query = courseName ? `?courseName=${encodeURIComponent(courseName as string)}` : ''
   redirect(`/course/center${query}`)
 }
 
-export async function pageChangeAction(page, courseName) {
+export async function pageChangeAction(page: number, courseName: string) {
   revalidatePath(`/course/center`)
   const pageQuery = `page=${page || 1}`
   const query = courseName ? `?courseName=${courseName}&${pageQuery}` : `?${pageQuery}`
   redirect(`/course/center${query}`)
 }
 
-export async function fetchCourse<T>(courseName, page, pageSize): Promise<T> {
+export async function fetchCourse<T>(courseName: string, page: number, pageSize: number): Promise<T> {
   const query = courseName ? {courseName} : {}
   return request.post('/api/course/center', {query, page, pageSize}).then(res => res?.data)
 }

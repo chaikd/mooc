@@ -12,8 +12,8 @@ export default async function CourseCenter({
 }) {
   const params = await searchParams
   const title = params.title || ''
-  const page = params.page || 1
-  const pageSize = params.pageSize || 9
+  const page = Number(params.page) || 1
+  const pageSize = Number(params.pageSize) || 9
   return(
     <div className="w-container mt-6 mx-auto min-h-[300px]">
       <div className="search">

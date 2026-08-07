@@ -9,7 +9,7 @@ import { getCourseChapters, parseChapter, getCourseDetail } from "@/services/cou
 import { CourseChapterType, CourseType, UserType } from "@mooc/db-shared";
 import ChapterTree from './chapter-tree'
 
-export default async function Content({ id }) {
+export default async function Content({ id }: { id: string }) {
   const courseDetail = await getCourseDetail<
     CourseType & {
       isLive: boolean;

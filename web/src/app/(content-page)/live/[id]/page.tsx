@@ -6,7 +6,7 @@ import { ClockCircleOutlined, UserOutlined } from "@ant-design/icons";
 import { Avatar, Button } from "antd";
 import dayjs from "dayjs";
 
-export default async function LiveDetail({ params }) {
+export default async function LiveDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const userInfo = await getAuthUserInfo()
   const liveInfo = await liveInfoAction(id)

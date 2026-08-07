@@ -44,6 +44,7 @@ export function useMediaStream(): UseMediaStreamType {
     }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     remoteStream.current = new MediaStream()
     microStream.current = new MediaStream()
@@ -92,13 +93,13 @@ export function useMediasoup({
   const resetStreamState = (type: ProducerTypes | undefined) => {
     new Promise(resolve => {setTimeout(resolve, 500)}).then(() => {
       if(type && type === 'camera' && cameraStream) {
-        setHasCameraStreamTracksmTracks(cameraStream?.current?.getTracks().length > 0)
+        setHasCameraStreamTracksmTracks((cameraStream?.current?.getTracks()?.length ?? 0) > 0)
       }
       if(type?.startsWith('screen') && remoteStream) {
-        setHasRemoteStreamTracks(remoteStream?.current?.getTracks().length > 0)
+        setHasRemoteStreamTracks((remoteStream?.current?.getTracks()?.length ?? 0) > 0)
       }
       if(type === 'microphone') {
-        setMicrophoneTrack(microStream?.current?.getTracks().length > 0)
+        setMicrophoneTrack((microStream?.current?.getTracks()?.length ?? 0) > 0)
       }
     })
   }
@@ -109,7 +110,7 @@ export function useMediasoup({
         return v.type === 'microphone'
       })
       const producer = producerItem?.producer
-      producer.track.stop()
+      producer?.track?.stop()
       setMicrophoneTrack(false)
       if(producer) {
         producer.close()

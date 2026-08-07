@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { Skeleton } from "antd";
 import Content from "@/modules/course/course-detail/content";
 
-export default async function CourseDetail({ params }) {
+export default async function CourseDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return (
     <div className="w-container mx-auto mt-6 min-h-[450px]">

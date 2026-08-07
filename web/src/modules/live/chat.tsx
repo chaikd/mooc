@@ -57,8 +57,8 @@ export default function LiveChat({liveDetail, userInfo}: PropType) {
       message.warning('请输入要发送的信息')
     }
     await chatIo.current?.emit('messageSend', JSON.stringify({
-      userId: userInfo._id,
-      username: userInfo.username,
+      userId: userInfo?._id ?? '',
+      username: userInfo?.username ?? '',
       message: messageText,
       createTime: new Date()
     }))

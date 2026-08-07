@@ -1,5 +1,5 @@
 "use client";
-import { Space, Button, Modal, Form, Input, message } from "antd";
+import { Space, Button, Modal, Form, Input, message, type FormInstance } from "antd";
 import { getUserInfo, login } from "@/services/auth";
 import FormItem from "antd/es/form/FormItem";
 import { useEffect, useState } from "react";
@@ -11,8 +11,9 @@ import { Spin } from "antd";
 import { redirect, usePathname } from "next/navigation";
 import { tryFn } from "@/utils/try";
 import { responseType } from "@/services/request";
+import { UserType } from "@mooc/db-shared";
 
-function HeadAvatar({ userInfo, outFn }) {
+function HeadAvatar({ userInfo, outFn }: { userInfo: UserType; outFn: () => Promise<void> }) {
   const [pending, setPending] = useState(false);
   const items = [
     {
@@ -20,7 +21,7 @@ function HeadAvatar({ userInfo, outFn }) {
       label: "退出登陆",
     },
   ];
-  const onClick = async ({ key }) => {
+  const onClick = async ({ key }: { key: string }) => {
     if (key === "out") {
       setPending(true);
       await outFn();
@@ -39,7 +40,7 @@ function HeadAvatar({ userInfo, outFn }) {
   );
 }
 
-function LoginForm({ loginForm, submit, pending }) {
+function LoginForm({ loginForm, submit, pending }: { loginForm: FormInstance; submit: () => Promise<void>; pending: boolean }) {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const onFinish = async () => {
     submit();
@@ -89,7 +90,7 @@ export default function HeadAuth() {
   const [loginForm] = Form.useForm();
   const [open, setOpen] = useState(0);
   const [pending, setPending] = useState(false);
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<UserType | null>(null);
   const [messageApi, contextHolder] = message.useMessage();
   const pathname = usePathname()
   // const { data } = useSWR<{ success: boolean; data: object }>(

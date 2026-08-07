@@ -1,11 +1,16 @@
 import { Carousel } from "antd";
 import Image from "next/image";
 
-export default function Banner({infos}) {
+interface BannerInfo {
+  imgUrl: string;
+  msg: string;
+}
+
+export default function Banner({ infos }: { infos: BannerInfo[] }) {
   return (
     <Carousel autoplay className="bg-gray-100 min-h-100">
       {
-        infos.map((v, k) => (
+        infos.map((v: BannerInfo, k: number) => (
           <div className="item relative" key={k}>
             <Image width={1920} height={1080} className="h-150 w-full" src={v.imgUrl} alt=""/>
             <div className="w-full absolute left-0 top-1/2 text-right">

@@ -2,12 +2,13 @@ import { getHomeInfo } from "@/services/home";
 import { Button } from "antd";
 import Link from "next/link";
 import CourseCard from "../course-card";
+import { LiveType, CourseType } from "@mooc/db-shared";
 
 export default async function HomeContent() {
-  let homeInfo = {lives: [], courses: []}
+  let homeInfo: { lives: LiveType[]; courses: CourseType[] } = {lives: [], courses: []}
   const res = await getHomeInfo();
   if (res?.success) {
-    homeInfo = res.data as { lives: []; courses: [] }
+    homeInfo = res.data as { lives: LiveType[]; courses: CourseType[] }
   }
   return (
     <div>
@@ -26,9 +27,9 @@ export default async function HomeContent() {
               <CourseCard
                 info={{
                   title: v.title,
-                  instructorName: v.instructor.username,
-                  studentsCount: v.totalCount,
-                  cover: v.liveCover,
+                  instructorName: v.instructor?.username || "",
+                  studentsCount: v.totalCount || 0,
+                  cover: v.liveCover || "",
                 }}
                 isLive={
                   v.status === 'live'
@@ -54,9 +55,9 @@ export default async function HomeContent() {
                 <CourseCard
                   info={{
                     title: v.courseName,
-                    instructorName: v.instructor.username,
-                    studentsCount: v.totalCount,
-                    cover: v.courseCover,
+                    instructorName: v.instructor?.username || "",
+                    studentsCount: v.totalCount || 0,
+                    cover: v.courseCover || "",
                   }}
                 ></CourseCard>
               </div>

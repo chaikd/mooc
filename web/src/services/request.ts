@@ -39,18 +39,26 @@ const nextFetchConfig = {
 //   }
 // );
 
-const requestCatch = err => {
-    if (err.response?.status === 401 || err.response?.status === 403) {
+interface RequestError {
+  response?: {
+    status?: number;
+    data?: unknown;
+  };
+}
+
+const requestCatch = (err: unknown) => {
+    const { response } = (err || {}) as RequestError;
+    if (response?.status === 401 || response?.status === 403) {
       redirect("/");
     }
-    return err.response?.data;
+    return response?.data;
   }
 
-const request = (url) => {
+const request = (url: string) => {
   return request.get(url)
 }
 
-request.get = (url) => {
+request.get = (url: string) => {
   url = host + url
   return fetch(url, {
     method: 'get',
@@ -60,7 +68,7 @@ request.get = (url) => {
   }).catch(requestCatch)
 }
 
-request.post = (url, body) => {
+request.post = (url: string, body: Record<string, unknown>) => {
   url  = host + url
   return fetch(url, {
     method: 'post',

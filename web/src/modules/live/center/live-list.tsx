@@ -4,7 +4,13 @@ import Link from "next/link"
 import { fetchLive } from "@/services/live"
 import LiveListPagination from "./pagination"
 
-export default async function LiveList({title, page, pageSize}) {
+interface LiveListProps {
+  title: string;
+  page: number;
+  pageSize: number;
+}
+
+export default async function LiveList({title, page, pageSize}: LiveListProps) {
   const res = await fetchLive<{
     liveList: LiveType[],
     total: number
@@ -20,9 +26,9 @@ export default async function LiveList({title, page, pageSize}) {
               <Link href={`/live/${v._id}`} key={v._id}>
                 <CourseCard key={v._id} isLive={v.status === 'live'} info={{
                   title: v.title,
-                  instructorName: v.instructor.username,
-                  studentsCount: v.totalCount,
-                  cover: v.liveCover,
+                  instructorName: v.instructor?.username ?? '',
+                  studentsCount: v.totalCount ?? 0,
+                  cover: v.liveCover ?? '',
                 }}></CourseCard>
               </Link>
             )
