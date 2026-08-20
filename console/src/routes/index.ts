@@ -1,9 +1,9 @@
+import Dashboard from "@/pages/dashboard";
 import Layout from '@/pages/layouts';
 import Login from "@/pages/login";
-import { createBrowserRouter, type RouteObject } from "react-router";
-// import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
 import { lazy, ReactNode } from "react";
+import { createBrowserRouter, type RouteObject } from "react-router";
 
 export type CustomeRouteObject = RouteObject & {
   meta?: {
@@ -67,14 +67,14 @@ const router = createBrowserRouter([
     path: '',
     Component: Layout,
     children: [
-      // {
-      //   index: true,
-      //   Component: Dashboard,
-      //   meta: {
-      //     label: '首页',
-      //     icon: 'FundProjectionScreenOutlined'
-      //   }
-      // },
+      {
+        index: true,
+        Component: Dashboard,
+        meta: {
+          label: '首页',
+          icon: 'FundProjectionScreenOutlined'
+        }
+      },
       ...cursorRoute,
       {
         path: 'person',
