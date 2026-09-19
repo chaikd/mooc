@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import os
-from typing import Optional
+from typing import Optional, Any, cast
 from langchain_openai import ChatOpenAI
 from langchain_core.language_models import BaseChatModel
 
@@ -18,9 +18,9 @@ class ChatFactory(LLMFactory):
     def __init__(self):
         super().__init__()
         self.client = ChatOpenAI(
-            openai_api_key=os.getenv("LLM_API_KEY"),
-            openai_api_base=os.getenv("LLM_BASE_URL"),
-            model=os.getenv("LLM_MODEL_NAME"),
+            api_key=cast(Any,os.getenv("LLM_API_KEY")),
+            base_url=os.getenv("LLM_BASE_URL"),
+            model=os.getenv("LLM_MODEL_NAME") or '',
             temperature=0.3,
             # top_p=0.1,
             # thinking='enabled',

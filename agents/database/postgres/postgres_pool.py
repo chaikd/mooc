@@ -6,39 +6,33 @@ import os
 
 load_dotenv()
 
+
 class PostgresDB:
     def __init__(self):
-        self.pool = None
+        self.pool: ConnectionPool | None = None
 
     def initialize(self):
         self.pool = ConnectionPool(
             min_size=1,
             max_size=20,
-            conninfo=os.getenv("POSTGRES_URL"),
+            conninfo=os.getenv("POSTGRES_URL") or '',
         )
         self.pool.open()
-        self.set_up()
-    def set_up(self):
-        with self.db_conn() as conn:
-            try:
-                pass
-                # conn.execute("""
-                #     CREATE DATABASE IF NOT EXISTS mooc
-                # """)
-            except Exception as e:
-                print(f"Error setting up the database: {e}")
-    def get_pool(self):
+
+    def get_pool(self) -> ConnectionPool:
         if not self.pool:
             self.initialize()
+        assert self.pool is not None
         return self.pool
 
     @contextmanager
     def db_conn(self):
-        with self.pool.connection() as conn:
-            try:
-                yield conn
-            finally:
-                pass
+        if self.pool:
+            with self.pool.connection() as conn:
+                try:
+                    yield conn
+                finally:
+                    pass
 
     def close(self):
         if self.pool:
