@@ -1,0 +1,4 @@
+/* playground 专用的 Tailwind 完整入口；消费方不要引入此文件，接入方式见 README */
+@import 'tailwindcss';
+@import './theme.css';
+@source '../../src';

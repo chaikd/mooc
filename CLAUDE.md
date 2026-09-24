@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-这是一个 MOOC（大规模开放在线课程）平台，monorepo 架构，使用 pnpm workspace 管理 5 个包。
+这是一个 MOOC（大规模开放在线课程）平台，monorepo 架构，使用 pnpm workspace 管理 6 个包。
 
 - **管理端 (console)**: https://console.mooc.chaikd.com
 - **学员端 (web)**: https://web.mooc.chaikd.com
@@ -19,10 +19,12 @@
 
 ```
 mooc/
+  agents/              # AI 学习模块后端 - Python + FastAPI + LangGraph（独立 uv 项目，见 agents/CLAUDE.md）
   console/             # 管理端 - Vite + React 19 + Ant Design 5
   server/              # 后端服务 - Express 5 + WebSocket + mediasoup
   web/                 # 学员端 - Next.js 15 App Router
   packages/
+    ai-ui/             # @mooc/ai-ui - 共享 React 组件库（Vite + Tailwind 4，源码优先）
     db-shared/         # @mooc/db-shared - 共享数据库层
     live-service/      # @mooc/live-service - 共享直播服务
 ```
@@ -33,6 +35,7 @@ mooc/
 console ──────────> @mooc/live-service
 server ───────────> @mooc/db-shared
 web ──────────────> @mooc/db-shared + @mooc/live-service
+console / web ─────> @mooc/ai-ui（尚未接入，接入步骤见 packages/ai-ui/README.md）
 ```
 
 ### 各包详情
@@ -123,6 +126,12 @@ web ──────────────> @mooc/db-shared + @mooc/live-ser
   - `useSocketIo` — React Hook，Socket.IO 连接（`/ws/live` 命名空间）
   - 辅助函数: `getRouterRtpCapabilities`, `getReport`, `getProduces`, `getConsumer`, `requestWs`
 
+#### @mooc/ai-ui — 共享组件库
+- **框架**: Vite 7（lib 模式构建）+ React 19 + Tailwind CSS 4 + Vitest
+- **消费**: 源码优先（`exports` → `src/index.ts`），消费方直接编译源码，与 db-shared/live-service 一致；`dist/` 仅为将来发布预留
+- **开发预览**: 内置轻量 playground（`pnpm ai-ui:dev`）
+- **约定**: 组件三件套模板、样式令牌与红线见 `packages/ai-ui/CLAUDE.md`
+
 ## 常用命令
 
 | 命令 | 说明 |
@@ -130,8 +139,9 @@ web ──────────────> @mooc/db-shared + @mooc/live-ser
 | `pnpm console:dev` | 启动管理端开发服务器 |
 | `pnpm server:dev` | 启动后端开发服务器 |
 | `pnpm web:dev` | 启动学员端开发服务器 |
+| `pnpm ai-ui:dev` | 启动组件库 playground 预览 |
 | `pnpm build` | 并行构建所有三个应用 |
-| `pnpm lint` | 顺序 lint 所有 5 个包 |
+| `pnpm lint` | 顺序 lint 所有 6 个包 |
 | `pnpm --filter <pkg> <cmd>` | 在指定包中运行命令 |
 
 ## 代码规范
@@ -143,7 +153,7 @@ web ──────────────> @mooc/db-shared + @mooc/live-ser
 ### TypeScript
 - ⚠️ **当前状态**: 各包配置不一致，`web` 使用 `strict: false`
 - 代码中使用 `.ts` 扩展名导入（`import { ... } from './foo.ts'`）
-- 共享包（db-shared, live-service）直接以 TypeScript 源码被消费，无构建步骤
+- 共享包（db-shared, live-service, ai-ui）直接以 TypeScript 源码被消费，日常开发无构建步骤（ai-ui 的 build 仅为将来发布预留）
 
 ### 命名约定
 - 组件文件使用 kebab-case（如 `lazy-image/`, `course-card/`）

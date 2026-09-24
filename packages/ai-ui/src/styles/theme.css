@@ -1,0 +1,19 @@
+/*
+ * ai-ui 设计令牌（Tailwind CSS 4 @theme）
+ * 组件只消费令牌生成的工具类（如 bg-primary-600、rounded-ui、shadow-ui），
+ * 改主题 = 改令牌，无需改动任何组件。
+ */
+@theme {
+  /* 品牌主色阶 */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+
+  /* 圆角 */
+  --radius-ui: 0.5rem;
+
+  /* 阴影 */
+  --shadow-ui: 0 1px 2px 0 rgb(0 0 0 / 0.08);
+}

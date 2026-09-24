@@ -1,0 +1,53 @@
+{
+  "name": "@mooc/ai-ui",
+  "version": "0.1.0",
+  "description": "MOOC 平台共享 React 组件库（源码优先，Tailwind CSS 4）",
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles/*": "./src/styles/*",
+    "./package.json": "./package.json"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.31.0",
+    "@tailwindcss/vite": "^4.1.11",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "eslint": "^9.30.1",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.3.0",
+    "jsdom": "^26.1.0",
+    "tailwindcss": "^4.1.11",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.36.0",
+    "vite": "^7.0.0",
+    "vite-plugin-dts": "^4.5.0",
+    "vitest": "^4.0.0"
+  },
+  "packageManager": "pnpm@10.7.1"
+}
