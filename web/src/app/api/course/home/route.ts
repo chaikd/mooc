@@ -19,7 +19,8 @@ export async function GET() {
     );
     if (lives.length < 3) {
       const moreLives = await (Live as Model<LiveType>)
-        .find({ startTime: { $gt: now } })
+        // .find({ startTime: { $gt: now } })
+        .find({})
         .sort({ startTime: 1 })
         .limit(3 - lives.length);
       lives = lives.concat(moreLives);

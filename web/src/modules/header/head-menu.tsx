@@ -13,6 +13,10 @@ export default function HeaderMenu() {
     {
       label: '直播',
       href: '/live/center'
+    },
+    {
+      label: '自主学习',
+      href: '/ai-learn'
     }
   ]
   return (

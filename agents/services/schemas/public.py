@@ -24,6 +24,7 @@ class ChatRole(str, Enum):
     THINKING = 'thinking'
 
 class SSEType(str, Enum):
+    META = 'meta'
     TOKEN = 'token'
     QUESTION = 'question'
     END = 'end'

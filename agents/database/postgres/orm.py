@@ -25,7 +25,7 @@ class ORM:
             "postgresql+psycopg://",
             creator=pool.getconn,
         )
-        self._session_factory = sessionmaker(bind=self.engine, autoflush=False)
+        self._session_factory = sessionmaker(bind=self.engine, autoflush=False, expire_on_commit=False)
 
     def create_tables(self) -> None:
         """根据已注册的 ORM 模型自动建表（幂等，已存在的表跳过）。"""

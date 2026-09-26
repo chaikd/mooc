@@ -1,4 +1,6 @@
 @use "tailwindcss" as *;
+@import '@mooc/ai-ui/styles/theme.css';
+@source '../../../packages/ai-ui/src';
 
 @theme {
   --color-primary: #6366F1;

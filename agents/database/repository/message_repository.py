@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import List
 
 from sqlalchemy import update
 
@@ -35,4 +36,14 @@ class MessageRepository:
                 update(Messages)
                 .where(Messages.id == message_id)
                 .values(content=content, update_time=datetime.now())
+            )
+
+    def get_messages_by_target_id(self, *, target_id: uuid.UUID) -> List[Messages]:
+        """按 target_id 查询所有消息，按创建时间排序。"""
+        with orm.session() as session:
+            return (
+                session.query(Messages)
+                .filter(Messages.target_id == target_id)
+                .order_by(Messages.create_time)
+                .all()
             )
