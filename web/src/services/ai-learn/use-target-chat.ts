@@ -1,14 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ChatMessage } from '@/components/ai-learn/types';
-import type { LearnDataSource, StreamMeta } from './types';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { LearnDataSource, StreamGenerated, StreamMeta } from './types';
 
 interface UseTargetChatOptions {
   dataSource: LearnDataSource;
   /** 可选：收到 meta 事件时的额外处理（WelcomeChat 用来切模式） */
   // eslint-disable-next-line no-unused-vars
   onMeta?: (meta: StreamMeta) => void;
+  /** 收到完整的微学习 HTML 时更新中间展示区 */
+  // eslint-disable-next-line no-unused-vars
+  onGenerated?: (payload: StreamGenerated) => void;
 }
 
 interface UseTargetChatReturn {
@@ -18,6 +21,8 @@ interface UseTargetChatReturn {
   // eslint-disable-next-line no-unused-vars
   send: (targetId: string, text: string) => void;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+  generatedHtml:string;
+  setGeneratedHtml: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const nextMsgId = () => `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -32,10 +37,11 @@ const nextMsgId = () => `msg-${Date.now()}-${Math.random().toString(36).slice(2,
  * - onEnd/onError 更新 status
  * - 维护 abort ref，组件卸载时取消未完成的流
  */
-export function useTargetChat({ dataSource, onMeta }: UseTargetChatOptions): UseTargetChatReturn {
+export function useTargetChat({ dataSource, onMeta, onGenerated }: UseTargetChatOptions): UseTargetChatReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const [generatedHtml, setGeneratedHtml] = useState<string>('');
 
   // 组件卸载时取消未完成的流
   useEffect(() => {
@@ -54,6 +60,7 @@ export function useTargetChat({ dataSource, onMeta }: UseTargetChatOptions): Use
         createdAt: Date.now(),
       };
       const assistantId = nextMsgId();
+      let thinkingId: string | null = null;
       const assistantMsg: ChatMessage = {
         id: assistantId,
         role: 'assistant',
@@ -65,49 +72,88 @@ export function useTargetChat({ dataSource, onMeta }: UseTargetChatOptions): Use
       setMessages((prev) => [...prev, userMsg, assistantMsg]);
       setStreaming(true);
 
-      const ac = dataSource.streamChat(
+      const ac = dataSource.streamChat({
         targetId,
         text,
-        (meta) => onMeta?.(meta),
-        (delta) => {
+        onMeta: (meta) => onMeta?.(meta),
+        onToken: (delta) => {
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantId ? { ...m, content: m.content + delta } : m,
             ),
           );
         },
-        (q) => {
-          const opts = q.options?.length ? `\n\n可选：${q.options.join(' / ')}` : '';
+        onThinking: (delta) => {
+          setMessages((prev) => {
+            return prev.filter(v => v.id !== assistantId)
+          })
+          if (!thinkingId) {
+            thinkingId = nextMsgId();
+            const thinkingMsg: ChatMessage = {
+              id: thinkingId,
+              role: 'thinking',
+              content: delta,
+              status: 'sending',
+              createdAt: Date.now(),
+            };
+            setMessages((prev) => {
+              return [...prev, thinkingMsg]
+            });
+            return;
+          }
+
+          setMessages((prev) => {
+            return prev.map((m) =>
+              m.id === thinkingId ? { ...m, content: m.content + delta } : m,
+            )
+          });
+        },
+        onQuestion: (q) => {
           const questionMsg: ChatMessage = {
             id: nextMsgId(),
             role: 'assistant',
-            content: q.question + opts,
+            content: JSON.stringify(q),
             status: 'sent',
             createdAt: Date.now(),
           };
-          setMessages((prev) => [...prev, questionMsg]);
+          setMessages((prev) => {
+            prev.pop()
+            return [...prev, questionMsg]
+          });
         },
-        () => {
+        onGenerated: (payload) => {
+          onGenerated?.(payload)
+          setGeneratedHtml(pre => pre + payload.result)
+        },
+        onEnd: () => {
           setMessages((prev) =>
-            prev.map((m) => (m.id === assistantId ? { ...m, status: 'sent' } : m)),
+            prev.map((m) => (
+              m.id === assistantId || m.id === thinkingId
+                ? { ...m, status: 'sent' }
+                : m
+            )),
           );
           setStreaming(false);
           abortRef.current = null;
         },
-        (err) => {
+        onError: (err) => {
           if (err.name === 'AbortError') return;
           setMessages((prev) =>
-            prev.map((m) => (m.id === assistantId ? { ...m, status: 'error' } : m)),
+            prev.map((m) => (
+              m.id === assistantId || m.id === thinkingId
+                ? { ...m, status: 'error' }
+                : m
+            )),
           );
           setStreaming(false);
           abortRef.current = null;
         },
-      );
+      });
 
       abortRef.current = ac;
     },
-    [streaming, dataSource, onMeta],
+    [streaming, dataSource, onMeta, onGenerated],
   );
 
-  return { messages, streaming, send, setMessages };
+  return { messages, streaming, send, setMessages, generatedHtml, setGeneratedHtml };
 }

@@ -1,3 +1,5 @@
+import type { ChatMessage as AiUiChatMessage } from '@mooc/ai-ui';
+
 /** 对齐 agents/services/schemas/public.py 的 MasteryState（值是中文） */
 export type MasteryState =
   | '未接触'
@@ -23,12 +25,5 @@ export interface TargetNode {
   html: string | null;
 }
 
-/** 与 @mooc/ai-ui ChatMessage 形状一致，便于直接透传给 ChatBox */
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  status: 'sending' | 'sent' | 'error';
-  createdAt: number;
-}
-
+/** 直接复用 @mooc/ai-ui 的判别联合消息类型。 */
+export type ChatMessage = AiUiChatMessage;

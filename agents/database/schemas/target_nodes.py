@@ -5,7 +5,7 @@ from sqlalchemy import Enum, ForeignKeyConstraint, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from database.schemas.base import Base
-from services.schemas.public import MasteryState
+from services.schemas.public import DataStatus, MasteryState
 
 
 class TargetNodes(Base):
@@ -26,8 +26,11 @@ class TargetNodes(Base):
     mastery_state: Mapped[MasteryState] = mapped_column(
         Enum(MasteryState, name="mastery_state")
     )
-    status: Mapped[str] = mapped_column(Text)
-    html: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(
+        Enum(DataStatus, name="status"),
+        default=DataStatus.ACTIVE
+    )
+    # html: Mapped[str] = mapped_column(Text)
     create_time: Mapped[datetime] = mapped_column(default=datetime.now)
     update_time: Mapped[datetime] = mapped_column(
         default=datetime.now, onupdate=datetime.now

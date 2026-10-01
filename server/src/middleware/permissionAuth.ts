@@ -21,8 +21,6 @@ export const noPromissionAuth = (url: string): boolean => {
 }
 
 export const checkPromssion = (req: RequestTypeWithJWT, res: Response, next: NextFunction) => {
-  console.log(noPromissionAuth(req.url))
-  console.log(req.url)
   if(noPromissionAuth(req.url)) {
     next()
   } else {

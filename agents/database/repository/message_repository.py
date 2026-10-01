@@ -37,6 +37,14 @@ class MessageRepository:
                 .where(Messages.id == message_id)
                 .values(content=content, update_time=datetime.now())
             )
+    def update_message_role(self, *, message_id: uuid.UUID, role: str) -> None:
+            """按 id 更新消息内容，用于流式增量写入或完整替换。"""
+            with orm.session() as session:
+                session.execute(
+                    update(Messages)
+                    .where(Messages.id == message_id)
+                    .values(role=role, update_time=datetime.now())
+                )
 
     def get_messages_by_target_id(self, *, target_id: uuid.UUID) -> List[Messages]:
         """按 target_id 查询所有消息，按创建时间排序。"""

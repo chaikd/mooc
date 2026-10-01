@@ -1,5 +1,5 @@
 import type { ChatMessage, MasteryState, Target, TargetNode } from '@/components/ai-learn/types';
-import type { LearnDataSource, StreamMeta, StreamQuestion } from './types';
+import type { LearnDataSource, StreamChatOptions } from './types';
 
 const DEMO_HTML = `<!doctype html>
 <html lang="zh-CN">
@@ -69,19 +69,25 @@ export class MockLearnDataSource implements LearnDataSource {
     return structuredClone(existingNodes);
   }
 
+  async getLatestNodeDisplay(nodeId: string): Promise<string | null> {
+    return structuredClone(existingNodes.find((node) => node.id === nodeId)?.html ?? null);
+  }
+
   async getMessages(_targetId: string): Promise<ChatMessage[]> {
     return structuredClone(existingHistory);
   }
 
-  streamChat(
-    _targetId: string,
-    text: string,
-    onMeta: (meta: StreamMeta) => void,
-    onToken: (delta: string) => void,
-    onQuestion: (q: StreamQuestion) => void,
-    onEnd: () => void,
-    _onError: (err: Error) => void,
-  ): AbortController {
+  streamChat({
+    targetId: _targetId,
+    text,
+    onMeta,
+    onToken,
+    onThinking,
+    onQuestion,
+    onGenerated,
+    onEnd,
+    onError: _onError,
+  }: StreamChatOptions): AbortController {
     /* eslint-enable no-unused-vars */
     const ac = new AbortController();
     const signal = ac.signal;
@@ -98,18 +104,28 @@ export class MockLearnDataSource implements LearnDataSource {
     });
 
     const reply = `（mock 回复）你说的是："${text}"。这是一段用来演示 SSE 流式追加效果的文本，会逐字出现在聊天框里。`;
+    const thinking = '正在分析学习目标并组织内容...';
     let i = 0;
+    let thinkingIndex = 0;
 
     const tick = setInterval(() => {
       if (signal.aborted) {
         clearInterval(tick);
         return;
       }
-      if (i < reply.length) {
+      if (thinkingIndex < thinking.length) {
+        onThinking(thinking[thinkingIndex]);
+        thinkingIndex++;
+      } else if (i < reply.length) {
         onToken(reply[i]);
         i++;
       } else {
         clearInterval(tick);
+        onGenerated({
+          result: `<!doctype html><html lang="zh-CN"><body><p>${reply}</p></body></html>`,
+          learning_node: 'Mock 学习节点',
+          mastery_state: '理解程度未知',
+        });
         if (Math.random() > 0.5) {
           onQuestion({ question: '你更希望先深入哪个方向？', options: ['原理', '实战'] });
         }

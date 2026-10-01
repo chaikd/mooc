@@ -13,8 +13,8 @@ class TargetGeneratedDisplays(Base):
     __tablename__ = "target_generated_displays"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    target_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("targets.id"), nullable=False
+    target_node_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("target_nodes.id"), nullable=False
     )
     result: Mapped[str] = mapped_column(Text)
     version: Mapped[int] = mapped_column(Integer, nullable=False)

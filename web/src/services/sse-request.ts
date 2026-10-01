@@ -139,7 +139,7 @@ function parseSSEFrame(frame: string): SSERawEvent | null {
     if (line.startsWith('event:')) {
       event = line.slice(6).trim();
     } else if (line.startsWith('data:')) {
-      dataLines.push(line.slice(5));
+      dataLines.push(decodeURIComponent(line.slice(5)));
     }
     // 忽略 id:, retry:, 注释行(:)等
   }
@@ -150,6 +150,6 @@ function parseSSEFrame(frame: string): SSERawEvent | null {
 
   return {
     event,
-    data: dataLines.join('\n'),
+    data: dataLines.join(''),
   };
 }

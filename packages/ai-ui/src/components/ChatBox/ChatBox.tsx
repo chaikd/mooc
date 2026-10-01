@@ -3,15 +3,26 @@ import { cx } from '../../utils/cx';
 import { ChatInput } from './ChatInput';
 import { ChatMessages } from './ChatMessages';
 
-export type MessageRole = 'user' | 'assistant';
+export type MessageRole = 'user' | 'assistant' | 'thinking';
 export type MessageStatus = 'sending' | 'sent' | 'error';
+export interface MessageQuestionContent {
+  question: string;
+  options?: string[];
+}
+export interface MessageThinkingContent {
+  learning_node?: string;
+  mastery_state?: string;
+  content_info?: string;
+  conditionsSatisfied?: boolean;
+}
+export type MessageContent = string | MessageQuestionContent | MessageThinkingContent;
 
 export interface ChatMessage {
-  id: string;
-  role: MessageRole;
-  content: string;
-  status: MessageStatus;
-  createdAt: number;
+  id?: string;
+  status?: MessageStatus;
+  createdAt?: number;
+  content?: string;
+  role?: 'user' | 'assistant' | 'thinking'
 }
 
 export interface ChatBoxProps extends HTMLAttributes<HTMLDivElement> {
@@ -45,7 +56,9 @@ export function ChatBox({
       )}
       {...rest}
     >
-      <ChatMessages messages={messages} emptyText={emptyText} />
+      <ChatMessages messages={messages} emptyText={emptyText} onSelectedOption={(v: string) => {
+        onSend(v)
+      }}/>
       <ChatInput onSend={onSend} disabled={disabled} />
     </div>
   );

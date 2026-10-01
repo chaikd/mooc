@@ -6,6 +6,9 @@ export { ChatBox } from './components/ChatBox';
 export type {
   ChatBoxProps,
   ChatMessage,
+  MessageContent,
+  MessageQuestionContent,
   MessageRole,
   MessageStatus,
+  MessageThinkingContent,
 } from './components/ChatBox';

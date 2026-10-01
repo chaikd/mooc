@@ -35,3 +35,12 @@ class TargetRepository:
                 .where(Targets.id == target_id)
                 .values(title=title, update_time=datetime.now())
             )
+
+    def set_current_node(self, *, target_id: uuid.UUID, node_id: uuid.UUID) -> None:
+        """更新 target 当前正在学习的目标节点。"""
+        with orm.session() as session:
+            session.execute(
+                update(Targets)
+                .where(Targets.id == target_id)
+                .values(current_node_id=node_id, update_time=datetime.now())
+            )

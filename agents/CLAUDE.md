@@ -34,9 +34,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. **`router/mastery_chat.py`** — 路由，返回 `EventSourceResponse`，逐个 yield SSE 事件。
 3. **`services/mastery_chat.py`** — `MasteryChatService.get_target()`：
    - 先 `ensure_target`（幂等建 target）、保存用户消息、建空 assistant 占位消息（流式内容稍后增量回填）
-   - 以 `stream_mode=["messages", "values"]` 流式消费 `chat_agent`
-   - `messages` 模式 → 累积 token → **按节流（20 token / 0.5s）增量写 assistant 消息** → yield `TOKEN`
-   - `values` 模式 → 检测到 `result`（生成的展示内容）时落库 `target_generated_displays`；条件不满足时 yield `QUESTION`
+   - 以 `stream_mode=["messages", "updates"]` 流式消费 `chat_agent`
+   - `messages` 模式 → `chat_node` 发送 `TOKEN`；`get_content_show` 累积并发送 `THINKING`
+   - `updates` 模式 → 节点完成后统一落库 assistant/thinking 消息；检测到 result 时落库节点与展示版本并发送 `GENERATED`；条件不满足时发送 `QUESTION`
    - 最后 flush 未写内容并 yield `END`
 4. **`agents_services/agents/chat.py`** — `ChatAgent`：LangGraph 状态图（见下）。
 

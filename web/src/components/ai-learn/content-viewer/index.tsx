@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from "react";
+
 interface ContentViewerProps {
   nodeId: string | null;
   html: string | null;
@@ -10,6 +12,19 @@ interface ContentViewerProps {
  * key=nodeId 强制切换时重建，避免 srcDoc 残留；不传 allow-forms/allow-popups 限制脚本能力。
  */
 export default function ContentViewer({ nodeId, html }: ContentViewerProps) {
+  const [curHtml, setCurHtml] = useState('')
+  let timeout: null | ReturnType<typeof setTimeout> = null
+  useEffect(() => {
+    if (!timeout) {
+      timeout = setTimeout(() => {
+        if (timeout) {
+          clearTimeout(timeout)
+          timeout = null
+        }
+        setCurHtml(html)
+      }, 300)
+    }
+  }, [html])
   if (!html) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-gray-400">
@@ -21,7 +36,7 @@ export default function ContentViewer({ nodeId, html }: ContentViewerProps) {
   return (
     <iframe
       key={nodeId ?? '__none__'}
-      srcDoc={html}
+      srcDoc={curHtml}
       title="学习内容"
       sandbox="allow-scripts allow-same-origin"
       className="h-full w-full border-0"

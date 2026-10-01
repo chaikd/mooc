@@ -86,9 +86,7 @@ router.post('/batchAdd', async (req: Request, res: Response) => {
       res.json({ success: false, message: '参数list不能为空' });
       return;
     }
-    console.log(list)
     const result = await Information.insertMany(list);
-    console.log(result)
     res.json({ success: true, data: result });
   } catch (error) {
     res.status(500).json({ success: false, message: '批量新增资料失败', error });

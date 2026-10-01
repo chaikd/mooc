@@ -1,6 +1,5 @@
 import json
 import logging
-import time
 from typing import Any, Callable, Optional, TypedDict, cast
 import uuid
 
@@ -13,15 +12,10 @@ from database.repository.message_repository import MessageRepository
 from database.repository.target_generated_display_repository import TargetGeneratedDisplayRepository
 from database.repository.target_nodes_repository import TargetNodesRepository
 from database.repository.target_repository import TargetRepository
-from services.schemas.public import ChatRole, SSEType
+from services.schemas.public import ChatRole, MasteryState, SSEType
 from agents_services.agents.summary import title_summary_agent
 
 logger = logging.getLogger(__name__)
-
-# 节流参数：TOKEN 阶段累积写入 DB 的频率控制
-_FLUSH_INTERVAL = 0.5      # 最小刷新间隔（秒）
-_FLUSH_TOKEN_COUNT = 20    # 最少累积 token 数才触发刷新
-
 
 class GetTargetArgs(TypedDict):
     user_input: str
@@ -30,7 +24,7 @@ class GetTargetArgs(TypedDict):
 
 class MasteryChatService:
     def __init__(self) -> None:
-        self.chat_agent = chat_agent
+        self.chat_agent = chat_agent.get_agent()
         self.message_repo = MessageRepository()
         self.display_repo = TargetGeneratedDisplayRepository()
         self.node_repo = TargetNodesRepository()
@@ -56,30 +50,64 @@ class MasteryChatService:
     def update_message(self, message_id: uuid.UUID, content: str) -> None:
         """更新已有消息的内容（用于流式增量写入或完整替换）。"""
         self.message_repo.update_message_content(message_id=message_id, content=content)
+    def update_role(self, message_id: uuid.UUID, role: str) -> None:
+        """更新已有消息的内容（用于流式增量写入或完整替换）。"""
+        self.message_repo.update_message_role(message_id=message_id, role=role)
 
     def save_generated_display(
         self,
-        display_id: uuid.UUID,
         target_id: uuid.UUID,
+        learning_node: str,
+        mastery_state: str,
         result: str,
-    ) -> None:
-        """保存 AI 生成的展示内容（get_content_show 产出），自动递增版本。"""
+    ) -> tuple[uuid.UUID, uuid.UUID]:
+        """按 target + learning_node 更新节点，并为该节点新增一版展示内容。"""
+        title = learning_node.strip() or "未命名学习节点"
+        try:
+            normalized_mastery_state = MasteryState(mastery_state)
+        except (TypeError, ValueError):
+            normalized_mastery_state = MasteryState.UNKNOWN
+
+        node_id = self.node_repo.upsert_node(
+            node_id=uuid.uuid4(),
+            target_id=target_id,
+            title=title,
+            mastery_state=normalized_mastery_state,
+        )
+        display_id = uuid.uuid4()
         self.display_repo.save_display(
             display_id=display_id,
-            target_id=target_id,
+            target_node_id=node_id,
             result=result,
         )
-
+        self.target_repo.set_current_node(target_id=target_id, node_id=node_id)
+        return display_id, node_id
+    def update_generated_display_result(self, display_id: uuid.UUID, result: str):
+        self.display_repo.update_display_result(
+            display_id=display_id,
+            result=result,
+        )
+    def update_node_title(self, node_id: uuid.UUID, target_id: uuid.UUID, learning_node: str, mastery_state: str):
+        title = learning_node.strip() or "未命名学习节点"
+        try:
+            normalized_mastery_state = MasteryState(mastery_state)
+        except (TypeError, ValueError):
+            normalized_mastery_state = MasteryState.UNKNOWN
+        self.node_repo.upsert_node(
+            node_id=node_id,
+            target_id=target_id,
+            title=title,
+            mastery_state=normalized_mastery_state,
+        )
     def update_target_title(self, target_id: uuid.UUID, message: str) -> None:
         """异步生成并更新 target 标题。"""
         title = title_summary_agent.summary(message)
         self.target_repo.update_target(target_id=target_id, title=title)
 
-    def _safe_db_op(self, func: Callable[..., Any], **kwargs: Any) -> bool:
+    def _safe_db_op(self, func: Callable[..., Any], **kwargs: Any) -> Any:
         """执行 DB 操作，失败时仅记录日志不抛异常，返回是否成功。"""
         try:
-            func(**kwargs)
-            return True
+            return func(**kwargs)
         except Exception:
             logger.exception("DB operation failed: %s", func.__name__)
             return False
@@ -155,95 +183,202 @@ class MasteryChatService:
         )
 
         # 3. 流式消费 graph
-        accumulated = ""
-        last_flush_time = time.monotonic()
-        tokens_since_flush = 0
-        pending = False
-        question_sent = False
+        # question_sent = False
+        # assistant_saved = False
         display_saved = False
+        # generated_sent = False
+
+        # thinking_content = ""
+        # thinking_msg_id: Optional[uuid.UUID] = None
+        # thinking_saved = False
+
+        content_text = ""
+        html_text = ""
+        # 当前display_id, target_node_id
+        target_display_id = None
+        target_node_id = None
 
         for chunk in self.chat_agent.stream(
             input=input_value,
             config=config,
-            stream_mode=["messages", "values"],
+            stream_mode=["messages", "updates"],
         ):
             # stream_mode 为列表时，chunk 为 (mode, data) 二元组；data 类型随 mode 变化
             mode, data = cast(tuple[str, Any], chunk)
-
+            print("🚀 ~ MasteryChatService ~ get_target ~ mode, data:", mode, data)
             if mode == "messages":
                 msg_chunk, meta = cast(tuple[Any, dict[str, Any]], data)
+                chunk_name = type(msg_chunk).__name__
+                print("🚀 ~ MasteryChatService ~ get_target ~ chunk_name:", chunk_name)
                 node_name = meta.get("langgraph_node", "")
-                if node_name in ("chat_node", "get_content_show"):
-                    text = msg_chunk.content if hasattr(msg_chunk, 'content') else str(msg_chunk)
-                    if text:
-                        accumulated += text
-                        tokens_since_flush += 1
-                        pending = True
-
-                        # 节流刷新
-                        now = time.monotonic()
-                        if (tokens_since_flush >= _FLUSH_TOKEN_COUNT
-                                and now - last_flush_time >= _FLUSH_INTERVAL):
-                            self._safe_db_op(
-                                self.update_message,
-                                message_id=asst_msg_id,
-                                content=accumulated,
-                            )
-                            last_flush_time = now
-                            tokens_since_flush = 0
-                            pending = False
-
-                        yield ServerSentEvent(event=SSEType.TOKEN, data=text)
-
-            elif mode == "values":
-                state = cast(dict[str, Any], data)
-
-                # get_content_show 完成：保存生成内容
-                if not display_saved and state.get("result") is not None:
-                    result_value = state["result"]
-                    result_str = (
-                        result_value if isinstance(result_value, str)
-                        else json.dumps(result_value, ensure_ascii=False)
-                    )
-                    self._safe_db_op(
-                        self.save_generated_display,
-                        display_id=uuid.uuid4(),
-                        target_id=real_target_id,
-                        result=result_str,
-                    )
-                    display_saved = True
-
-                # chat_node 结束且条件不满足：发送 question
-                if not question_sent and not state.get("conditions_satisfied", True):
-                    question = state.get("question", "")
-                    options = state.get("options", [])
-                    if question:
-                        question_content = json.dumps(
-                            {"question": question, "options": options},
-                            ensure_ascii=False,
-                        )
-                        accumulated = question_content
+                text = msg_chunk.content if hasattr(msg_chunk, 'content') else str(msg_chunk)
+                if not text:
+                    continue
+                if chunk_name == "AIMessageChunk":
+                    if node_name == "chat_node":
+                        yield ServerSentEvent(event=SSEType.THINKING, data=text)
+                        content_text += text
                         self._safe_db_op(
                             self.update_message,
                             message_id=asst_msg_id,
-                            content=question_content,
+                            content=content_text,
                         )
-                        pending = False
-                        tokens_since_flush = 0
-                        last_flush_time = time.monotonic()
-
-                        yield ServerSentEvent(
-                            event=SSEType.QUESTION,
-                            data={"question": question, "options": options},
+                    elif node_name == "get_content_show":
+                        yield ServerSentEvent(event=SSEType.GENERATED, data=text)
+                        html_text += text
+                        # 保存html到数据库
+                        print("🚀 ~ MasteryChatService ~ get_target ~ target_display_id:", target_display_id)
+                        if not display_saved:
+                            target_display_id, target_node_id = self._safe_db_op(
+                                self.save_generated_display,
+                                target_id=real_target_id,
+                                learning_node= "",
+                                mastery_state="",
+                                result=html_text,
+                            )
+                            display_saved = True
+                        elif target_display_id:
+                            print("🚀 ~ MasteryChatService ~ get_target ~ html_text:", html_text)
+                            self._safe_db_op(
+                                self.update_generated_display_result,
+                                display_id=target_display_id,
+                                result=html_text,
+                            )
+                elif chunk_name == "AIMessage":
+                    data_message = json.loads(msg_chunk.content)
+                    print("🚀 ~ MasteryChatService ~ get_target ~ data_message:", data_message)
+                    print('🚀 ~ MasteryChatService ~ get_target ~ data_message.get("conditions_satisfied", False):', data_message.get("conditions_satisfied", False))
+                    if data_message.get("conditions_satisfied", False):
+                        self._safe_db_op(
+                            self.update_role,
+                            message_id=asst_msg_id,
+                            role=ChatRole.THINKING,
                         )
-                        question_sent = True
-
-        # 最终 flush
-        if pending:
-            self._safe_db_op(
-                self.update_message,
-                message_id=asst_msg_id,
-                content=accumulated,
-            )
-
+                    else:
+                        if node_name == "chat_node":
+                            yield ServerSentEvent(
+                                event=SSEType.QUESTION,
+                                data={
+                                    "question": data_message.get("question") or "",
+                                    "options": data_message.get("options") or [],
+                                },
+                            )
+            elif mode == "updates":
+                node_name = list(data.keys())[0]
+                the_data = data.get("get_content_show", {})
+                if node_name == "get_content_show":
+                    # 更新节点learning_node和mastery_status
+                    if target_node_id:
+                        self._safe_db_op(
+                            self.update_node_title,
+                            node_id = target_node_id,
+                            target_id=real_target_id,
+                            learning_node=the_data.get("learning_node") or "",
+                            mastery_state=the_data.get("mastery_state") or "",
+                        )
         yield ServerSentEvent(event=SSEType.END, data="")
+
+
+
+
+
+
+
+                    # if node_name == "chat_node":
+                    #     yield ServerSentEvent(event=SSEType.TOKEN, data=text)
+                    # elif node_name == "get_content_show":
+                    #     if thinking_msg_id is None:
+                    #         thinking_msg_id = uuid.uuid4()
+                    #     thinking_content += text
+                    #     yield ServerSentEvent(event=SSEType.THINKING, data=text)
+            # elif mode == "updates":
+            #     updates = cast(dict[str, Any], data)
+
+            #     for node_name, update in updates.items():
+            #         if not isinstance(update, dict):
+            #             continue
+
+            #         if node_name == "chat_node":
+            #             if (
+            #                 not question_sent
+            #                 and update.get("conditions_satisfied", True) is False
+            #             ):
+            #                 question = update.get("question", "")
+            #                 options = update.get("options", [])
+            #                 if question:
+            #                     question_content = json.dumps(
+            #                         {"question": question, "options": options},
+            #                         ensure_ascii=False,
+            #                     )
+            #                     if not assistant_saved:
+            #                         assistant_saved = self._safe_db_op(
+            #                             self.update_message,
+            #                             message_id=asst_msg_id,
+            #                             content=question_content,
+            #                         )
+            #                     question_sent = True
+            #                     yield ServerSentEvent(
+            #                         event=SSEType.QUESTION,
+            #                         data={"question": question, "options": options},
+            #                     )
+
+            #             if not assistant_saved:
+            #                 update_messages = update.get("messages") or []
+            #                 if update_messages:
+            #                     latest_message = update_messages[-1]
+            #                     latest_content = getattr(
+            #                         latest_message,
+            #                         "content",
+            #                         latest_message,
+            #                     )
+            #                     assistant_content = (
+            #                         latest_content
+            #                         if isinstance(latest_content, str)
+            #                         else json.dumps(latest_content, ensure_ascii=False)
+            #                     )
+            #                     if assistant_content:
+            #                         assistant_saved = self._safe_db_op(
+            #                             self.update_message,
+            #                             message_id=asst_msg_id,
+            #                             content=assistant_content,
+            #                         )
+
+            #         elif node_name == "get_content_show":
+            #             if (
+            #                 thinking_content
+            #                 and thinking_msg_id is not None
+            #                 and not thinking_saved
+            #             ):
+            #                 thinking_saved = self._safe_db_op(
+            #                     self.save_message,
+            #                     message_id=thinking_msg_id,
+            #                     target_id=real_target_id,
+            #                     content=thinking_content,
+            #                     role=ChatRole.THINKING,
+            #                 )
+
+            #             if not display_saved and update.get("result") is not None:
+            #                 result_value = update["result"]
+            #                 result_str = (
+            #                     result_value if isinstance(result_value, str)
+            #                     else json.dumps(result_value, ensure_ascii=False)
+            #                 )
+            #                 display_saved = self._safe_db_op(
+            #                     self.save_generated_display,
+            #                     target_id=real_target_id,
+            #                     learning_node=update.get("learning_node") or "",
+            #                     mastery_state=update.get("mastery_state") or "",
+            #                     result=result_str,
+            #                 )
+
+            #                 if not generated_sent:
+            #                     yield ServerSentEvent(
+            #                         event=SSEType.GENERATED,
+            #                         data={
+            #                             "result": result_str,
+            #                             "learning_node": update.get("learning_node") or "",
+            #                             "mastery_state": update.get("mastery_state") or "",
+            #                         },
+            #                     )
+            #                     generated_sent = True
+        # yield ServerSentEvent(event=SSEType.END, data="")

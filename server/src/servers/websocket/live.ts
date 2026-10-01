@@ -203,7 +203,6 @@ export default async function createLiveIo(ioServer: Server) {
     async function executeFFmpag() {
       await new Promise((resolve) => {setTimeout(resolve, 200)}).then(() => {})
       if(producerMap.size <= 0) {
-        console.log('close ffmpeg')
         await stopFFmpeg(roomId)
         return
       }
@@ -247,7 +246,6 @@ export default async function createLiveIo(ioServer: Server) {
           liveIo.to(roomId).emit('ffmpegStoped')
         }
       })
-      console.log('▶️ mediasoup → FFmpeg RTP/RTCP 发包已开启');
     }
   })
   return liveIo
