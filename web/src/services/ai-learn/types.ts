@@ -19,6 +19,7 @@ export interface StreamGenerated {
 /* eslint-disable no-unused-vars -- 回调参数名用于表达事件协议，不参与实现。 */
 export interface StreamChatOptions {
   targetId: string;
+  targetNodeId?: string;
   text: string;
   onMeta: (meta: StreamMeta) => void;
   onToken: (delta: string) => void;

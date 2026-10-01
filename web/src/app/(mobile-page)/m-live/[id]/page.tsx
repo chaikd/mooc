@@ -2,19 +2,19 @@
 import LiveVideo from "@/modules/live/live";
 import LiveChat from "@/modules/live/chat";
 import { useParams } from "next/navigation";
-import { useEffect, useEffectEvent, useState} from 'react';
+import { useEffect, useState} from 'react';
 import request from "@/services/request";
 
 export default function MLive({}) {
   const {id} = useParams()
   const [liveInfo, setLiveInfo] = useState(undefined)
   const [userInfo, setUserInfo] = useState(undefined)
-  const getCourseInfo = useEffectEvent(async () => {
+  const getCourseInfo = async () => {
     const liveInfo = await request.get(`/api/live/${id}`).then(res => {
       return res?.data
     })
     setLiveInfo(liveInfo)
-  })
+  }
   const onMessage = ({data: {type, userInfo}}) => {
       // if(type === 'token'){
       //   Cookies.set('authorization', token, {

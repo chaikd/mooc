@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 class ChatRequest(BaseModel):
     user_input: str
+    target_node_id: Optional[uuid.UUID] = None
     target_id: Optional[uuid.UUID] = None
 
 
@@ -30,6 +31,7 @@ async def post_messages(
         args: GetTargetArgs = {
             "user_input": post_info.user_input,
             "target_id": post_info.target_id,
+            "target_node_id": post_info.target_node_id
         }
         for event in mastery_chat_service.get_target(args):
             yield event

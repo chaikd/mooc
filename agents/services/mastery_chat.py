@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 class GetTargetArgs(TypedDict):
     user_input: str
     target_id: Optional[uuid.UUID]
+    target_node_id: Optional[uuid.UUID]
 
 
 class MasteryChatService:
@@ -60,6 +61,7 @@ class MasteryChatService:
         learning_node: str,
         mastery_state: str,
         result: str,
+        target_node_id: Optional[uuid.UUID] = None,
     ) -> tuple[uuid.UUID, uuid.UUID]:
         """按 target + learning_node 更新节点，并为该节点新增一版展示内容。"""
         title = learning_node.strip() or "未命名学习节点"
@@ -69,7 +71,7 @@ class MasteryChatService:
             normalized_mastery_state = MasteryState.UNKNOWN
 
         node_id = self.node_repo.upsert_node(
-            node_id=uuid.uuid4(),
+            node_id=target_node_id or uuid.uuid4(),
             target_id=target_id,
             title=title,
             mastery_state=normalized_mastery_state,
@@ -87,7 +89,14 @@ class MasteryChatService:
             display_id=display_id,
             result=result,
         )
-    def update_node_title(self, node_id: uuid.UUID, target_id: uuid.UUID, learning_node: str, mastery_state: str):
+
+    def update_node_title(
+        self,
+        node_id: uuid.UUID,
+        target_id: uuid.UUID,
+        learning_node: str,
+        mastery_state: str,
+    ):
         title = learning_node.strip() or "未命名学习节点"
         try:
             normalized_mastery_state = MasteryState(mastery_state)
@@ -146,9 +155,11 @@ class MasteryChatService:
 
     def get_target(self, info: GetTargetArgs):
         user_input = info["user_input"]
+        target_node_id = info["target_node_id"] or None
+        target_id = info["target_id"]
 
         # 0. 解析或创建 target
-        real_target_id, is_new = self._resolve_target(info.get("target_id"), user_input)
+        real_target_id, is_new = self._resolve_target(target_id, user_input)
 
         # META：告知前端真实 targetId 及是否新建
         yield ServerSentEvent(
@@ -183,20 +194,12 @@ class MasteryChatService:
         )
 
         # 3. 流式消费 graph
-        # question_sent = False
-        # assistant_saved = False
         display_saved = False
-        # generated_sent = False
-
-        # thinking_content = ""
-        # thinking_msg_id: Optional[uuid.UUID] = None
-        # thinking_saved = False
 
         content_text = ""
         html_text = ""
         # 当前display_id, target_node_id
         target_display_id = None
-        target_node_id = None
 
         for chunk in self.chat_agent.stream(
             input=input_value,
@@ -235,6 +238,7 @@ class MasteryChatService:
                                 learning_node= "",
                                 mastery_state="",
                                 result=html_text,
+                                target_node_id=target_node_id,
                             )
                             display_saved = True
                         elif target_display_id:
@@ -278,107 +282,3 @@ class MasteryChatService:
                         )
         yield ServerSentEvent(event=SSEType.END, data="")
 
-
-
-
-
-
-
-                    # if node_name == "chat_node":
-                    #     yield ServerSentEvent(event=SSEType.TOKEN, data=text)
-                    # elif node_name == "get_content_show":
-                    #     if thinking_msg_id is None:
-                    #         thinking_msg_id = uuid.uuid4()
-                    #     thinking_content += text
-                    #     yield ServerSentEvent(event=SSEType.THINKING, data=text)
-            # elif mode == "updates":
-            #     updates = cast(dict[str, Any], data)
-
-            #     for node_name, update in updates.items():
-            #         if not isinstance(update, dict):
-            #             continue
-
-            #         if node_name == "chat_node":
-            #             if (
-            #                 not question_sent
-            #                 and update.get("conditions_satisfied", True) is False
-            #             ):
-            #                 question = update.get("question", "")
-            #                 options = update.get("options", [])
-            #                 if question:
-            #                     question_content = json.dumps(
-            #                         {"question": question, "options": options},
-            #                         ensure_ascii=False,
-            #                     )
-            #                     if not assistant_saved:
-            #                         assistant_saved = self._safe_db_op(
-            #                             self.update_message,
-            #                             message_id=asst_msg_id,
-            #                             content=question_content,
-            #                         )
-            #                     question_sent = True
-            #                     yield ServerSentEvent(
-            #                         event=SSEType.QUESTION,
-            #                         data={"question": question, "options": options},
-            #                     )
-
-            #             if not assistant_saved:
-            #                 update_messages = update.get("messages") or []
-            #                 if update_messages:
-            #                     latest_message = update_messages[-1]
-            #                     latest_content = getattr(
-            #                         latest_message,
-            #                         "content",
-            #                         latest_message,
-            #                     )
-            #                     assistant_content = (
-            #                         latest_content
-            #                         if isinstance(latest_content, str)
-            #                         else json.dumps(latest_content, ensure_ascii=False)
-            #                     )
-            #                     if assistant_content:
-            #                         assistant_saved = self._safe_db_op(
-            #                             self.update_message,
-            #                             message_id=asst_msg_id,
-            #                             content=assistant_content,
-            #                         )
-
-            #         elif node_name == "get_content_show":
-            #             if (
-            #                 thinking_content
-            #                 and thinking_msg_id is not None
-            #                 and not thinking_saved
-            #             ):
-            #                 thinking_saved = self._safe_db_op(
-            #                     self.save_message,
-            #                     message_id=thinking_msg_id,
-            #                     target_id=real_target_id,
-            #                     content=thinking_content,
-            #                     role=ChatRole.THINKING,
-            #                 )
-
-            #             if not display_saved and update.get("result") is not None:
-            #                 result_value = update["result"]
-            #                 result_str = (
-            #                     result_value if isinstance(result_value, str)
-            #                     else json.dumps(result_value, ensure_ascii=False)
-            #                 )
-            #                 display_saved = self._safe_db_op(
-            #                     self.save_generated_display,
-            #                     target_id=real_target_id,
-            #                     learning_node=update.get("learning_node") or "",
-            #                     mastery_state=update.get("mastery_state") or "",
-            #                     result=result_str,
-            #                 )
-
-            #                 if not generated_sent:
-            #                     yield ServerSentEvent(
-            #                         event=SSEType.GENERATED,
-            #                         data={
-            #                             "result": result_str,
-            #                             "learning_node": update.get("learning_node") or "",
-            #                             "mastery_state": update.get("mastery_state") or "",
-            #                         },
-            #                     )
-            #                     generated_sent = True
-        # yield ServerSentEvent(event=SSEType.END, data="")

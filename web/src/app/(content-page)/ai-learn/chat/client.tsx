@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import TargetTree from '@/components/ai-learn/target-tree';
 import ContentViewer from '@/components/ai-learn/content-viewer';
@@ -102,7 +102,12 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
     };
   }, [targetId, dataSource, setMessages]);
 
-  const getHtml = useEffectEvent(() => {
+  useEffect(() => {
+    if (!activeNodeId) {
+      setGeneratedHtml('');
+      return
+    };
+    // 实现当activeNodeId变化时，activeNode也随之变化,
     (async () => {
       try {
         const html = await dataSource.getLatestNodeDisplay(activeNodeId)
@@ -111,14 +116,6 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
         setError(e instanceof Error ? e.message : String(e))
       }
     })()
-  })
-  useEffect(() => {
-    if (!activeNodeId) {
-      setGeneratedHtml('');
-      return
-    };
-    // 实现当activeNodeId变化时，activeNode也随之变化,
-    getHtml()
   }, [activeNodeId])
   // const activeNode = useMemo(() => nodes.find((n) => n.id === activeNodeId) ?? null, [nodes, activeNodeId]);
 
@@ -164,14 +161,13 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
           html={generatedHtml}
         />
       </main>
-
       <aside className="w-96 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
         <ChatPanel
           messages={messages}
           streaming={streaming}
           onSend={(text) => {
             setGeneratedHtml('');
-            send(targetId!, text);
+            send(targetId!, text, activeNodeId ?? undefined);
           }}
         />
       </aside>

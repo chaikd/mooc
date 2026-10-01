@@ -19,7 +19,7 @@ interface UseTargetChatReturn {
   streaming: boolean;
   /** 发送消息并启动 SSE 流 */
   // eslint-disable-next-line no-unused-vars
-  send: (targetId: string, text: string) => void;
+  send: (targetId: string, text: string, targetNodeId?: string) => void;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
   generatedHtml:string;
   setGeneratedHtml: React.Dispatch<React.SetStateAction<string>>;
@@ -49,7 +49,7 @@ export function useTargetChat({ dataSource, onMeta, onGenerated }: UseTargetChat
   }, []);
 
   const send = useCallback(
-    (targetId: string, text: string) => {
+    (targetId: string, text: string, targetNodeId?: string) => {
       if (streaming) return;
 
       const userMsg: ChatMessage = {
@@ -74,6 +74,7 @@ export function useTargetChat({ dataSource, onMeta, onGenerated }: UseTargetChat
 
       const ac = dataSource.streamChat({
         targetId,
+        targetNodeId,
         text,
         onMeta: (meta) => onMeta?.(meta),
         onToken: (delta) => {
@@ -103,8 +104,9 @@ export function useTargetChat({ dataSource, onMeta, onGenerated }: UseTargetChat
           }
 
           setMessages((prev) => {
-            return prev.map((m) =>
-              m.id === thinkingId ? { ...m, content: m.content + delta } : m,
+            return prev.map((m) => {
+              return m.id === thinkingId ? { ...m, content: m.content + delta } : m;
+            },
             )
           });
         },
@@ -123,7 +125,7 @@ export function useTargetChat({ dataSource, onMeta, onGenerated }: UseTargetChat
         },
         onGenerated: (payload) => {
           onGenerated?.(payload)
-          setGeneratedHtml(pre => pre + payload.result)
+          setGeneratedHtml(pre => pre + payload)
         },
         onEnd: () => {
           setMessages((prev) =>
