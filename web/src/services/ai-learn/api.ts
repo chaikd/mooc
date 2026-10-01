@@ -5,6 +5,15 @@ import type {
   StreamChatOptions
 } from './types';
 
+function decodeSSEText(data: string): string {
+  try {
+    const parsed = JSON.parse(data);
+    return typeof parsed === 'string' ? parsed : data;
+  } catch {
+    return data;
+  }
+}
+
 /**
  * 真实 agents 后端数据源。
  * REST 接口用于读取 target、节点、消息和节点最新展示内容；streamChat 对接 SSE。
@@ -76,7 +85,7 @@ export class ApiLearnDataSource implements LearnDataSource {
               if (data) onToken(data);
               break;
             case 'thinking':
-              if (data) onThinking(data);
+              if (data) onThinking(decodeSSEText(data));
               break;
             case 'question': {
               const payload = JSON.parse(data);

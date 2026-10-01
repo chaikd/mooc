@@ -85,9 +85,6 @@ export function useTargetChat({ dataSource, onMeta, onGenerated }: UseTargetChat
           );
         },
         onThinking: (delta) => {
-          setMessages((prev) => {
-            return prev.filter(v => v.id !== assistantId)
-          })
           if (!thinkingId) {
             thinkingId = nextMsgId();
             const thinkingMsg: ChatMessage = {
@@ -98,7 +95,10 @@ export function useTargetChat({ dataSource, onMeta, onGenerated }: UseTargetChat
               createdAt: Date.now(),
             };
             setMessages((prev) => {
-              return [...prev, thinkingMsg]
+              return [
+                ...prev.filter((message) => message.id !== assistantId),
+                thinkingMsg,
+              ];
             });
             return;
           }

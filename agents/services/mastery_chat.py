@@ -208,18 +208,16 @@ class MasteryChatService:
         ):
             # stream_mode 为列表时，chunk 为 (mode, data) 二元组；data 类型随 mode 变化
             mode, data = cast(tuple[str, Any], chunk)
-            print("🚀 ~ MasteryChatService ~ get_target ~ mode, data:", mode, data)
             if mode == "messages":
                 msg_chunk, meta = cast(tuple[Any, dict[str, Any]], data)
                 chunk_name = type(msg_chunk).__name__
-                print("🚀 ~ MasteryChatService ~ get_target ~ chunk_name:", chunk_name)
                 node_name = meta.get("langgraph_node", "")
                 text = msg_chunk.content if hasattr(msg_chunk, 'content') else str(msg_chunk)
                 if not text:
                     continue
                 if chunk_name == "AIMessageChunk":
                     if node_name == "chat_node":
-                        yield ServerSentEvent(event=SSEType.THINKING, data=text)
+                        yield ServerSentEvent(event=SSEType.THINKING, raw_data=text)
                         content_text += text
                         self._safe_db_op(
                             self.update_message,
@@ -230,7 +228,6 @@ class MasteryChatService:
                         yield ServerSentEvent(event=SSEType.GENERATED, data=text)
                         html_text += text
                         # 保存html到数据库
-                        print("🚀 ~ MasteryChatService ~ get_target ~ target_display_id:", target_display_id)
                         if not display_saved:
                             target_display_id, target_node_id = self._safe_db_op(
                                 self.save_generated_display,
@@ -242,7 +239,6 @@ class MasteryChatService:
                             )
                             display_saved = True
                         elif target_display_id:
-                            print("🚀 ~ MasteryChatService ~ get_target ~ html_text:", html_text)
                             self._safe_db_op(
                                 self.update_generated_display_result,
                                 display_id=target_display_id,
@@ -250,8 +246,6 @@ class MasteryChatService:
                             )
                 elif chunk_name == "AIMessage":
                     data_message = json.loads(msg_chunk.content)
-                    print("🚀 ~ MasteryChatService ~ get_target ~ data_message:", data_message)
-                    print('🚀 ~ MasteryChatService ~ get_target ~ data_message.get("conditions_satisfied", False):', data_message.get("conditions_satisfied", False))
                     if data_message.get("conditions_satisfied", False):
                         self._safe_db_op(
                             self.update_role,
@@ -281,4 +275,3 @@ class MasteryChatService:
                             mastery_state=the_data.get("mastery_state") or "",
                         )
         yield ServerSentEvent(event=SSEType.END, data="")
-

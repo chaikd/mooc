@@ -8,7 +8,6 @@ if __package__ in (None, ""):
 
 from langgraph.graph import END, START, StateGraph
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
-from langchain_core.runnables import RunnableConfig
 from agents_services.agents.base import BaseAgent
 from agents_services.schemas.chat import ChatResponse, ContentShow, InterruptResponse, StateSchema
 from prompts.loader import load_prompt
@@ -58,14 +57,6 @@ class ChatAgent(BaseAgent):
         except (json.JSONDecodeError, KeyError, TypeError, AttributeError) as e:
             logger.error("interrup_node: 解析问题/选项失败: %s", e, exc_info=True)
             raise RuntimeError(f"interrup_node: 解析问题/选项失败: {e}") from e
-
-        # user_input = interrupt({
-        #     "question": question,
-        #     "options": options
-        # })
-        # return {
-        #     "messages": [HumanMessage(content=user_input)]
-        # }
         return InterruptResponse(
             question=question,
             options=options,
@@ -86,27 +77,6 @@ class ChatAgent(BaseAgent):
                     HumanMessage(state.get('messages')[-1].content)
                 ],
             )
-            print("🚀 ~ ChatAgent ~ get_content_show ~ state.get('messages')[-1].content:", state.get('messages')[-1].content)
-            # {"conditions_satisfied":true,"question":"","options":[],"content_info":"面向已能用 LangChain 搭建简单 Agent、并动手写过简单多 Agent 协作 Demo、Python 较熟练的学习者。内容目标：帮助其从零散 Demo 经验升级为系统认知，理解常见协作模式（主管-下属/编排者-工作者、层级式、对等协作）的适用场景与取舍，并掌握 Agent 之间消息传递与共享状态（State）的通信机制。内容结构建议：1) 为什么需要多 Agent 协作：单 Agent 的局限与协作收益；2) 常见协作模式对比：主管-下属、层级、对等/群体协作，各自控制流、优缺点与典型场景；3) 通信机制：消息传递 vs 共享状态，如何设计共享 State、如何路由与条件跳转；4) 以 LangGraph 落地：节点/边、StateGraph、条件边、子图等核心概念与最小可运行代码骨架；5) 对照用户已有 Demo 做重构分析，指出其协作模式与可改进点；6) 循序渐进的小练习（如把顺序流程改为主管-下属模式并传递状态）。风格：讲解结合图解（协作拓扑图、状态流转图），代码示例简洁可运行，长度适中，重点突出‘模式选择’与‘通信设计’两个易混淆处。","learning_node":"多 Agent 协作的协作模式与通信机制（基于 LangGraph 实现）","mastery_state":"初步掌握"}
-            # return {
-            #     "result": """
-            #         <!doctype html>
-            #         <html lang="zh-CN">
-            #             <head><meta charset="UTF-8"><style>
-            #             body{font-family:system-ui,sans-serif;padding:24px;color:#1f2937;line-height:1.6}
-            #             h1{color:#2563eb;margin-top:0} .card{background:#eff6ff;border-radius:8px;padding:16px;margin:12px 0}
-            #             code{background:#f3f4f6;padding:2px 6px;border-radius:4px}
-            #             </style></head>
-            #             <body>
-            #             <h1>{{Python 异步编程入门}}</h1>
-            #             <div class="card"><p>这是一个<strong>模拟的微学习页面</strong>，用于演示 ContentViewer 的 iframe sandbox 渲染。</p></div>
-            #             <p>当前节点 ID：<code>{{mock-target-id}}</code></p>
-            #             </body>
-            #         </html>
-            #     """,
-            #     "learning_node": state.get('learning_node') or '',
-            #     "mastery_state": state.get('mastery_state') or ''
-            # }
             return {
                 "result": res.content,
                 "learning_node": state.get('learning_node') or '',
