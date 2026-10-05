@@ -3,14 +3,14 @@ import { MockLearnDataSource } from './mock';
 import type { LearnDataSource } from './types';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_AI_LEARN_USE_MOCK !== 'false';
-const API_BASE = process.env.NEXT_PUBLIC_AI_LEARN_API
+const API_BASE = '/api/ai-learn';
 
 let cached: LearnDataSource | null = null;
 
 /**
  * 返回单例数据源。
  * - NEXT_PUBLIC_AI_LEARN_USE_MOCK !== 'false' → MockLearnDataSource（默认）
- * - 否则 → ApiLearnDataSource(NEXT_PUBLIC_AI_LEARN_API)
+ * - 否则 → 通过 Node 的 /api/ai-learn 代理访问 Python
  */
 export function createDataSource(): LearnDataSource {
   if (!cached) {

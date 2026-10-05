@@ -8,7 +8,7 @@ from services.schemas.public import DataStatus, MasteryState
 
 class TargetInfo(BaseModel):
     id: uuid.UUID
-    user_id: uuid.UUID | None = None
+    user_id: str | None = None
     current_node_id: uuid.UUID
     title: str
     create_time: str | None = None

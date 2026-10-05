@@ -71,10 +71,18 @@ export default function User() {
   const handleOk = async () => {
     const values = await editForm.validateFields();
     if (editing) {
-      await editUser({ ...editing, ...values });
+      const res = await editUser({ ...editing, ...values });
+      if (!res.success) {
+        message.error(res.message || '编辑失败');
+        return;
+      }
       message.success('编辑成功');
     } else {
-      await addUser(values);
+      const res = await addUser(values);
+      if (!res.success) {
+        message.error(res.message || '添加失败');
+        return;
+      }
       message.success('添加成功');
     }
     handleCancel()

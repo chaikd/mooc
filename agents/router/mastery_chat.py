@@ -7,6 +7,7 @@ from fastapi.routing import APIRouter
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 from pydantic import BaseModel
 
+from router.common.auth import CurrentUserId
 from router.common.exception import DomainException
 from router.common.exception_handler import build_error_payload
 from services.mastery_chat import GetTargetArgs, MasteryChatService
@@ -25,10 +26,12 @@ router = APIRouter(prefix='/api/mastery_chat')
 @router.post('/', response_class=EventSourceResponse)
 async def post_messages(
     post_info: ChatRequest,
+    user_id: CurrentUserId,
     mastery_chat_service: MasteryChatService = Depends(MasteryChatService),
 ) -> AsyncIterable[ServerSentEvent]:
     try:
         args: GetTargetArgs = {
+            "user_id": user_id,
             "user_input": post_info.user_input,
             "target_id": post_info.target_id,
             "target_node_id": post_info.target_node_id

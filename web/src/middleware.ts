@@ -16,6 +16,7 @@ export const config = {
   runtime: 'nodejs',
   matcher: [
     '/api/auth/user',
-    '/api/auth/logout'
+    '/api/auth/logout',
+    '/api/ai-learn/:path*'
   ],
 }

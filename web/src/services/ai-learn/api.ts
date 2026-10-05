@@ -28,25 +28,37 @@ export class ApiLearnDataSource implements LearnDataSource {
   constructor(private readonly baseUrl: string) {}
 
   async getTargets(limit = 6): Promise<TargetSummary[]> {
-    const res = await fetch(`${this.baseUrl}/api/targets?limit=${limit}`);
-    if (!res.ok) throw new Error(`getTargets HTTP ${res.status}`);
+    const res = await fetch(`${this.baseUrl}/targets?limit=${limit}`, {
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const error = new Error(`getTargets HTTP ${res.status}`) as Error & { status: number };
+      error.status = res.status;
+      throw error;
+    }
     return res.json();
   }
 
   async getTarget(targetId: string): Promise<Target> {
-    const res = await fetch(`${this.baseUrl}/api/targets/${targetId}`);
+    const res = await fetch(`${this.baseUrl}/targets/${targetId}`, {
+      credentials: 'include',
+    });
     if (!res.ok) throw new Error(`getTarget HTTP ${res.status}`);
     return res.json();
   }
 
   async getNodes(targetId: string): Promise<TargetNode[]> {
-    const res = await fetch(`${this.baseUrl}/api/targets/${targetId}/nodes`);
+    const res = await fetch(`${this.baseUrl}/targets/${targetId}/nodes`, {
+      credentials: 'include',
+    });
     if (!res.ok) throw new Error(`getNodes HTTP ${res.status}`);
     return res.json();
   }
 
   async getLatestNodeDisplay(nodeId: string): Promise<string | null> {
-    const res = await fetch(`${this.baseUrl}/api/targets/nodes/${nodeId}/latest-display`);
+    const res = await fetch(`${this.baseUrl}/targets/nodes/${nodeId}/latest-display`, {
+      credentials: 'include',
+    });
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`getLatestNodeDisplay HTTP ${res.status}`);
     const payload = await res.json() as { result?: string | null };
@@ -54,7 +66,9 @@ export class ApiLearnDataSource implements LearnDataSource {
   }
 
   async getMessages(targetId: string): Promise<ChatMessage[]> {
-    const res = await fetch(`${this.baseUrl}/api/targets/${targetId}/messages`);
+    const res = await fetch(`${this.baseUrl}/targets/${targetId}/messages`, {
+      credentials: 'include',
+    });
     if (!res.ok) throw new Error(`getMessages HTTP ${res.status}`);
     return res.json();
   }
@@ -78,7 +92,7 @@ export class ApiLearnDataSource implements LearnDataSource {
     }
 
     return sseRequest({
-      url: `${this.baseUrl}/api/mastery_chat`,
+      url: `${this.baseUrl}/mastery_chat`,
       body,
       onEvent: ({ event, data }) => {
         try {

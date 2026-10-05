@@ -70,6 +70,7 @@ export function sseRequest(options: SSERequestOptions): AbortController {
       const res = await fetch(url, {
         method,
         headers: fetchHeaders,
+        credentials: 'include',
         body: body != null ? JSON.stringify(body) : undefined,
         signal: internalSignal,
       });

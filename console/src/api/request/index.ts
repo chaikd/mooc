@@ -18,10 +18,10 @@ request.interceptors.request.use((req) => {
 request.interceptors.response.use((res) => {
   return res.data
 }, err => {
-  if(err.response.status === 401 || err.response.status === 403) {
+  if(err.response?.status === 401) {
     router.navigate('/login')
   }
-  return err.response.data
+  return err.response?.data ?? Promise.reject(err)
 })
 
 export default request

@@ -21,7 +21,7 @@ export default function RootLayout({
   readonly children: ReactNode;
 }) {
   return (
-    <html lang="zh" className={`${mono.className}`}>
+    <html lang="zh" className={`${mono.className}`} suppressHydrationWarning>
       <body className="min-h-screen">
         <AntdConfig>{children}</AntdConfig>
       </body>

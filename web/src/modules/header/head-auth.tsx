@@ -1,17 +1,16 @@
 "use client";
 import { Space, Button, Modal, Form, Input, message, type FormInstance } from "antd";
-import { getUserInfo, login } from "@/services/auth";
+import { login, OPEN_LOGIN_EVENT } from "@/services/auth";
 import FormItem from "antd/es/form/FormItem";
 import { useEffect, useState } from "react";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import Password from "antd/es/input/Password";
-import { logOut } from "@/services/auth";
 import { Avatar, Dropdown } from "antd";
 import { Spin } from "antd";
-import { redirect, usePathname } from "next/navigation";
 import { tryFn } from "@/utils/try";
 import { responseType } from "@/services/request";
 import { UserType } from "@mooc/db-shared";
+import { useAuth } from "@/modules/auth/auth-context";
 
 function HeadAvatar({ userInfo, outFn }: { userInfo: UserType; outFn: () => Promise<void> }) {
   const [pending, setPending] = useState(false);
@@ -49,7 +48,7 @@ function LoginForm({ loginForm, submit, pending }: { loginForm: FormInstance; su
     <Form className="!mt-2" form={loginForm} onFinish={onFinish}>
       <FormItem
         name="username"
-        initialValue="yiyi"
+        initialValue="lisi"
         rules={[{ required: true, message: "请输入用户名" }]}
       >
         <Input placeholder="请输入用户名" prefix={<UserOutlined />}></Input>
@@ -90,19 +89,14 @@ export default function HeadAuth() {
   const [loginForm] = Form.useForm();
   const [open, setOpen] = useState(0);
   const [pending, setPending] = useState(false);
-  const [data, setData] = useState<UserType | null>(null);
+  const {
+    user: data,
+    refresh,
+    clearPendingHref,
+    logout,
+  } = useAuth();
   const [messageApi, contextHolder] = message.useMessage();
-  const pathname = usePathname()
-  // const { data } = useSWR<{ success: boolean; data: object }>(
-  //   '/api/auth/user',
-  //   request.get
-  // )
-  const getUser = async () => {
-    setPending(true);
-    const res = await getUserInfo();
-    setData(res);
-    setPending(false);
-  };
+
   const submit = async () => {
     setPending(true);
     const datas = loginForm.getFieldsValue();
@@ -112,22 +106,21 @@ export default function HeadAuth() {
     if ((res as responseType).success) {
       messageApi.success("登陆成功");
       setOpen(0);
-      await getUser();
-      redirect(pathname)
+      await refresh();
     }
     setPending(false);
   };
   const outFn = async () => {
-    const res = await logOut();
-    if (res.success) {
-      messageApi.success("退出登陆");
-      await getUser();
-      redirect(pathname)
-    }
+    await logout();
+    messageApi.success("退出登陆");
   };
+
   useEffect(() => {
-    getUser();
-  }, []);
+    const openLogin = () => setOpen(1)
+    window.addEventListener(OPEN_LOGIN_EVENT, openLogin)
+    return () => window.removeEventListener(OPEN_LOGIN_EVENT, openLogin)
+  }, [])
+
   return (
     <>
       {contextHolder}
@@ -154,6 +147,7 @@ export default function HeadAuth() {
         title={open === 1 ? "登陆" : "注册"}
         onCancel={() => {
           setOpen(0);
+          clearPendingHref();
           loginForm.resetFields();
         }}
       >

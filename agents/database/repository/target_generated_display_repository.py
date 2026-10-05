@@ -5,6 +5,8 @@ from sqlalchemy import func, update
 
 from database.postgres.orm import orm
 from database.schemas.target_generated_displays import TargetGeneratedDisplays
+from database.schemas.target_nodes import TargetNodes
+from database.schemas.targets import Targets
 
 
 class TargetGeneratedDisplayRepository:
@@ -51,12 +53,21 @@ class TargetGeneratedDisplayRepository:
         self,
         *,
         target_node_id: uuid.UUID,
+        user_id: str | None = None,
     ) -> Optional[TargetGeneratedDisplays]:
         """查询指定学习节点下版本号最高的展示内容。"""
         with orm.session() as session:
-            return (
+            query = (
                 session.query(TargetGeneratedDisplays)
                 .filter(TargetGeneratedDisplays.target_node_id == target_node_id)
-                .order_by(TargetGeneratedDisplays.version.desc())
-                .first()
             )
+            if user_id is not None:
+                query = (
+                    query.join(
+                        TargetNodes,
+                        TargetNodes.id == TargetGeneratedDisplays.target_node_id,
+                    )
+                    .join(Targets, Targets.id == TargetNodes.target_id)
+                    .filter(Targets.user_id == user_id)
+                )
+            return query.order_by(TargetGeneratedDisplays.version.desc()).first()

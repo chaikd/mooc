@@ -12,6 +12,8 @@ class Settings(BaseSettings):
 
     # postgressql
     POSTGRES_URL: str="postgresql://postgres:123456@localhost:5432/mooc"
+    # internal service auth
+    INTERNAL_API_SECRET: str="dev-internal-secret"
 
     class Config:
         env_file = '.env'

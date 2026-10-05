@@ -1,4 +1,5 @@
 import AiLearnChatClient from './client';
+import LoginGuard from '@/modules/auth/login-guard';
 
 export default async function AiLearnChatPage({
   searchParams,
@@ -6,5 +7,9 @@ export default async function AiLearnChatPage({
   searchParams: Promise<{ targetId?: string }>;
 }) {
   const { targetId } = await searchParams;
-  return <AiLearnChatClient initialTargetId={targetId} />;
+  return (
+    <LoginGuard>
+      <AiLearnChatClient initialTargetId={targetId} />
+    </LoginGuard>
+  );
 }

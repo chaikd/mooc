@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, Text
+from sqlalchemy import Enum, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from database.schemas.base import Base
@@ -12,7 +12,7 @@ class Targets(Base):
     __tablename__ = "targets"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    user_id: Mapped[uuid.UUID] = mapped_column(nullable=True)
+    user_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     title: Mapped[str] = mapped_column(Text)
     first_message: Mapped[str] = mapped_column(Text)
     # 绑定 MasteryState 枚举：自动生成 CHECK 约束，读写时自动 (反)序列化

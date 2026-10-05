@@ -1,14 +1,15 @@
+'use client';
+
 import {
   ClockCircleOutlined,
   MessageOutlined,
   RightOutlined,
 } from '@ant-design/icons';
-import { Button } from 'antd';
-import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import type { MasteryState, TargetSummary } from '@/components/ai-learn/types';
+import { useAuth } from '@/modules/auth/auth-context';
+import LoginRequiredLink from '@/modules/auth/login-required-link';
 import { createDataSource } from '@/services/ai-learn';
-
-export const dynamic = 'force-dynamic';
 
 const STATE_COLOR: Record<MasteryState, string> = {
   未接触: 'bg-gray-300',
@@ -28,15 +29,50 @@ function formatUpdatedAt(value: number) {
   }).format(new Date(value));
 }
 
-export default async function AILearn() {
-  let targets: TargetSummary[] = [];
-  let loadFailed = false;
+export default function AILearn() {
+  const dataSource = useMemo(() => createDataSource(), []);
+  const { user, loading: authLoading, requireLogin } = useAuth();
+  const [targets, setTargets] = useState<TargetSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loginRequired, setLoginRequired] = useState(false);
 
-  try {
-    targets = await createDataSource().getTargets(6);
-  } catch {
-    loadFailed = true;
-  }
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      setLoading(false);
+      setLoginRequired(true);
+      return;
+    }
+
+    let cancelled = false;
+    setLoginRequired(false);
+    setLoadFailed(false);
+    setLoading(true);
+
+    const loadTargets = async () => {
+      try {
+        const result = await dataSource.getTargets(6);
+        if (!cancelled) setTargets(result);
+      } catch (error) {
+        if (cancelled) return;
+        const status = (error as Error & { status?: number }).status;
+        if (status === 401 || status === 403) {
+          setLoginRequired(true);
+          requireLogin();
+        } else {
+          setLoadFailed(true);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    loadTargets();
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, dataSource, requireLogin, user]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -47,11 +83,13 @@ export default async function AILearn() {
             我的 AI 学习
           </h1>
         </div>
-        <Link href="/ai-learn/chat">
-          <Button type="primary" size="large" icon={<MessageOutlined />}>
-            开始新的学习
-          </Button>
-        </Link>
+        <LoginRequiredLink
+          href="/ai-learn/chat"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-white transition hover:bg-primary-600"
+        >
+          <MessageOutlined />
+          开始新的学习
+        </LoginRequiredLink>
       </section>
 
       <section className="mt-8">
@@ -62,7 +100,22 @@ export default async function AILearn() {
           )}
         </div>
 
-        {loadFailed ? (
+        {loading ? (
+          <div className="mt-4 rounded-lg border border-gray-200 px-4 py-8 text-center text-sm text-gray-400">
+            加载中...
+          </div>
+        ) : loginRequired ? (
+          <div className="mt-4 rounded-lg border border-dashed border-gray-300 px-6 py-12 text-center">
+            <p className="text-sm text-gray-500">登录后查看学习内容</p>
+            <button
+              type="button"
+              className="mt-3 text-sm font-medium text-primary hover:text-primary-700"
+              onClick={() => requireLogin()}
+            >
+              登录
+            </button>
+          </div>
+        ) : loadFailed ? (
           <div
             role="alert"
             className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-6 text-sm text-red-600"
@@ -72,17 +125,17 @@ export default async function AILearn() {
         ) : targets.length === 0 ? (
           <div className="mt-4 rounded-lg border border-dashed border-gray-300 px-6 py-12 text-center">
             <p className="text-sm text-gray-500">还没有生成学习内容</p>
-            <Link
+            <LoginRequiredLink
               href="/ai-learn/chat"
               className="mt-3 inline-block text-sm font-medium text-primary hover:text-primary-700"
             >
               从一次对话开始
-            </Link>
+            </LoginRequiredLink>
           </div>
         ) : (
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {targets.map((target) => (
-              <Link
+              <LoginRequiredLink
                 key={target.id}
                 href={`/ai-learn/chat?targetId=${target.id}`}
                 className="group flex min-h-36 flex-col justify-between rounded-lg border border-gray-200 bg-white p-5 transition hover:border-primary-300 hover:shadow-md"
@@ -105,7 +158,7 @@ export default async function AILearn() {
                   <ClockCircleOutlined />
                   {formatUpdatedAt(target.updatedAt)}
                 </p>
-              </Link>
+              </LoginRequiredLink>
             ))}
           </div>
         )}

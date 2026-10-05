@@ -1,5 +1,13 @@
 import request, { responseType } from "./request"
 
+export const OPEN_LOGIN_EVENT = 'mooc:open-login'
+
+export function openLoginModal() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(OPEN_LOGIN_EVENT))
+  }
+}
+
 export async function login(data: Record<string, unknown>): Promise<responseType> {
   return request.post('/api/auth/login', data)
 }

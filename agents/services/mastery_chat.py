@@ -12,12 +12,14 @@ from database.repository.message_repository import MessageRepository
 from database.repository.target_generated_display_repository import TargetGeneratedDisplayRepository
 from database.repository.target_nodes_repository import TargetNodesRepository
 from database.repository.target_repository import TargetRepository
+from router.common.exception import NotFoundError
 from services.schemas.public import ChatRole, MasteryState, SSEType
 from agents_services.agents.summary import title_summary_agent
 
 logger = logging.getLogger(__name__)
 
 class GetTargetArgs(TypedDict):
+    user_id: str
     user_input: str
     target_id: Optional[uuid.UUID]
     target_node_id: Optional[uuid.UUID]
@@ -61,6 +63,7 @@ class MasteryChatService:
         learning_node: str,
         mastery_state: str,
         result: str,
+        user_id: str,
         target_node_id: Optional[uuid.UUID] = None,
     ) -> tuple[uuid.UUID, uuid.UUID]:
         """按 target + learning_node 更新节点，并为该节点新增一版展示内容。"""
@@ -82,7 +85,11 @@ class MasteryChatService:
             target_node_id=node_id,
             result=result,
         )
-        self.target_repo.set_current_node(target_id=target_id, node_id=node_id)
+        self.target_repo.set_current_node(
+            target_id=target_id,
+            user_id=user_id,
+            node_id=node_id,
+        )
         return display_id, node_id
     def update_generated_display_result(self, display_id: uuid.UUID, result: str):
         self.display_repo.update_display_result(
@@ -108,10 +115,19 @@ class MasteryChatService:
             title=title,
             mastery_state=normalized_mastery_state,
         )
-    def update_target_title(self, target_id: uuid.UUID, message: str) -> None:
+    def update_target_title(
+        self,
+        target_id: uuid.UUID,
+        user_id: str,
+        message: str,
+    ) -> None:
         """异步生成并更新 target 标题。"""
         title = title_summary_agent.summary(message)
-        self.target_repo.update_target(target_id=target_id, title=title)
+        self.target_repo.update_target(
+            target_id=target_id,
+            user_id=user_id,
+            title=title,
+        )
 
     def _safe_db_op(self, func: Callable[..., Any], **kwargs: Any) -> Any:
         """执行 DB 操作，失败时仅记录日志不抛异常，返回是否成功。"""
@@ -124,7 +140,10 @@ class MasteryChatService:
     # ── Target 解析 ──────────────────────────────────────────
 
     def _resolve_target(
-        self, target_id: Optional[uuid.UUID], user_input: str
+        self,
+        user_id: str,
+        target_id: Optional[uuid.UUID],
+        user_input: str,
     ) -> tuple[uuid.UUID, bool]:
         """
         解析或创建 target，返回 (real_target_id, is_new)。
@@ -136,30 +155,51 @@ class MasteryChatService:
             self._safe_db_op(
                 self.target_repo.ensure_target_exists,
                 target_id=new_id,
+                user_id=user_id,
                 title=user_input,
                 message=user_input,
             )
-            self.update_target_title(target_id=new_id, message=user_input)
+            self.update_target_title(
+                target_id=new_id,
+                user_id=user_id,
+                message=user_input,
+            )
             return new_id, True
 
-        existed = self.target_repo.ensure_target_exists(
+        existing = self.target_repo.get_target_by_id(target_id=target_id)
+        if existing:
+            if existing.user_id != user_id:
+                raise NotFoundError("学习目标不存在")
+            return target_id, False
+
+        self._safe_db_op(
+            self.target_repo.ensure_target_exists,
             target_id=target_id,
+            user_id=user_id,
             title=user_input,
             message=user_input,
         )
-        if not existed:
-            self.update_target_title(target_id=target_id, message=user_input)
-        return target_id, not existed
+        self.update_target_title(
+            target_id=target_id,
+            user_id=user_id,
+            message=user_input,
+        )
+        return target_id, True
 
     # ── 流式响应 ─────────────────────────────────────────────
 
     def get_target(self, info: GetTargetArgs):
+        user_id = info["user_id"]
         user_input = info["user_input"]
         target_node_id = info["target_node_id"] or None
         target_id = info["target_id"]
 
         # 0. 解析或创建 target
-        real_target_id, is_new = self._resolve_target(target_id, user_input)
+        real_target_id, is_new = self._resolve_target(
+            user_id,
+            target_id,
+            user_input,
+        )
 
         # META：告知前端真实 targetId 及是否新建
         yield ServerSentEvent(
@@ -236,6 +276,7 @@ class MasteryChatService:
                                 mastery_state="",
                                 result=html_text,
                                 target_node_id=target_node_id,
+                                user_id=user_id,
                             )
                             display_saved = True
                         elif target_display_id:
