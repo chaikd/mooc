@@ -1,4 +1,9 @@
-import type { ChatMessage, Target, TargetNode } from '@/components/ai-learn/types';
+import type {
+  ChatMessage,
+  Target,
+  TargetNode,
+  TargetSummary,
+} from '@/components/ai-learn/types';
 
 export interface StreamQuestion {
   question: string;
@@ -35,6 +40,7 @@ export interface StreamChatOptions {
  * mock / api 各自实现一份，通过 services/ai-learn/index.ts 工厂切换。
  */
 export interface LearnDataSource {
+  getTargets(limit?: number): Promise<TargetSummary[]>;
   getTarget(targetId: string): Promise<Target>;
   getNodes(targetId: string): Promise<TargetNode[]>;
   getLatestNodeDisplay(nodeId: string): Promise<string | null>;

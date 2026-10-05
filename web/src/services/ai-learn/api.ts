@@ -1,4 +1,9 @@
-import type { ChatMessage, Target, TargetNode } from '@/components/ai-learn/types';
+import type {
+  ChatMessage,
+  Target,
+  TargetNode,
+  TargetSummary,
+} from '@/components/ai-learn/types';
 import { sseRequest } from '../sse-request';
 import type {
   LearnDataSource,
@@ -21,6 +26,12 @@ function decodeSSEText(data: string): string {
 export class ApiLearnDataSource implements LearnDataSource {
   // eslint-disable-next-line no-unused-vars
   constructor(private readonly baseUrl: string) {}
+
+  async getTargets(limit = 6): Promise<TargetSummary[]> {
+    const res = await fetch(`${this.baseUrl}/api/targets?limit=${limit}`);
+    if (!res.ok) throw new Error(`getTargets HTTP ${res.status}`);
+    return res.json();
+  }
 
   async getTarget(targetId: string): Promise<Target> {
     const res = await fetch(`${this.baseUrl}/api/targets/${targetId}`);

@@ -1,4 +1,10 @@
-import type { ChatMessage, MasteryState, Target, TargetNode } from '@/components/ai-learn/types';
+import type {
+  ChatMessage,
+  MasteryState,
+  Target,
+  TargetNode,
+  TargetSummary,
+} from '@/components/ai-learn/types';
 import type { LearnDataSource, StreamChatOptions } from './types';
 
 const DEMO_HTML = `<!doctype html>
@@ -61,6 +67,13 @@ const existingHistory: ChatMessage[] = [
 
 export class MockLearnDataSource implements LearnDataSource {
   /* eslint-disable no-unused-vars */
+  async getTargets(limit = 6): Promise<TargetSummary[]> {
+    return [{
+      ...structuredClone(existingTarget),
+      updatedAt: Date.now(),
+    }].slice(0, limit);
+  }
+
   async getTarget(_targetId: string): Promise<Target> {
     return structuredClone(existingTarget);
   }

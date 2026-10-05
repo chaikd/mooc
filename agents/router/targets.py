@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional
 
-from fastapi import Depends
+from fastapi import Depends, Query
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
 
@@ -14,22 +14,24 @@ from services.mastery_chat import MasteryChatService
 class TargetResponse(BaseModel):
     id: str
     title: str
-    masteryState: Optional[str] = Field(None, alias="mastery_state")
-    currentNodeId: Optional[str] = Field(None, alias="current_node_id")
-
-    class Config:
-        populate_by_name = True
+    masteryState: Optional[str] = None
+    currentNodeId: Optional[str] = None
 
 
 class TargetNodeResponse(BaseModel):
     id: str
-    targetId: str = Field(alias="target_id")
+    targetId: str
     title: str
-    masteryState: Optional[str] = Field(None, alias="mastery_state")
+    masteryState: Optional[str] = None
     result: Optional[str] = None
 
-    class Config:
-        populate_by_name = True
+
+class TargetSummaryResponse(BaseModel):
+    id: str
+    title: str
+    masteryState: Optional[str] = None
+    currentNodeId: Optional[str] = None
+    updatedAt: int
 
 
 class MessageResponse(BaseModel):
@@ -57,6 +59,25 @@ router = APIRouter(prefix='/api/targets')
 
 # ── Endpoints ─────────────────────────────────────────────────
 
+@router.get('', response_model=List[TargetSummaryResponse])
+async def get_targets(
+    limit: int = Query(default=6, ge=1, le=20),
+    mastery_chat_service: MasteryChatService = Depends(MasteryChatService),
+):
+    """获取最近更新的学习主题。"""
+    targets = mastery_chat_service.target_repo.get_recent_targets(limit=limit)
+    return [
+        TargetSummaryResponse(
+            id=str(target.id),
+            title=target.title,
+            masteryState=target.mastery_state.value if target.mastery_state else None,
+            currentNodeId=str(target.current_node_id) if target.current_node_id else None,
+            updatedAt=int(target.update_time.timestamp() * 1000),
+        )
+        for target in targets
+    ]
+
+
 @router.get('/{target_id}', response_model=TargetResponse)
 async def get_target(
     target_id: uuid.UUID,
@@ -69,8 +90,8 @@ async def get_target(
     return TargetResponse(
         id=str(target.id),
         title=target.title,
-        mastery_state=target.mastery_state.value if target.mastery_state else None,
-        current_node_id=str(target.current_node_id) if target.current_node_id else None,
+        masteryState=target.mastery_state.value if target.mastery_state else None,
+        currentNodeId=str(target.current_node_id) if target.current_node_id else None,
     )
 
 
@@ -84,9 +105,9 @@ async def get_nodes(
     return [
         TargetNodeResponse(
             id=str(n.id),
-            target_id=str(n.target_id),
+            targetId=str(n.target_id),
             title=n.title,
-            mastery_state=n.mastery_state.value if n.mastery_state else None,
+            masteryState=n.mastery_state.value if n.mastery_state else None,
             # result=n.result,
         )
         for n in nodes

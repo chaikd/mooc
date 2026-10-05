@@ -1,11 +1,12 @@
 from datetime import datetime
 import uuid
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
 from database.postgres.orm import orm
 from database.schemas.targets import Targets
+from services.schemas.public import DataStatus
 from sqlalchemy import update
 
 class TargetRepository:
@@ -15,6 +16,18 @@ class TargetRepository:
         """根据 ID 查询单个 target，不存在返回 None。"""
         with orm.session() as session:
             return session.query(Targets).filter(Targets.id == target_id).first()
+
+    def get_recent_targets(self, *, limit: int = 6) -> List[Targets]:
+        """查询最近更新的、已经生成学习内容的学习主题。"""
+        with orm.session() as session:
+            return (
+                session.query(Targets)
+                .filter(Targets.status == DataStatus.ACTIVE)
+                .filter(Targets.current_node_id.is_not(None))
+                .order_by(Targets.update_time.desc())
+                .limit(limit)
+                .all()
+            )
 
     def ensure_target_exists(self, *, target_id: uuid.UUID, title: str, message: str) -> bool:
         """确保 targets 表存在对应记录，不存在则新增一条最小记录（幂等）。"""

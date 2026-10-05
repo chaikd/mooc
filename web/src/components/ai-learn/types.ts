@@ -16,6 +16,10 @@ export interface Target {
   currentNodeId: string | null;
 }
 
+export interface TargetSummary extends Target {
+  updatedAt: number;
+}
+
 export interface TargetNode {
   id: string;
   targetId: string;
