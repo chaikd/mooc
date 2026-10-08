@@ -5,7 +5,7 @@ from sqlalchemy import Enum, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from database.schemas.base import Base
-from services.schemas.public import DataStatus, MasteryState
+from services.schemas.public import DataStatus, MasteryState, TargetState
 
 
 class Targets(Base):
@@ -19,6 +19,11 @@ class Targets(Base):
     mastery_state: Mapped[MasteryState] = mapped_column(
         Enum(MasteryState, name="mastery_state"),
         default=MasteryState.UNKNOWN
+    )
+    target_state: Mapped[TargetState] = mapped_column(
+        Enum(TargetState, name="target_state"),
+        default=TargetState.Node_DISCOVERY,
+        nullable=False,
     )
     status: Mapped[str] = mapped_column(
         Enum(DataStatus, name="status"),

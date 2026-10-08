@@ -98,8 +98,8 @@ export function sseRequest(options: SSERequestOptions): AbortController {
 
         buffer += decoder.decode(value, { stream: true });
 
-        // SSE 帧以 \n\n 分隔
-        const frames = buffer.split('\n\n');
+        // SSE 帧以空行分隔；兼容常见的 \r\n\r\n。
+        const frames = buffer.split(/\r?\n\r?\n/);
         // 最后一段可能不完整，留到下次拼接
         buffer = frames.pop() ?? '';
 
@@ -136,11 +136,13 @@ function parseSSEFrame(frame: string): SSERawEvent | null {
   let event = '';
   const dataLines: string[] = [];
 
-  for (const line of frame.split('\n')) {
+  for (const line of frame.replace(/\r\n?/g, '\n').split('\n')) {
     if (line.startsWith('event:')) {
       event = line.slice(6).trim();
     } else if (line.startsWith('data:')) {
-      dataLines.push(decodeURIComponent(line.slice(5)));
+      const value = line.slice(5);
+      // SSE 规范允许冒号后有一个可选空格，但不应修改其余内容。
+      dataLines.push(value.startsWith(' ') ? value.slice(1) : value);
     }
     // 忽略 id:, retry:, 注释行(:)等
   }
@@ -151,6 +153,6 @@ function parseSSEFrame(frame: string): SSERawEvent | null {
 
   return {
     event,
-    data: dataLines.join(''),
+    data: dataLines.join('\n'),
   };
 }

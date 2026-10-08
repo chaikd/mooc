@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 class GetTargetArgs(TypedDict):
     user_id: str
     user_input: str
-    type: Optional[str]
     target_id: Optional[uuid.UUID]
     target_node_id: Optional[uuid.UUID]
 
@@ -265,7 +264,7 @@ class MasteryChatService:
                             message_id=asst_msg_id,
                             content=content_text,
                         )
-                    elif node_name == "generate_node":
+                    elif node_name == "get_content_show":
                         yield ServerSentEvent(event=SSEType.GENERATED, data=text)
                         html_text += text
                         # 保存html到数据库
@@ -305,8 +304,8 @@ class MasteryChatService:
                             )
             elif mode == "updates":
                 node_name = list(data.keys())[0]
-                the_data = data.get("generate_node", {})
-                if node_name == "generate_node":
+                the_data = data.get("get_content_show", {})
+                if node_name == "get_content_show":
                     # 更新节点learning_node和mastery_status
                     if target_node_id:
                         self._safe_db_op(

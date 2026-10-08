@@ -28,6 +28,7 @@ const existingTarget: Target = {
   id: 'mock-target-id',
   title: 'Python 异步编程入门',
   masteryState: '理解程度未知' as MasteryState,
+  state: 'learning',
   currentNodeId: 'node-2',
 };
 

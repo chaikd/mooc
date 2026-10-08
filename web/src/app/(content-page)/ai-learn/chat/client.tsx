@@ -50,6 +50,11 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
     onMeta: !targetId ? (meta) => {
       return handleReady(meta.targetId);
     } : undefined,
+    onComplete: (completedTargetId) => {
+      void dataSource.getNodes(completedTargetId).then(setNodes).catch((e) => {
+        console.warn('[ai-learn] refresh nodes failed', e);
+      });
+    },
   });
 
   // 同步 URL 变化（浏览器前进/后退）

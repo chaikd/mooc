@@ -16,6 +16,7 @@ class TargetResponse(BaseModel):
     id: str
     title: str
     masteryState: Optional[str] = None
+    state: str
     currentNodeId: Optional[str] = None
 
 
@@ -31,6 +32,7 @@ class TargetSummaryResponse(BaseModel):
     id: str
     title: str
     masteryState: Optional[str] = None
+    state: str
     currentNodeId: Optional[str] = None
     updatedAt: int
 
@@ -76,6 +78,7 @@ async def get_targets(
             id=str(target.id),
             title=target.title,
             masteryState=target.mastery_state.value if target.mastery_state else None,
+            state=target.target_state.value,
             currentNodeId=str(target.current_node_id) if target.current_node_id else None,
             updatedAt=int(target.update_time.timestamp() * 1000),
         )
@@ -100,6 +103,7 @@ async def get_target(
         id=str(target.id),
         title=target.title,
         masteryState=target.mastery_state.value if target.mastery_state else None,
+        state=target.target_state.value,
         currentNodeId=str(target.current_node_id) if target.current_node_id else None,
     )
 

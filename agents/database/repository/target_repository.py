@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from database.postgres.orm import orm
 from database.schemas.targets import Targets
-from services.schemas.public import DataStatus
+from services.schemas.public import DataStatus, TargetState
 from sqlalchemy import update
 
 class TargetRepository:
@@ -52,7 +52,8 @@ class TargetRepository:
                     id=target_id,
                     user_id=user_id,
                     title=title,
-                    first_message=message
+                    first_message=message,
+                    target_state=TargetState.Node_DISCOVERY,
                 ))
         return bool(exists)
 
@@ -77,10 +78,14 @@ class TargetRepository:
         user_id: str,
         node_id: uuid.UUID,
     ) -> None:
-        """更新 target 当前正在学习的目标节点。"""
+        """更新 target 当前正在学习的目标节点，并进入 LEARNING 状态。"""
         with orm.session() as session:
             session.execute(
                 update(Targets)
                 .where(Targets.id == target_id, Targets.user_id == user_id)
-                .values(current_node_id=node_id, update_time=datetime.now())
+                .values(
+                    current_node_id=node_id,
+                    target_state=TargetState.LEARNING,
+                    update_time=datetime.now(),
+                )
             )

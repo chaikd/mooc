@@ -11,12 +11,13 @@ from router.common.auth import CurrentUserId
 from router.common.exception import DomainException
 from router.common.exception_handler import build_error_payload
 from services.mastery_chat import GetTargetArgs, MasteryChatService
-from services.schemas.public import SSEType
+from services.schemas.public import ChatType, SSEType
 
 logger = logging.getLogger(__name__)
 
 class ChatRequest(BaseModel):
     user_input: str
+    type: Optional[ChatType] = ChatType.MASTERY_CHAT
     target_node_id: Optional[uuid.UUID] = None
     target_id: Optional[uuid.UUID] = None
 
@@ -34,7 +35,8 @@ async def post_messages(
             "user_id": user_id,
             "user_input": post_info.user_input,
             "target_id": post_info.target_id,
-            "target_node_id": post_info.target_node_id
+            "target_node_id": post_info.target_node_id,
+            "type": post_info.type
         }
         for event in mastery_chat_service.get_target(args):
             yield event

@@ -31,3 +31,12 @@ class SSEType(str, Enum):
     QUESTION = 'question'
     END = 'end'
     ERROR = 'error'
+
+class TargetState(str, Enum):
+    Node_DISCOVERY = 'node_discovery'
+    LEARNING = 'learning'
+    EVALUATE_FEEDBACK = 'evaluate_feedback'
+
+class ChatType(str, Enum):
+    MASTERY_CHAT = 'mastery_chat'
+    LEARNING_ACTION = 'learning_action'

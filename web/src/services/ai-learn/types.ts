@@ -15,11 +15,13 @@ export interface StreamMeta {
   isNew: boolean;
 }
 
-export interface StreamGenerated {
-  result: string;
-  learning_node: string;
-  mastery_state: string;
-}
+export type StreamGenerated =
+  | string
+  | {
+      result: string;
+      learning_node: string;
+      mastery_state: string;
+    };
 
 /* eslint-disable no-unused-vars -- 回调参数名用于表达事件协议，不参与实现。 */
 export interface StreamChatOptions {

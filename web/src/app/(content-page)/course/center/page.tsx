@@ -27,9 +27,9 @@ export default async function CourseCenter({
       <div className="course-list mt-4">
         <Suspense fallback={<ListFallback/>}>
           <CourseList {...{
-            page,
+            page: page as number,
             courseName,
-            pageSize
+            pageSize: pageSize as number,
           }}></CourseList>
         </Suspense>
       </div>

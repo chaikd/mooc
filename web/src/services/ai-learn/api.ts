@@ -119,8 +119,7 @@ export class ApiLearnDataSource implements LearnDataSource {
               break;
             }
             case 'generated': {
-              const payload = JSON.parse(data);
-              onGenerated(payload);
+              onGenerated(decodeSSEText(data));
               break;
             }
             case 'end':

@@ -9,10 +9,17 @@ export type MasteryState =
   | '稳定掌握'
   | '迁移掌握';
 
+/** 对齐 agents/services/schemas/public.py 的 TargetState。 */
+export type TargetState =
+  | 'node_discovery'
+  | 'learning'
+  | 'evaluate_feedback';
+
 export interface Target {
   id: string;
   title: string;
   masteryState: MasteryState;
+  state: TargetState;
   currentNodeId: string | null;
 }
 

@@ -61,13 +61,13 @@ class ChatAgent(BaseAgent):
             question=question,
             options=options,
         )
-    def chat_router_node(self,state: StateSchema) -> Literal["generate_node", "interrup_node"]:
+    def router_node(self,state: StateSchema) -> Literal["get_content_show", "interrup_node"]:
         if state.get("conditions_satisfied"):
-            return "generate_node"
+            return "get_content_show"
         else:
             return "interrup_node"
-    def generate_node(self,state: StateSchema) -> ContentShow:
-        system_prompt = load_prompt("prompts/chat/content_show_v2.md")
+    def get_content_show(self,state: StateSchema) -> ContentShow:
+        system_prompt = load_prompt("prompts/chat/content_show.md")
         try:
             res = self.llm.invoke(
                 input=[
@@ -83,19 +83,19 @@ class ChatAgent(BaseAgent):
                 "mastery_state": state.get('mastery_state') or ''
             }
         except Exception as e:
-            logger.error("generate_node: 调用大模型失败: %s", e, exc_info=True)
-            raise RuntimeError(f"generate_node 执行失败: {e}") from e
+            logger.error("get_content_show: 调用大模型失败: %s", e, exc_info=True)
+            raise RuntimeError(f"get_content_show 执行失败: {e}") from e
     def build_graph(self):
         if chat_checkpoint.saver is None:
             raise RuntimeError("checkpointer 未初始化：请先调用 chat_checkpoint.initialize()")
         builder = StateGraph(state_schema=StateSchema, output_schema=ContentShow)
         builder.add_node("chat_node", self.chat_node)
         builder.add_node("interrup_node", self.interrup_node)
-        builder.add_node("generate_node", self.generate_node)
+        builder.add_node("get_content_show", self.get_content_show)
         builder.add_edge(START, "chat_node")
-        builder.add_conditional_edges("chat_node", self.chat_router_node)
+        builder.add_conditional_edges("chat_node", self.router_node)
         builder.add_edge("interrup_node", END)
-        builder.add_edge("generate_node", END)
+        builder.add_edge("get_content_show", END)
         checkpointer = chat_checkpoint.saver
         graph = builder.compile(checkpointer=checkpointer)
         self.agent = graph

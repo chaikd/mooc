@@ -12,6 +12,9 @@ interface UseTargetChatOptions {
   /** 收到完整的微学习 HTML 时更新中间展示区 */
   // eslint-disable-next-line no-unused-vars
   onGenerated?: (payload: StreamGenerated) => void;
+  /** 数据流正常结束后触发，用于刷新依赖服务端落库结果的数据。 */
+  // eslint-disable-next-line no-unused-vars
+  onComplete?: (targetId: string) => void;
 }
 
 interface UseTargetChatReturn {
@@ -37,7 +40,12 @@ const nextMsgId = () => `msg-${Date.now()}-${Math.random().toString(36).slice(2,
  * - onEnd/onError 更新 status
  * - 维护 abort ref，组件卸载时取消未完成的流
  */
-export function useTargetChat({ dataSource, onMeta, onGenerated }: UseTargetChatOptions): UseTargetChatReturn {
+export function useTargetChat({
+  dataSource,
+  onMeta,
+  onGenerated,
+  onComplete,
+}: UseTargetChatOptions): UseTargetChatReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -61,6 +69,7 @@ export function useTargetChat({ dataSource, onMeta, onGenerated }: UseTargetChat
       };
       const assistantId = nextMsgId();
       let thinkingId: string | null = null;
+      let activeTargetId = targetId && targetId !== 'new' ? targetId : null;
       const assistantMsg: ChatMessage = {
         id: assistantId,
         role: 'assistant',
@@ -76,7 +85,10 @@ export function useTargetChat({ dataSource, onMeta, onGenerated }: UseTargetChat
         targetId,
         targetNodeId,
         text,
-        onMeta: (meta) => onMeta?.(meta),
+        onMeta: (meta) => {
+          activeTargetId = meta.targetId;
+          onMeta?.(meta);
+        },
         onToken: (delta) => {
           setMessages((prev) =>
             prev.map((m) =>
@@ -125,7 +137,8 @@ export function useTargetChat({ dataSource, onMeta, onGenerated }: UseTargetChat
         },
         onGenerated: (payload) => {
           onGenerated?.(payload)
-          setGeneratedHtml(pre => pre + payload)
+          const html = typeof payload === 'string' ? payload : payload.result;
+          setGeneratedHtml(pre => pre + html)
         },
         onEnd: () => {
           setMessages((prev) =>
@@ -137,6 +150,7 @@ export function useTargetChat({ dataSource, onMeta, onGenerated }: UseTargetChat
           );
           setStreaming(false);
           abortRef.current = null;
+          if (activeTargetId) onComplete?.(activeTargetId);
         },
         onError: (err) => {
           if (err.name === 'AbortError') return;
@@ -154,7 +168,7 @@ export function useTargetChat({ dataSource, onMeta, onGenerated }: UseTargetChat
 
       abortRef.current = ac;
     },
-    [streaming, dataSource, onMeta, onGenerated],
+    [streaming, dataSource, onMeta, onGenerated, onComplete],
   );
 
   return { messages, streaming, send, setMessages, generatedHtml, setGeneratedHtml };
