@@ -92,6 +92,7 @@ class ChatAgent(BaseAgent):
             res = self.llm.invoke(
                 input=[
                     SystemMessage(content=system_prompt),
+                    SystemMessage(content="当前是测试，生成内容要简短，不要浪费token，这很重要。"),
                     SystemMessage(content="以下是要学习的内容描述："),
                     HumanMessage(content_info)
                 ],

@@ -200,6 +200,7 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
           nodes={nodes}
           activeNodeId={activeNodeId}
           onSelect={(nodeId) => {
+            setGeneratedHtml('');
             setActiveNodeId(nodeId);
           }}
         />
@@ -209,6 +210,7 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
         <ContentViewer
           nodeId={generatedHtml ? 'generated-current' : activeNodeId ?? null}
           html={generatedHtml}
+          streaming={streaming}
           onLearningEvent={handleLearningEvent}
         />
       </main>
