@@ -28,6 +28,10 @@ interface UseTargetChatReturn {
   /** 发送消息并启动 SSE 流 */
   // eslint-disable-next-line no-unused-vars
   send: (targetId: string, text: string, targetNodeId?: string, options?: SendOptions) => void;
+  /** 终止当前流，保留已生成内容和消息 */
+  stop: () => void;
+  stopped: boolean;
+  clearStopped: () => void;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
   generatedHtml:string;
   setGeneratedHtml: React.Dispatch<React.SetStateAction<string>>;
@@ -53,6 +57,7 @@ export function useTargetChat({
 }: UseTargetChatOptions): UseTargetChatReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
+  const [stopped, setStopped] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const [generatedHtml, setGeneratedHtml] = useState<string>('');
 
@@ -85,6 +90,7 @@ export function useTargetChat({
 
       setMessages((prev) => [...prev, userMsg, assistantMsg]);
       setStreaming(true);
+      setStopped(false);
 
       const ac = dataSource.streamChat({
         targetId,
@@ -156,6 +162,7 @@ export function useTargetChat({
             )),
           );
           setStreaming(false);
+          setStopped(false);
           abortRef.current = null;
           if (activeTargetId) onComplete?.(activeTargetId);
         },
@@ -169,6 +176,7 @@ export function useTargetChat({
             )),
           );
           setStreaming(false);
+          setStopped(false);
           abortRef.current = null;
         },
       });
@@ -178,5 +186,32 @@ export function useTargetChat({
     [streaming, dataSource, onMeta, onGenerated, onComplete],
   );
 
-  return { messages, streaming, send, setMessages, generatedHtml, setGeneratedHtml };
+  const stop = useCallback(() => {
+    const controller = abortRef.current;
+    if (!controller) return;
+
+    abortRef.current = null;
+    controller.abort();
+    setStreaming(false);
+    setStopped(true);
+    setMessages((prev) =>
+      prev.map((message) =>
+        message.status === 'sending' ? { ...message, status: 'sent' } : message,
+      ),
+    );
+  }, []);
+
+  const clearStopped = useCallback(() => setStopped(false), []);
+
+  return {
+    messages,
+    streaming,
+    stopped,
+    send,
+    stop,
+    clearStopped,
+    setMessages,
+    generatedHtml,
+    setGeneratedHtml,
+  };
 }

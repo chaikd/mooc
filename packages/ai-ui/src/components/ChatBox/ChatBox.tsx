@@ -32,6 +32,8 @@ export interface ChatBoxProps extends HTMLAttributes<HTMLDivElement> {
   onSend: (text: string) => void | Promise<void>;
   /** 禁用输入（例如正在等待 AI 回复） */
   disabled?: boolean;
+  /** 终止当前生成流 */
+  onStop?: () => void;
   /** 空态文案 */
   emptyText?: string;
 }
@@ -44,6 +46,7 @@ export function ChatBox({
   messages,
   onSend,
   disabled = false,
+  onStop,
   emptyText,
   className,
   ...rest
@@ -59,7 +62,7 @@ export function ChatBox({
       <ChatMessages messages={messages} emptyText={emptyText} onSelectedOption={(v: string) => {
         onSend(v)
       }}/>
-      <ChatInput onSend={onSend} disabled={disabled} />
+      <ChatInput onSend={onSend} onStop={onStop} disabled={disabled} />
     </div>
   );
 }

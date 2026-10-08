@@ -7,6 +7,7 @@ interface ContentViewerProps {
   nodeId: string | null;
   html: string | null;
   streaming: boolean;
+  stopped: boolean;
   // eslint-disable-next-line no-unused-vars
   onLearningEvent?: (message: IframeLearningMessage) => void;
 }
@@ -47,6 +48,7 @@ export default function ContentViewer({
   nodeId,
   html,
   streaming,
+  stopped,
   onLearningEvent,
 }: ContentViewerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -55,6 +57,7 @@ export default function ContentViewer({
   const writtenHtmlRef = useRef('');
   const htmlRef = useRef(html ?? '');
   const streamingRef = useRef(streaming);
+  const stoppedRef = useRef(stopped);
   const documentOpenRef = useRef(false);
   const activeDocumentRef = useRef<Document | null>(null);
   const frameRef = useRef<number | null>(null);
@@ -72,7 +75,7 @@ export default function ContentViewer({
 
     const writtenHtml = writtenHtmlRef.current;
     if (nextHtml === writtenHtml) {
-      if (!streamingRef.current && documentOpenRef.current) {
+      if (!streamingRef.current && !stoppedRef.current && documentOpenRef.current) {
         contentDocument.close();
         documentOpenRef.current = false;
         activeDocumentRef.current = null;
@@ -92,7 +95,7 @@ export default function ContentViewer({
       }
       writtenHtmlRef.current = nextHtml;
 
-      if (!streamingRef.current && documentOpenRef.current) {
+      if (!streamingRef.current && !stoppedRef.current && documentOpenRef.current) {
         contentDocument.close();
         documentOpenRef.current = false;
         activeDocumentRef.current = null;
@@ -136,6 +139,7 @@ export default function ContentViewer({
   useEffect(() => {
     htmlRef.current = html ?? '';
     streamingRef.current = streaming;
+    stoppedRef.current = stopped;
 
     if (!html) {
       writtenHtmlRef.current = '';
@@ -158,7 +162,7 @@ export default function ContentViewer({
     }
 
     scheduleFlush(!streaming);
-  }, [html, nodeId, scheduleFlush, streaming]);
+  }, [html, nodeId, scheduleFlush, stopped, streaming]);
 
   useEffect(() => {
     return () => {

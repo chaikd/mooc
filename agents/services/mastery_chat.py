@@ -190,7 +190,7 @@ class MasteryChatService:
 
     # ── 流式响应 ─────────────────────────────────────────────
 
-    def get_target(self, info: GetTargetArgs):
+    async def get_target(self, info: GetTargetArgs):
         user_id = info["user_id"]
         user_input = info["user_input"]
         display_input = info.get("display_input") or user_input
@@ -289,8 +289,10 @@ class MasteryChatService:
         # 当前display_id、实际落库的 target_node_id
         target_display_id = None
         generated_node_id = effective_target_node_id
+        learning_node = ""
+        mastery_state = ""
 
-        for chunk in self.chat_agent.stream(
+        async for chunk in self.chat_agent.astream(
             input=input_value,
             config=config,
             stream_mode=["messages", "updates", "custom"],
@@ -313,16 +315,29 @@ class MasteryChatService:
                             message_id=asst_msg_id,
                             content=content_text,
                         )
-                    elif node_name == "generate_node":
+            elif mode == "custom":
+                if (
+                    isinstance(data, dict)
+                    and data.get("type") == "target_state_change"
+                    and data.get("target_state") == TargetState.EVALUATE_FEEDBACK.value
+                ):
+                    self._safe_db_op(
+                        self.target_repo.set_target_state,
+                        target_id=real_target_id,
+                        user_id=user_id,
+                        target_state=TargetState.EVALUATE_FEEDBACK,
+                    )
+                elif isinstance(data, dict) and data.get("type") == "generated_delta":
+                    text = data.get("data") or ""
+                    if text:
                         yield ServerSentEvent(event=SSEType.GENERATED, data=text)
                         html_text += text
-                        # 保存html到数据库
                         if not display_saved:
                             saved_display = self._safe_db_op(
                                 self.save_generated_display,
                                 target_id=real_target_id,
-                                learning_node= "",
-                                mastery_state="",
+                                learning_node=learning_node,
+                                mastery_state=mastery_state,
                                 result=html_text,
                                 target_node_id=effective_target_node_id,
                                 user_id=user_id,
@@ -336,18 +351,6 @@ class MasteryChatService:
                                 display_id=target_display_id,
                                 result=html_text,
                             )
-            elif mode == "custom":
-                if (
-                    isinstance(data, dict)
-                    and data.get("type") == "target_state_change"
-                    and data.get("target_state") == TargetState.EVALUATE_FEEDBACK.value
-                ):
-                    self._safe_db_op(
-                        self.target_repo.set_target_state,
-                        target_id=real_target_id,
-                        user_id=user_id,
-                        target_state=TargetState.EVALUATE_FEEDBACK,
-                    )
             elif mode == "updates":
                 if not isinstance(data, dict) or not data:
                     continue
@@ -364,6 +367,8 @@ class MasteryChatService:
                             mastery_state=the_data.get("mastery_state") or "",
                         )
                 elif node_name == "chat_node":
+                    learning_node = the_data.get("learning_node") or learning_node
+                    mastery_state = the_data.get("mastery_state") or mastery_state
                     if the_data.get("conditions_satisfied") and the_data.get("content_info"):
                         self._safe_db_op(
                             self.update_role,

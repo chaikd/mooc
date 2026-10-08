@@ -1,3 +1,4 @@
+import asyncio
 import json
 import sys
 from pathlib import Path
@@ -20,7 +21,22 @@ from prompts.loader import load_prompt
 from utils.logger_tool import logger
 from llm.model import get_chat_model
 from database.postgres.postgres_pool import postgres_db
-from database.postgres.checkpoint import chat_checkpoint
+from database.postgres.checkpoint import async_chat_checkpoint as chat_checkpoint
+
+
+def _extract_chunk_text(content: Any) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict) and isinstance(item.get("text"), str):
+                parts.append(item["text"])
+        return "".join(parts)
+    return ""
+
 
 class ChatAgent(BaseAgent):
     def __init__(self):
@@ -83,28 +99,46 @@ class ChatAgent(BaseAgent):
             "options": options,
         }
 
-    def generate_node(self,state: StateSchema) -> ContentShow:
+    async def generate_node(self, state: StateSchema) -> ContentShow:
         system_prompt = load_prompt("prompts/chat/content_show_v2.md")
         content_info = state.get("content_info")
         if not content_info:
             raise RuntimeError("generate_node: 缺少 content_info")
+        stream = self.llm.astream(
+            input=[
+                SystemMessage(content=system_prompt),
+                SystemMessage(content="当前是测试，生成内容要简短，不要浪费token，这很重要。"),
+                SystemMessage(content="以下是要学习的内容描述："),
+                HumanMessage(content_info),
+            ],
+        )
+        html_parts: list[str] = []
+        writer = get_stream_writer()
         try:
-            res = self.llm.invoke(
-                input=[
-                    SystemMessage(content=system_prompt),
-                    SystemMessage(content="当前是测试，生成内容要简短，不要浪费token，这很重要。"),
-                    SystemMessage(content="以下是要学习的内容描述："),
-                    HumanMessage(content_info)
-                ],
-            )
+            async for chunk in stream:
+                text = _extract_chunk_text(chunk.content)
+                if text:
+                    html_parts.append(text)
+                    writer({"type": "generated_delta", "data": text})
+            result = "".join(html_parts)
             return {
-                "result": res.content,
+                "result": result,
                 "learning_node": state.get('learning_node') or '',
                 "mastery_state": state.get('mastery_state') or ''
             }
+        except asyncio.CancelledError:
+            logger.info("generate_node: 用户终止生成")
+            raise
         except Exception as e:
             logger.error("generate_node: 调用大模型失败: %s", e, exc_info=True)
             raise RuntimeError(f"generate_node 执行失败: {e}") from e
+        finally:
+            close = getattr(stream, "aclose", None)
+            if close is not None:
+                try:
+                    await close()
+                except Exception:
+                    logger.exception("generate_node: 关闭模型流失败")
 
     def estimate_learning_state_node(self, state: StateSchema) -> dict[str, Any]:
         system_prompt = load_prompt("prompts/chat/estimate_learning_state.md")
@@ -272,27 +306,19 @@ if __name__ == "__main__":
     #     logger.error("main: 图执行主流程失败: %s", e, exc_info=True)
     #     raise
 
-    database_pool = postgres_db.get_pool()
-    chat_checkpoint.initialize(database=database_pool)
-    config: Any = {"configurable": {"thread_id": "debug-001"}}
+    async def main() -> None:
+        await chat_checkpoint.initialize()
+        config: Any = {"configurable": {"thread_id": "debug-001"}}
 
-    graph = ChatAgent().get_agent()
-    # 第一次对话
-    for mode, chunk in graph.stream(
-        {"messages": [HumanMessage(content="你好")]},
-        config=config,
-        stream_mode=["messages", "values"],
-    ):
-        if mode == "values":
-            values = cast(dict[str, Any], chunk)
-            print("第1轮 values:", [m.content for m in values["messages"]])
+        graph = ChatAgent().get_agent()
+        for prompt in ("你好", "再见"):
+            async for mode, chunk in graph.astream(
+                {"messages": [HumanMessage(content=prompt)]},
+                config=config,
+                stream_mode=["messages", "values"],
+            ):
+                if mode == "values":
+                    values = cast(dict[str, Any], chunk)
+                    print("values:", [m.content for m in values["messages"]])
 
-    # 第二次对话（相同 thread_id）
-    for mode, chunk in graph.stream(
-        {"messages": [HumanMessage(content="再见")]},
-        config=config,
-        stream_mode=["messages", "values"],
-    ):
-        if mode == "values":
-            values = cast(dict[str, Any], chunk)
-            print("第2轮 values:", [m.content for m in values["messages"]])
+    asyncio.run(main())

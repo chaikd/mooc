@@ -3,6 +3,7 @@ import { cx } from '../../utils/cx';
 
 export interface ChatInputProps {
   onSend: (text: string) => void | Promise<void>;
+  onStop?: () => void;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -14,6 +15,7 @@ export interface ChatInputProps {
  */
 export function ChatInput({
   onSend,
+  onStop,
   disabled = false,
   placeholder = '输入消息…',
 }: ChatInputProps) {
@@ -59,19 +61,33 @@ export function ChatInput({
           'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400'
         )}
       />
-      <button
-        type="button"
-        onClick={() => void submit()}
-        disabled={busy || !value.trim()}
-        aria-label="发送消息"
-        className={cx(
-          'inline-flex h-10 items-center justify-center rounded-ui px-4 text-sm font-medium text-white shadow-ui transition-colors',
-          'bg-primary-600 hover:bg-primary-700',
-          'disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500'
-        )}
-      >
-        发送
-      </button>
+      {onStop ? (
+        <button
+          type="button"
+          onClick={onStop}
+          aria-label="停止生成"
+          className={cx(
+            'inline-flex h-10 items-center justify-center rounded-ui px-4 text-sm font-medium shadow-ui transition-colors',
+            'border border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
+          )}
+        >
+          停止生成
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => void submit()}
+          disabled={busy || !value.trim()}
+          aria-label="发送消息"
+          className={cx(
+            'inline-flex h-10 items-center justify-center rounded-ui px-4 text-sm font-medium text-white shadow-ui transition-colors',
+            'bg-primary-600 hover:bg-primary-700',
+            'disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500'
+          )}
+        >
+          发送
+        </button>
+      )}
     </div>
   );
 }

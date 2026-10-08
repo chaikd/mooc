@@ -40,7 +40,7 @@ async def post_messages(
             "target_node_id": post_info.target_node_id,
             "type": post_info.type
         }
-        for event in mastery_chat_service.get_target(args):
+        async for event in mastery_chat_service.get_target(args):
             yield event
     except DomainException as exc:
         logger.error("DomainException:", exc, exc_info=True)

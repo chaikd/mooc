@@ -50,7 +50,17 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
   // }, []);
 
   // useTargetChat 提升到 client 层级，new/detail 模式共享同一份消息状态
-  const { messages, streaming, send, setMessages, generatedHtml, setGeneratedHtml } = useTargetChat({
+  const {
+    messages,
+    streaming,
+    stopped,
+    send,
+    stop,
+    clearStopped,
+    setMessages,
+    generatedHtml,
+    setGeneratedHtml,
+  } = useTargetChat({
     dataSource,
     // onGenerated: handleGenerated,
     onMeta: !targetId ? (meta) => {
@@ -127,6 +137,7 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
   useEffect(() => {
     if (!targetId) return;
     let cancelled = false;
+    clearStopped();
     setError(null);
 
     (async () => {
@@ -150,7 +161,7 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
     return () => {
       cancelled = true;
     };
-  }, [targetId, dataSource, setMessages]);
+  }, [targetId, dataSource, setMessages, clearStopped]);
 
   useEffect(() => {
     if (!activeNodeId) {
@@ -175,6 +186,7 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
       <WelcomeChat
         messages={messages}
         streaming={streaming}
+        onStop={stop}
         onSend={(text) => {
           setGeneratedHtml('');
           send('new', text);
@@ -200,6 +212,7 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
           nodes={nodes}
           activeNodeId={activeNodeId}
           onSelect={(nodeId) => {
+            clearStopped();
             setGeneratedHtml('');
             setActiveNodeId(nodeId);
           }}
@@ -211,6 +224,7 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
           nodeId={generatedHtml ? 'generated-current' : activeNodeId ?? null}
           html={generatedHtml}
           streaming={streaming}
+          stopped={stopped}
           onLearningEvent={handleLearningEvent}
         />
       </main>
@@ -218,6 +232,7 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
         <ChatPanel
           messages={messages}
           streaming={streaming}
+          onStop={stop}
           onSend={(text) => {
             setGeneratedHtml('');
             send(targetId!, text, activeNodeId ?? undefined);
