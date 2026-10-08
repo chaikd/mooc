@@ -13,7 +13,7 @@ from database.repository.target_generated_display_repository import TargetGenera
 from database.repository.target_nodes_repository import TargetNodesRepository
 from database.repository.target_repository import TargetRepository
 from router.common.exception import NotFoundError
-from services.schemas.public import ChatRole, MasteryState, SSEType
+from services.schemas.public import ChatRole, ChatType, MasteryState, SSEType, TargetState
 from agents_services.agents.summary import title_summary_agent
 
 logger = logging.getLogger(__name__)
@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 class GetTargetArgs(TypedDict):
     user_id: str
     user_input: str
+    display_input: Optional[str]
     type: Optional[str]
     target_id: Optional[uuid.UUID]
     target_node_id: Optional[uuid.UUID]
@@ -145,9 +146,9 @@ class MasteryChatService:
         user_id: str,
         target_id: Optional[uuid.UUID],
         user_input: str,
-    ) -> tuple[uuid.UUID, bool]:
+    ) -> tuple[uuid.UUID, bool, TargetState, Optional[uuid.UUID]]:
         """
-        解析或创建 target，返回 (real_target_id, is_new)。
+        解析或创建 target，返回当前目标状态与 current_node_id。
         - target_id 为 None → 生成新 UUID、创建记录、标记 is_new=True
         - target_id 有效 → ensure_target_exists 幂等检查，不存在则创建
         """
@@ -165,13 +166,13 @@ class MasteryChatService:
                 user_id=user_id,
                 message=user_input,
             )
-            return new_id, True
+            return new_id, True, TargetState.Node_DISCOVERY, None
 
         existing = self.target_repo.get_target_by_id(target_id=target_id)
         if existing:
             if existing.user_id != user_id:
                 raise NotFoundError("学习目标不存在")
-            return target_id, False
+            return target_id, False, existing.target_state, existing.current_node_id
 
         self._safe_db_op(
             self.target_repo.ensure_target_exists,
@@ -185,22 +186,62 @@ class MasteryChatService:
             user_id=user_id,
             message=user_input,
         )
-        return target_id, True
+        return target_id, True, TargetState.Node_DISCOVERY, None
 
     # ── 流式响应 ─────────────────────────────────────────────
 
     def get_target(self, info: GetTargetArgs):
         user_id = info["user_id"]
         user_input = info["user_input"]
-        target_node_id = info["target_node_id"] or None
+        display_input = info.get("display_input") or user_input
+        requested_target_node_id = info["target_node_id"] or None
         target_id = info["target_id"]
+        input_type = info.get("type") or ChatType.MASTERY_CHAT
+        is_learning_action = input_type in (
+            ChatType.LEARNING_ACTION,
+            ChatType.LEARNING_ACTION.value,
+        )
 
         # 0. 解析或创建 target
-        real_target_id, is_new = self._resolve_target(
+        real_target_id, is_new, target_state, current_node_id = self._resolve_target(
             user_id,
             target_id,
-            user_input,
+            display_input,
         )
+
+        # 节点创建由服务层决定：evaluate_feedback 表示正在回答下一节点确认。
+        effective_target_node_id = requested_target_node_id or current_node_id
+        if not is_learning_action and target_state == TargetState.EVALUATE_FEEDBACK:
+            if "重新" in user_input:
+                effective_target_node_id = requested_target_node_id or current_node_id
+                self._safe_db_op(
+                    self.target_repo.set_target_state,
+                    target_id=real_target_id,
+                    user_id=user_id,
+                    target_state=TargetState.LEARNING,
+                )
+                target_state = TargetState.LEARNING
+            else:
+                effective_target_node_id = None
+                self._safe_db_op(
+                    self.target_repo.set_target_state,
+                    target_id=real_target_id,
+                    user_id=user_id,
+                    target_state=TargetState.Node_DISCOVERY,
+                )
+                target_state = TargetState.Node_DISCOVERY
+        elif target_state == TargetState.Node_DISCOVERY:
+            if current_node_id and "重新" in user_input:
+                effective_target_node_id = current_node_id
+                self._safe_db_op(
+                    self.target_repo.set_target_state,
+                    target_id=real_target_id,
+                    user_id=user_id,
+                    target_state=TargetState.LEARNING,
+                )
+                target_state = TargetState.LEARNING
+            else:
+                effective_target_node_id = None
 
         # META：告知前端真实 targetId 及是否新建
         yield ServerSentEvent(
@@ -212,7 +253,13 @@ class MasteryChatService:
         config: RunnableConfig = {
             "configurable": {"thread_id": str(real_target_id)}
         }
-        input_value = cast(Any, {"messages": [HumanMessage(content=user_input)]})
+        input_value = cast(Any, {
+            "messages": [HumanMessage(content=user_input)],
+            "input_type": (
+                input_type.value if isinstance(input_type, ChatType) else str(input_type)
+            ),
+            "learning_action": user_input if is_learning_action else None,
+        })
 
         # 1. 保存用户消息
         user_msg_id = uuid.uuid4()
@@ -220,7 +267,7 @@ class MasteryChatService:
             self.save_message,
             message_id=user_msg_id,
             target_id=real_target_id,
-            content=user_input,
+            content=display_input,
             role=ChatRole.USER,
         )
 
@@ -239,13 +286,14 @@ class MasteryChatService:
 
         content_text = ""
         html_text = ""
-        # 当前display_id, target_node_id
+        # 当前display_id、实际落库的 target_node_id
         target_display_id = None
+        generated_node_id = effective_target_node_id
 
         for chunk in self.chat_agent.stream(
             input=input_value,
             config=config,
-            stream_mode=["messages", "updates"],
+            stream_mode=["messages", "updates", "custom"],
         ):
             # stream_mode 为列表时，chunk 为 (mode, data) 二元组；data 类型随 mode 变化
             mode, data = cast(tuple[str, Any], chunk)
@@ -257,7 +305,7 @@ class MasteryChatService:
                 if not text:
                     continue
                 if chunk_name == "AIMessageChunk":
-                    if node_name == "chat_node":
+                    if node_name in ("chat_node", "estimate_learning_state_node"):
                         yield ServerSentEvent(event=SSEType.THINKING, raw_data=text)
                         content_text += text
                         self._safe_db_op(
@@ -270,50 +318,87 @@ class MasteryChatService:
                         html_text += text
                         # 保存html到数据库
                         if not display_saved:
-                            target_display_id, target_node_id = self._safe_db_op(
+                            saved_display = self._safe_db_op(
                                 self.save_generated_display,
                                 target_id=real_target_id,
                                 learning_node= "",
                                 mastery_state="",
                                 result=html_text,
-                                target_node_id=target_node_id,
+                                target_node_id=effective_target_node_id,
                                 user_id=user_id,
                             )
-                            display_saved = True
+                            if saved_display:
+                                target_display_id, generated_node_id = saved_display
+                                display_saved = True
                         elif target_display_id:
                             self._safe_db_op(
                                 self.update_generated_display_result,
                                 display_id=target_display_id,
                                 result=html_text,
                             )
-                elif chunk_name == "AIMessage":
-                    data_message = json.loads(msg_chunk.content)
-                    if data_message.get("conditions_satisfied", False):
+            elif mode == "custom":
+                if (
+                    isinstance(data, dict)
+                    and data.get("type") == "target_state_change"
+                    and data.get("target_state") == TargetState.EVALUATE_FEEDBACK.value
+                ):
+                    self._safe_db_op(
+                        self.target_repo.set_target_state,
+                        target_id=real_target_id,
+                        user_id=user_id,
+                        target_state=TargetState.EVALUATE_FEEDBACK,
+                    )
+            elif mode == "updates":
+                if not isinstance(data, dict) or not data:
+                    continue
+                node_name = list(data.keys())[0]
+                the_data = data.get(node_name, {})
+                if node_name == "generate_node":
+                    # 更新节点learning_node和mastery_status
+                    if generated_node_id:
+                        self._safe_db_op(
+                            self.update_node_title,
+                            node_id = generated_node_id,
+                            target_id=real_target_id,
+                            learning_node=the_data.get("learning_node") or "",
+                            mastery_state=the_data.get("mastery_state") or "",
+                        )
+                elif node_name == "chat_node":
+                    if the_data.get("conditions_satisfied") and the_data.get("content_info"):
                         self._safe_db_op(
                             self.update_role,
                             message_id=asst_msg_id,
                             role=ChatRole.THINKING,
                         )
-                    else:
-                        if node_name == "chat_node":
-                            yield ServerSentEvent(
-                                event=SSEType.QUESTION,
-                                data={
-                                    "question": data_message.get("question") or "",
-                                    "options": data_message.get("options") or [],
-                                },
+                elif node_name == "continue_node":
+                    messages = the_data.get("messages") or []
+                    if messages:
+                        continuation = messages[-1].content
+                        if isinstance(continuation, str) and continuation:
+                            content_text += continuation
+                            self._safe_db_op(
+                                self.update_message,
+                                message_id=asst_msg_id,
+                                content=content_text,
                             )
-            elif mode == "updates":
-                node_name = list(data.keys())[0]
-                the_data = data.get("generate_node", {})
-                if node_name == "generate_node":
-                    # 更新节点learning_node和mastery_status
-                    if target_node_id:
-                        self._safe_db_op(
-                            self.update_node_title,
-                            node_id = target_node_id,
-                            target_id=real_target_id,
-                            learning_node=the_data.get("learning_node") or "",
-                            mastery_state=the_data.get("mastery_state") or "",
-                        )
+                            yield ServerSentEvent(
+                                event=SSEType.THINKING,
+                                raw_data=continuation,
+                            )
+                elif node_name == "interrupt_node":
+                    question = the_data.get("question") or ""
+                    options = the_data.get("options") or []
+                    question_content = json.dumps(
+                        {"question": question, "options": options},
+                        ensure_ascii=False,
+                    )
+                    self._safe_db_op(
+                        self.update_message,
+                        message_id=asst_msg_id,
+                        content=question_content,
+                    )
+                    yield ServerSentEvent(
+                        event=SSEType.QUESTION,
+                        data={"question": question, "options": options},
+                    )
         yield ServerSentEvent(event=SSEType.END, data="")

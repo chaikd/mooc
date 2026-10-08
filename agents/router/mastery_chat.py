@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 class ChatRequest(BaseModel):
     user_input: str
     type: Optional[ChatType] = ChatType.MASTERY_CHAT
+    display_input: Optional[str] = None
     target_node_id: Optional[uuid.UUID] = None
     target_id: Optional[uuid.UUID] = None
 
@@ -34,6 +35,7 @@ async def post_messages(
         args: GetTargetArgs = {
             "user_id": user_id,
             "user_input": post_info.user_input,
+            "display_input": post_info.display_input,
             "target_id": post_info.target_id,
             "target_node_id": post_info.target_node_id,
             "type": post_info.type

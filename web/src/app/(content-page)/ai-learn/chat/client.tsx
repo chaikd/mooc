@@ -6,7 +6,12 @@ import TargetTree from '@/components/ai-learn/target-tree';
 import ContentViewer from '@/components/ai-learn/content-viewer';
 import ChatPanel from '@/components/ai-learn/chat-panel';
 import WelcomeChat from '@/components/ai-learn/welcome-chat';
-import type { Target, TargetNode } from '@/components/ai-learn/types';
+import type {
+  IframeLearningMessage,
+  LearningEventPayload,
+  Target,
+  TargetNode,
+} from '@/components/ai-learn/types';
 import { createDataSource } from '@/services/ai-learn';
 import { useTargetChat } from '@/services/ai-learn/use-target-chat';
 
@@ -27,6 +32,7 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
 
   // 防止 router.replace 过渡期 URL sync effect 误重置状态
   const skipNextSyncRef = useRef(false);
+  const latestLearningEventsRef = useRef(new Map<string, LearningEventPayload>());
 
   // 新建完成：切模式 + 更新 URL
   const handleReady = useCallback(
@@ -51,11 +57,50 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
       return handleReady(meta.targetId);
     } : undefined,
     onComplete: (completedTargetId) => {
-      void dataSource.getNodes(completedTargetId).then(setNodes).catch((e) => {
-        console.warn('[ai-learn] refresh nodes failed', e);
+      void Promise.all([
+        dataSource.getTarget(completedTargetId),
+        dataSource.getNodes(completedTargetId),
+      ]).then(([nextTarget, nextNodes]) => {
+        setTarget(nextTarget);
+        setNodes(nextNodes);
+        setActiveNodeId(nextTarget.currentNodeId ?? nextNodes[0]?.id ?? null);
+      }).catch((e) => {
+        console.warn('[ai-learn] refresh target/nodes failed', e);
       });
     },
   });
+
+  const handleLearningEvent = useCallback((message: IframeLearningMessage) => {
+    console.log('[ai-learn] iframe event', message);
+
+    if (message.type === 'learning_event') {
+      const target = message.event.target;
+      if (!target) return;
+      // 同一 target 不以首次事件为准，始终用最后触发的事件覆盖旧值。
+      latestLearningEventsRef.current.set(target, message.event);
+      return;
+    }
+
+    if (streaming || !targetId) return;
+
+    const events = Array.from(latestLearningEventsRef.current.values());
+    const userInput = JSON.stringify(events);
+    const displayText = events.length > 0
+      ? `已完成当前学习页，共记录 ${events.length} 项学习操作，继续下一步。`
+      : '已完成当前学习页，继续下一步。';
+
+    console.log('[ai-learn] learning_action payload', {
+      type: 'learning_action',
+      user_input: userInput,
+      display_input: displayText,
+    });
+
+    send(targetId, userInput, activeNodeId ?? undefined, {
+      type: 'learning_action',
+      displayText,
+    });
+    latestLearningEventsRef.current.clear();
+  }, [activeNodeId, send, streaming, targetId]);
 
   // 同步 URL 变化（浏览器前进/后退）
   useEffect(() => {
@@ -164,6 +209,7 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
         <ContentViewer
           nodeId={generatedHtml ? 'generated-current' : activeNodeId ?? null}
           html={generatedHtml}
+          onLearningEvent={handleLearningEvent}
         />
       </main>
       <aside className="w-96 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">

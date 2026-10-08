@@ -77,6 +77,8 @@ export class ApiLearnDataSource implements LearnDataSource {
     targetId,
     targetNodeId,
     text,
+    type,
+    displayText,
     onMeta,
     onToken,
     onThinking,
@@ -86,7 +88,10 @@ export class ApiLearnDataSource implements LearnDataSource {
     onError,
   }: StreamChatOptions): AbortController {
     // 新建模式（targetId 为 'new' 或空）不传 target_id，后端自动创建
-    const body: Record<string, string> = { user_input: text, target_node_id: targetNodeId ?? undefined };
+    const body: Record<string, string> = { user_input: text };
+    if (targetNodeId) body.target_node_id = targetNodeId;
+    if (type) body.type = type;
+    if (displayText) body.display_input = displayText;
     if (targetId && targetId !== 'new') {
       body.target_id = targetId;
     }

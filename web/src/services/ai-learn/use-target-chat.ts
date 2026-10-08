@@ -2,7 +2,12 @@
 
 import type { ChatMessage } from '@/components/ai-learn/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { LearnDataSource, StreamGenerated, StreamMeta } from './types';
+import type { ChatType, LearnDataSource, StreamGenerated, StreamMeta } from './types';
+
+interface SendOptions {
+  type?: ChatType;
+  displayText?: string;
+}
 
 interface UseTargetChatOptions {
   dataSource: LearnDataSource;
@@ -22,7 +27,7 @@ interface UseTargetChatReturn {
   streaming: boolean;
   /** 发送消息并启动 SSE 流 */
   // eslint-disable-next-line no-unused-vars
-  send: (targetId: string, text: string, targetNodeId?: string) => void;
+  send: (targetId: string, text: string, targetNodeId?: string, options?: SendOptions) => void;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
   generatedHtml:string;
   setGeneratedHtml: React.Dispatch<React.SetStateAction<string>>;
@@ -57,13 +62,13 @@ export function useTargetChat({
   }, []);
 
   const send = useCallback(
-    (targetId: string, text: string, targetNodeId?: string) => {
+    (targetId: string, text: string, targetNodeId?: string, options?: SendOptions) => {
       if (streaming) return;
 
       const userMsg: ChatMessage = {
         id: nextMsgId(),
         role: 'user',
-        content: text,
+        content: options?.displayText || text,
         status: 'sent',
         createdAt: Date.now(),
       };
@@ -85,6 +90,8 @@ export function useTargetChat({
         targetId,
         targetNodeId,
         text,
+        type: options?.type,
+        displayText: options?.displayText,
         onMeta: (meta) => {
           activeTargetId = meta.targetId;
           onMeta?.(meta);

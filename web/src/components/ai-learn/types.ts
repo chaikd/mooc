@@ -36,5 +36,28 @@ export interface TargetNode {
   html: string | null;
 }
 
+export interface LearningEventPayload {
+  operation: string;
+  target?: string;
+  input?: unknown;
+  result?: unknown;
+  timestamp: number;
+}
+
+export interface LearningEventMessage {
+  type: 'learning_event';
+  event: LearningEventPayload;
+}
+
+export interface LearningNextMessage {
+  type: 'learning_next';
+  event: {
+    operation: 'next_step';
+    timestamp: number;
+  };
+}
+
+export type IframeLearningMessage = LearningEventMessage | LearningNextMessage;
+
 /** 直接复用 @mooc/ai-ui 的判别联合消息类型。 */
 export type ChatMessage = AiUiChatMessage;

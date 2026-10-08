@@ -23,11 +23,15 @@ export type StreamGenerated =
       mastery_state: string;
     };
 
+export type ChatType = 'mastery_chat' | 'learning_action';
+
 /* eslint-disable no-unused-vars -- 回调参数名用于表达事件协议，不参与实现。 */
 export interface StreamChatOptions {
   targetId: string;
   targetNodeId?: string;
   text: string;
+  type?: ChatType;
+  displayText?: string;
   onMeta: (meta: StreamMeta) => void;
   onToken: (delta: string) => void;
   onThinking: (delta: string) => void;

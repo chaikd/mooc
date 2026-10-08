@@ -89,3 +89,21 @@ class TargetRepository:
                     update_time=datetime.now(),
                 )
             )
+
+    def set_target_state(
+        self,
+        *,
+        target_id: uuid.UUID,
+        user_id: str,
+        target_state: TargetState,
+    ) -> None:
+        """更新 target 当前阶段，不改变 current_node_id。"""
+        with orm.session() as session:
+            session.execute(
+                update(Targets)
+                .where(Targets.id == target_id, Targets.user_id == user_id)
+                .values(
+                    target_state=target_state,
+                    update_time=datetime.now(),
+                )
+            )
