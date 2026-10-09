@@ -9,7 +9,17 @@ if __package__ in (None, ""):
 
 from langgraph.graph import END, START, StateGraph
 from langgraph.config import get_stream_writer
+from langgraph.errors import NodeError, NodeTimeoutError
+from langgraph.runtime import get_runtime
+from langgraph.types import RetryPolicy, TimeoutPolicy
 from langchain_core.messages import AIMessage, AnyMessage, SystemMessage, HumanMessage
+from langchain_core.exceptions import (
+    ModelAPIError,
+    ModelConnectionError,
+    ModelRateLimitError,
+    ModelTimeoutError,
+)
+from langchain_openai import StreamChunkTimeoutError
 from agents_services.agents.base import BaseAgent
 from agents_services.schemas.chat import (
     ChatResponse,
@@ -20,6 +30,7 @@ from agents_services.schemas.chat import (
 from prompts.loader import load_prompt
 from utils.logger_tool import logger
 from llm.model import get_chat_model
+from config.settings import settings
 from database.postgres.postgres_pool import postgres_db
 from database.postgres.checkpoint import async_chat_checkpoint as chat_checkpoint
 
@@ -38,6 +49,29 @@ def _extract_chunk_text(content: Any) -> str:
     return ""
 
 
+def _retry_on_transient_model_error(exc: Exception) -> bool:
+    should_retry = isinstance(
+        exc,
+        (
+            ModelTimeoutError,
+            ModelConnectionError,
+            ModelRateLimitError,
+            ModelAPIError,
+            NodeTimeoutError,
+            StreamChunkTimeoutError,
+            TimeoutError,
+        ),
+    )
+    if should_retry:
+        logger.error(
+            "agent.node.retry_triggered error_type=%s error=%s",
+            type(exc).__name__,
+            str(exc),
+            exc_info=(type(exc), exc, exc.__traceback__),
+        )
+    return should_retry
+
+
 class ChatAgent(BaseAgent):
     def __init__(self):
         self.agent = None
@@ -48,7 +82,7 @@ class ChatAgent(BaseAgent):
             return "estimate_learning_state_node"
         return "chat_node"
 
-    def chat_node(self, state: StateSchema) -> dict[str, Any]:
+    async def chat_node(self, state: StateSchema) -> dict[str, Any]:
         system_prompt = load_prompt("prompts/chat/content_info.md")
         input_messages: list[AnyMessage] = [SystemMessage(content=system_prompt)]
         if state.get("chat_directive") == "regenerate_current":
@@ -62,15 +96,11 @@ class ChatAgent(BaseAgent):
                 )
             )
         input_messages.extend(state.get('messages', []))
-        try:
-            res = self.llm.with_structured_output(ChatResponse, method="json_mode").invoke(
-                input=input_messages
-            )
-        except Exception as e:
-            logger.error("chat_node: 调用大模型失败: %s", e, exc_info=True)
-            raise RuntimeError(f"chat_node 执行失败: {e}") from e
+        res = await self.llm.with_structured_output(
+            ChatResponse,
+            method="json_mode",
+        ).ainvoke(input=input_messages)
         if not isinstance(res, ChatResponse):
-            logger.error("chat_node: 大模型输出格式异常, 类型=%s", type(res).__name__)
             raise RuntimeError(f"chat_node: 大模型输出不是 ChatResponse, 实际类型={type(res).__name__}")
 
         return {
@@ -119,6 +149,7 @@ class ChatAgent(BaseAgent):
                 text = _extract_chunk_text(chunk.content)
                 if text:
                     html_parts.append(text)
+                    get_runtime().heartbeat()
                     writer({"type": "generated_delta", "data": text})
             result = "".join(html_parts)
             return {
@@ -126,12 +157,6 @@ class ChatAgent(BaseAgent):
                 "learning_node": state.get('learning_node') or '',
                 "mastery_state": state.get('mastery_state') or ''
             }
-        except asyncio.CancelledError:
-            logger.info("generate_node: 用户终止生成")
-            raise
-        except Exception as e:
-            logger.error("generate_node: 调用大模型失败: %s", e, exc_info=True)
-            raise RuntimeError(f"generate_node 执行失败: {e}") from e
         finally:
             close = getattr(stream, "aclose", None)
             if close is not None:
@@ -140,23 +165,19 @@ class ChatAgent(BaseAgent):
                 except Exception:
                     logger.exception("generate_node: 关闭模型流失败")
 
-    def estimate_learning_state_node(self, state: StateSchema) -> dict[str, Any]:
+    async def estimate_learning_state_node(self, state: StateSchema) -> dict[str, Any]:
         system_prompt = load_prompt("prompts/chat/estimate_learning_state.md")
         learning_action = state.get("learning_action") or ""
-        try:
-            res = self.llm.with_structured_output(
-                LearningEstimateResponse,
-                method="json_mode",
-            ).invoke(
-                input=[
-                    SystemMessage(content=system_prompt),
-                    SystemMessage(content=f"本轮学习操作信息：\n{learning_action}"),
-                    *state["messages"],
-                ]
-            )
-        except Exception as e:
-            logger.error("estimate_learning_state_node: 调用大模型失败: %s", e, exc_info=True)
-            raise RuntimeError(f"estimate_learning_state_node 执行失败: {e}") from e
+        res = await self.llm.with_structured_output(
+            LearningEstimateResponse,
+            method="json_mode",
+        ).ainvoke(
+            input=[
+                SystemMessage(content=system_prompt),
+                SystemMessage(content=f"本轮学习操作信息：\n{learning_action}"),
+                *state["messages"],
+            ]
+        )
 
         if not isinstance(res, LearningEstimateResponse):
             raise RuntimeError(
@@ -166,7 +187,6 @@ class ChatAgent(BaseAgent):
         decision = res.learning_decision
         estimate_info = res.estimate_info.model_dump()
         if decision == "next_node" and not estimate_info.get("next_learning_node", "").strip():
-            logger.warning("estimate_learning_state_node: 缺少下一节点建议，回退到继续当前节点")
             decision = "continue_current_node"
             estimate_info["next_learning_node"] = ""
             estimate_info["reason"] = ""
@@ -210,7 +230,6 @@ class ChatAgent(BaseAgent):
             "是否同意？"
         )
         options = ["继续下一节", "重新学习当前节点"]
-
         try:
             writer = get_stream_writer()
             writer({
@@ -240,14 +259,59 @@ class ChatAgent(BaseAgent):
             "options": options,
         }
 
+    def log_node_error(self, _state: StateSchema, error: NodeError) -> Any:
+        exc = error.error
+        logger.error(
+            "agent.node.error node=%s error_type=%s error=%s",
+            error.node,
+            type(exc).__name__,
+            str(exc),
+            exc_info=(type(exc), exc, exc.__traceback__),
+        )
+        raise exc
+
     def build_graph(self):
         if chat_checkpoint.saver is None:
             raise RuntimeError("checkpointer 未初始化：请先调用 chat_checkpoint.initialize()")
         builder = StateGraph(state_schema=StateSchema)
-        builder.add_node("chat_node", self.chat_node)
+        structured_retry_policy = RetryPolicy(
+            initial_interval=settings.AGENT_RETRY_INITIAL_INTERVAL,
+            backoff_factor=settings.AGENT_RETRY_BACKOFF_FACTOR,
+            max_interval=settings.AGENT_RETRY_MAX_INTERVAL,
+            max_attempts=settings.AGENT_RETRY_MAX_ATTEMPTS,
+            jitter=settings.AGENT_RETRY_JITTER,
+            retry_on=_retry_on_transient_model_error,
+        )
+        builder.add_node(
+            "chat_node",
+            self.chat_node,
+            retry_policy=structured_retry_policy,
+            error_handler=self.log_node_error,
+            timeout=TimeoutPolicy(
+                run_timeout=settings.AGENT_CHAT_NODE_RUN_TIMEOUT,
+                idle_timeout=settings.AGENT_CHAT_NODE_IDLE_TIMEOUT,
+            ),
+        )
         builder.add_node("interrupt_node", self.interrupt_node)
-        builder.add_node("generate_node", self.generate_node)
-        builder.add_node("estimate_learning_state_node", self.estimate_learning_state_node)
+        builder.add_node(
+            "generate_node",
+            self.generate_node,
+            error_handler=self.log_node_error,
+            timeout=TimeoutPolicy(
+                run_timeout=settings.AGENT_GENERATE_NODE_RUN_TIMEOUT,
+                idle_timeout=settings.AGENT_GENERATE_NODE_IDLE_TIMEOUT,
+            ),
+        )
+        builder.add_node(
+            "estimate_learning_state_node",
+            self.estimate_learning_state_node,
+            retry_policy=structured_retry_policy,
+            error_handler=self.log_node_error,
+            timeout=TimeoutPolicy(
+                run_timeout=settings.AGENT_ESTIMATE_NODE_RUN_TIMEOUT,
+                idle_timeout=settings.AGENT_ESTIMATE_NODE_IDLE_TIMEOUT,
+            ),
+        )
         builder.add_node("continue_node", self.continue_node)
         builder.add_node("next_node", self.next_node)
 

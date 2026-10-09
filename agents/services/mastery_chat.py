@@ -1,5 +1,5 @@
+import asyncio
 import json
-import logging
 from typing import Any, Callable, Optional, TypedDict, cast
 import uuid
 
@@ -15,8 +15,8 @@ from database.repository.target_repository import TargetRepository
 from router.common.exception import NotFoundError
 from services.schemas.public import ChatRole, ChatType, MasteryState, SSEType, TargetState
 from agents_services.agents.summary import title_summary_agent
-
-logger = logging.getLogger(__name__)
+from config.settings import settings
+from utils.logger_tool import logger
 
 class GetTargetArgs(TypedDict):
     user_id: str
@@ -117,14 +117,14 @@ class MasteryChatService:
             title=title,
             mastery_state=normalized_mastery_state,
         )
-    def update_target_title(
+    async def update_target_title(
         self,
         target_id: uuid.UUID,
         user_id: str,
         message: str,
     ) -> None:
         """异步生成并更新 target 标题。"""
-        title = title_summary_agent.summary(message)
+        title = await title_summary_agent.asummary(message)
         self.target_repo.update_target(
             target_id=target_id,
             user_id=user_id,
@@ -141,7 +141,7 @@ class MasteryChatService:
 
     # ── Target 解析 ──────────────────────────────────────────
 
-    def _resolve_target(
+    async def _resolve_target(
         self,
         user_id: str,
         target_id: Optional[uuid.UUID],
@@ -161,7 +161,7 @@ class MasteryChatService:
                 title=user_input,
                 message=user_input,
             )
-            self.update_target_title(
+            await self.update_target_title(
                 target_id=new_id,
                 user_id=user_id,
                 message=user_input,
@@ -181,7 +181,7 @@ class MasteryChatService:
             title=user_input,
             message=user_input,
         )
-        self.update_target_title(
+        await self.update_target_title(
             target_id=target_id,
             user_id=user_id,
             message=user_input,
@@ -190,7 +190,35 @@ class MasteryChatService:
 
     # ── 流式响应 ─────────────────────────────────────────────
 
+    async def _astream_graph(
+        self,
+        *,
+        input_value: Any,
+        config: RunnableConfig,
+        request_id: str,
+    ):
+        total_timeout = settings.AGENT_TOTAL_TIMEOUT
+        total_timeout = total_timeout if total_timeout > 0 else None
+        try:
+            async with asyncio.timeout(total_timeout):
+                async for chunk in self.chat_agent.astream(
+                    input=input_value,
+                    config=config,
+                    stream_mode=["messages", "updates", "custom"],
+                ):
+                    yield chunk
+        except asyncio.CancelledError:
+            raise
+        except TimeoutError:
+            logger.error(
+                "graph.timeout request_id=%s timeout=%s",
+                request_id,
+                total_timeout,
+            )
+            raise
+
     async def get_target(self, info: GetTargetArgs):
+        request_id = str(uuid.uuid4())
         user_id = info["user_id"]
         user_input = info["user_input"]
         display_input = info.get("display_input") or user_input
@@ -203,7 +231,7 @@ class MasteryChatService:
         )
 
         # 0. 解析或创建 target
-        real_target_id, is_new, target_state, current_node_id = self._resolve_target(
+        real_target_id, is_new, target_state, current_node_id = await self._resolve_target(
             user_id,
             target_id,
             display_input,
@@ -246,7 +274,11 @@ class MasteryChatService:
         # META：告知前端真实 targetId 及是否新建
         yield ServerSentEvent(
             event=SSEType.META,
-            data={"target_id": str(real_target_id), "is_new": is_new},
+            data={
+                "target_id": str(real_target_id),
+                "is_new": is_new,
+                "request_id": request_id,
+            },
         )
 
         # LangGraph 配置
@@ -292,10 +324,10 @@ class MasteryChatService:
         learning_node = ""
         mastery_state = ""
 
-        async for chunk in self.chat_agent.astream(
-            input=input_value,
+        async for chunk in self._astream_graph(
+            input_value=input_value,
             config=config,
-            stream_mode=["messages", "updates", "custom"],
+            request_id=request_id,
         ):
             # stream_mode 为列表时，chunk 为 (mode, data) 二元组；data 类型随 mode 变化
             mode, data = cast(tuple[str, Any], chunk)

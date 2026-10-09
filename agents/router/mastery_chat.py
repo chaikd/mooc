@@ -1,10 +1,18 @@
+import asyncio
 import uuid
-import logging
 from typing import AsyncIterable, Optional
 
 from fastapi import Depends
 from fastapi.routing import APIRouter
 from fastapi.sse import EventSourceResponse, ServerSentEvent
+from langchain_core.exceptions import (
+    ModelAPIError,
+    ModelConnectionError,
+    ModelRateLimitError,
+    ModelTimeoutError,
+)
+from langchain_openai import StreamChunkTimeoutError
+from langgraph.errors import NodeTimeoutError
 from pydantic import BaseModel
 
 from router.common.auth import CurrentUserId
@@ -12,8 +20,7 @@ from router.common.exception import DomainException
 from router.common.exception_handler import build_error_payload
 from services.mastery_chat import GetTargetArgs, MasteryChatService
 from services.schemas.public import ChatType, SSEType
-
-logger = logging.getLogger(__name__)
+from utils.logger_tool import logger
 
 class ChatRequest(BaseModel):
     user_input: str
@@ -42,6 +49,59 @@ async def post_messages(
         }
         async for event in mastery_chat_service.get_target(args):
             yield event
+    except asyncio.CancelledError:
+        raise
+    except NodeTimeoutError as exc:
+        logger.error("Agent node timeout: node=%s kind=%s", exc.node, exc.kind)
+        yield ServerSentEvent(
+            event=SSEType.ERROR,
+            data=build_error_payload(
+                code="AGENT_NODE_TIMEOUT",
+                message="生成超时，请重试",
+                details={
+                    "node": exc.node,
+                    "kind": exc.kind,
+                    "timeout": exc.timeout,
+                    "elapsed": exc.elapsed,
+                },
+            ),
+        )
+    except ModelTimeoutError as exc:
+        logger.error("LLM timeout: %s", exc, exc_info=True)
+        yield ServerSentEvent(
+            event=SSEType.ERROR,
+            data=build_error_payload(
+                code="LLM_TIMEOUT",
+                message="模型响应超时，请重试",
+            ),
+        )
+    except StreamChunkTimeoutError as exc:
+        logger.error("LLM stream idle timeout: %s", exc, exc_info=True)
+        yield ServerSentEvent(
+            event=SSEType.ERROR,
+            data=build_error_payload(
+                code="LLM_STREAM_IDLE_TIMEOUT",
+                message="模型长时间未返回内容，请重试",
+            ),
+        )
+    except (ModelConnectionError, ModelRateLimitError, ModelAPIError) as exc:
+        logger.error("LLM request failed: %s", exc, exc_info=True)
+        yield ServerSentEvent(
+            event=SSEType.ERROR,
+            data=build_error_payload(
+                code="LLM_REQUEST_ERROR",
+                message="模型服务暂时不可用，请稍后重试",
+            ),
+        )
+    except TimeoutError as exc:
+        logger.error("Agent total timeout: %s", exc, exc_info=True)
+        yield ServerSentEvent(
+            event=SSEType.ERROR,
+            data=build_error_payload(
+                code="AGENT_TOTAL_TIMEOUT",
+                message="本次生成超时，请重试",
+            ),
+        )
     except DomainException as exc:
         logger.error("DomainException:", exc, exc_info=True)
         yield ServerSentEvent(

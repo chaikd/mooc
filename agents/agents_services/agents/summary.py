@@ -21,9 +21,10 @@ class SummaryAgent(BaseAgent):
     def build_graph(self):
         return self.chain
 
-    def summary(self, user_input: str):
-        return self.chain.invoke({
+    async def asummary(self, user_input: str) -> str:
+        result = await self.chain.ainvoke({
             "user_input": user_input
         })
+        return str(result or "")
 
 title_summary_agent = SummaryAgent(load_prompt("prompts/chat/summary_target_title.md"))

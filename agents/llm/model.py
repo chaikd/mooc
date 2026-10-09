@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-import os
 from typing import Optional, Any, cast
+import httpx
 from langchain_openai import ChatOpenAI
 from langchain_core.language_models import BaseChatModel
 
-from dotenv import load_dotenv
-load_dotenv()
+from config.settings import settings
+
 
 class LLMFactory(ABC):
     def __init__(self):
@@ -18,10 +18,18 @@ class ChatFactory(LLMFactory):
     def __init__(self):
         super().__init__()
         self.client = ChatOpenAI(
-            api_key=cast(Any,os.getenv("LLM_API_KEY")),
-            base_url=os.getenv("LLM_BASE_URL"),
-            model=os.getenv("LLM_MODEL_NAME") or '',
+            api_key=cast(Any, settings.LLM_API_KEY),
+            base_url=settings.LLM_BASE_URL,
+            model=settings.LLM_MODEL_NAME,
             temperature=0.3,
+            timeout=httpx.Timeout(
+                connect=settings.LLM_CONNECT_TIMEOUT,
+                read=settings.LLM_READ_TIMEOUT,
+                write=settings.LLM_WRITE_TIMEOUT,
+                pool=settings.LLM_POOL_TIMEOUT,
+            ),
+            max_retries=settings.LLM_MAX_RETRIES,
+            stream_chunk_timeout=settings.LLM_STREAM_CHUNK_TIMEOUT,
             # top_p=0.1,
             # thinking='enabled',
             # response_effort='high',
@@ -60,7 +68,6 @@ class ChatFactory(LLMFactory):
             # top_logprobs=3,
             # user_id="",
         )
-
     def generate(self):
         return self.client
 
