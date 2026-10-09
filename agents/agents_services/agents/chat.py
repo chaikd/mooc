@@ -286,7 +286,7 @@ class ChatAgent(BaseAgent):
             "chat_node",
             self.chat_node,
             retry_policy=structured_retry_policy,
-            error_handler=self.log_node_error,
+            error_handler=cast(Any, self.log_node_error),
             timeout=TimeoutPolicy(
                 run_timeout=settings.AGENT_CHAT_NODE_RUN_TIMEOUT,
                 idle_timeout=settings.AGENT_CHAT_NODE_IDLE_TIMEOUT,
@@ -296,7 +296,7 @@ class ChatAgent(BaseAgent):
         builder.add_node(
             "generate_node",
             self.generate_node,
-            error_handler=self.log_node_error,
+            error_handler=cast(Any, self.log_node_error),
             timeout=TimeoutPolicy(
                 run_timeout=settings.AGENT_GENERATE_NODE_RUN_TIMEOUT,
                 idle_timeout=settings.AGENT_GENERATE_NODE_IDLE_TIMEOUT,
@@ -306,7 +306,7 @@ class ChatAgent(BaseAgent):
             "estimate_learning_state_node",
             self.estimate_learning_state_node,
             retry_policy=structured_retry_policy,
-            error_handler=self.log_node_error,
+            error_handler=cast(Any, self.log_node_error),
             timeout=TimeoutPolicy(
                 run_timeout=settings.AGENT_ESTIMATE_NODE_RUN_TIMEOUT,
                 idle_timeout=settings.AGENT_ESTIMATE_NODE_IDLE_TIMEOUT,
