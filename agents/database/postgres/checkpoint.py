@@ -1,4 +1,8 @@
 from langgraph.checkpoint.postgres import PostgresSaver
+
+from config.settings import settings
+
+
 class Checkpoint:
   saver = None
   def __init__(self):
@@ -11,13 +15,8 @@ class Checkpoint:
 chat_checkpoint = Checkpoint()
 
 
-import os
-
-from dotenv import load_dotenv
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from psycopg_pool import AsyncConnectionPool
-
-load_dotenv()
 
 
 class AsyncCheckPoint:
@@ -29,7 +28,7 @@ class AsyncCheckPoint:
             return
 
         pool = AsyncConnectionPool(
-            conninfo=os.getenv("POSTGRES_URL") or "",
+            conninfo=settings.POSTGRES_URL,
             min_size=1,
             max_size=4,
             open=False,

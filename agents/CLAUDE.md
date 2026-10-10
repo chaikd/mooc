@@ -24,7 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `LLM_API_KEY` / `LLM_BASE_URL` / `LLM_MODEL_NAME` — LLM 配置，默认走本地代理 `http://localhost:15721`（文件注释里保留了 deepseek / qwen 备选）
 - `POSTGRES_URL` — 默认 `postgresql://postgres:123456@localhost:5432/mooc`
 
-配置同时存在于 `config/settings.py`（pydantic-settings `BaseSettings`）和各模块直接 `os.getenv()` + `load_dotenv()` 两处。**实际运行时取值都走 `os.getenv()`；`config.settings` 目前没有被任何模块 import，基本是死代码**。新增配置优先沿用 `os.getenv()` 模式。
+配置统一从 `config/settings.py`（pydantic-settings `BaseSettings`）读取。`settings` 会加载项目根目录的 `.env`，且进程环境变量优先于 `.env`（生产用环境变量 / secret 注入即可，无需改代码）。新增配置优先加到这里，不要再直接用 `os.getenv()` / `load_dotenv()`。
 
 ## 架构：一次请求的完整链路
 

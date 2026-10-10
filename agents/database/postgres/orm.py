@@ -1,14 +1,11 @@
 from contextlib import contextmanager
 from typing import Generator
 
-from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from database.postgres.postgres_pool import postgres_db
-
-load_dotenv()
 
 
 class ORM:

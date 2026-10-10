@@ -1,10 +1,8 @@
 from contextlib import contextmanager
 
-from dotenv import load_dotenv
 from psycopg_pool import ConnectionPool
-import os
 
-load_dotenv()
+from config.settings import settings
 
 
 class PostgresDB:
@@ -15,7 +13,7 @@ class PostgresDB:
         self.pool = ConnectionPool(
             min_size=1,
             max_size=20,
-            conninfo=os.getenv("POSTGRES_URL") or '',
+            conninfo=settings.POSTGRES_URL,
         )
         self.pool.open()
 
