@@ -1,0 +1,58 @@
+# agents/docker-compose.yaml
+#
+# 在 agents/ 目录下使用：
+#   docker compose up -d --build
+#   docker compose logs -f agents
+#   docker compose down          # 保留数据卷
+#   docker compose down -v       # 连数据一起删
+#
+# 环境配置：容器运行时读取 .env.docker —— 与 .env 参数相同、取值不同的 docker 专用一套。
+# .env.docker 和 .env 一样被 git 忽略（根 .gitignore 的 .env**），也不会进镜像：
+# 密钥只在容器启动时注入，不参与镜像构建。
+
+name: mooc-agents
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    env_file:
+      - .env.docker
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      # $$ 转义后交给容器内 shell 解析，读的是容器自己的环境变量
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks: [backend]
+
+  agents:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mooc-agents:latest
+    env_file:
+      - .env.docker
+    ports:
+      # 只绑回环地址：宿主机上的 web(Next.js) 通过 http://127.0.0.1:8000 代理进来
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - agent-logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    extra_hosts:
+      # Linux 上让容器能访问宿主机；Docker Desktop(mac/win) 默认已支持
+      - "host.docker.internal:host-gateway"
+    stop_grace_period: 90s
+    restart: unless-stopped
+    networks: [backend]
+
+volumes:
+  pg-data:
+  agent-logs:
+
+networks:
+  backend:
