@@ -10,9 +10,9 @@ if __package__ in (None, ""):
 from langgraph.graph import END, START, StateGraph
 from langgraph.config import get_stream_writer
 from langgraph.errors import NodeError, NodeTimeoutError
-from langgraph.runtime import get_runtime
+from langgraph.runtime import Runtime, get_runtime
 from langgraph.types import RetryPolicy, TimeoutPolicy
-from langchain_core.messages import AIMessage, AnyMessage, SystemMessage, HumanMessage
+from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 from langchain_core.exceptions import (
     ModelAPIError,
     ModelConnectionError,
@@ -21,6 +21,8 @@ from langchain_core.exceptions import (
 )
 from langchain_openai import StreamChunkTimeoutError
 from agents_services.agents.base import BaseAgent
+from agents_services.context.manager import ContextManager
+from agents_services.context.schemas import AgentRuntimeContext
 from agents_services.schemas.chat import (
     ChatResponse,
     ContentShow,
@@ -76,17 +78,22 @@ class ChatAgent(BaseAgent):
     def __init__(self):
         self.agent = None
         self.llm = get_chat_model()
+        self.context_manager = ContextManager(self.llm)
 
     def start_router_node(self, state: StateSchema) -> Literal["chat_node", "estimate_learning_state_node"]:
         if state.get("input_type") == "learning_action" and state.get("learning_action"):
             return "estimate_learning_state_node"
         return "chat_node"
 
-    async def chat_node(self, state: StateSchema) -> dict[str, Any]:
+    async def chat_node(
+        self,
+        state: StateSchema,
+        runtime: Runtime[AgentRuntimeContext],
+    ) -> dict[str, Any]:
         system_prompt = load_prompt("prompts/chat/content_info.md")
-        input_messages: list[AnyMessage] = [SystemMessage(content=system_prompt)]
+        leading_system_messages = [SystemMessage(content=system_prompt)]
         if state.get("chat_directive") == "regenerate_current":
-            input_messages.append(
+            leading_system_messages.append(
                 SystemMessage(
                     content=(
                         "系统判定用户需要继续学习当前节点。请结合评估信息和已有对话，"
@@ -95,7 +102,11 @@ class ChatAgent(BaseAgent):
                     )
                 )
             )
-        input_messages.extend(state.get('messages', []))
+        input_messages, context_update = await self.context_manager.prepare(
+            state=state,
+            leading_system_messages=leading_system_messages,
+            runtime_context=runtime.context,
+        )
         res = await self.llm.with_structured_output(
             ChatResponse,
             method="json_mode",
@@ -103,7 +114,7 @@ class ChatAgent(BaseAgent):
         if not isinstance(res, ChatResponse):
             raise RuntimeError(f"chat_node: 大模型输出不是 ChatResponse, 实际类型={type(res).__name__}")
 
-        return {
+        update = {
             "messages": [AIMessage(content=res.model_dump_json())],
             "conditions_satisfied": res.conditions_satisfied or False,
             "question": res.question or '',
@@ -114,6 +125,8 @@ class ChatAgent(BaseAgent):
             "mastery_state": res.mastery_state or '',
             "chat_directive": None,
         }
+        update.update(context_update)
+        return update
 
     def chat_router_node(self,state: StateSchema) -> Literal["generate_node", "interrupt_node"]:
         if state.get("conditions_satisfied") and state.get("content_info"):
@@ -130,7 +143,7 @@ class ChatAgent(BaseAgent):
         }
 
     async def generate_node(self, state: StateSchema) -> ContentShow:
-        system_prompt = load_prompt("prompts/chat/content_show_v2.md")
+        system_prompt = load_prompt("prompts/chat/content_show_v3.md")
         content_info = state.get("content_info")
         if not content_info:
             raise RuntimeError("generate_node: 缺少 content_info")
@@ -165,18 +178,26 @@ class ChatAgent(BaseAgent):
                 except Exception:
                     logger.exception("generate_node: 关闭模型流失败")
 
-    async def estimate_learning_state_node(self, state: StateSchema) -> dict[str, Any]:
+    async def estimate_learning_state_node(
+        self,
+        state: StateSchema,
+        runtime: Runtime[AgentRuntimeContext],
+    ) -> dict[str, Any]:
         system_prompt = load_prompt("prompts/chat/estimate_learning_state.md")
         learning_action = state.get("learning_action") or ""
+        input_messages, context_update = await self.context_manager.prepare(
+            state=state,
+            leading_system_messages=[
+                SystemMessage(content=system_prompt),
+                SystemMessage(content=f"本轮学习操作信息：\n{learning_action}"),
+            ],
+            runtime_context=runtime.context,
+        )
         res = await self.llm.with_structured_output(
             LearningEstimateResponse,
             method="json_mode",
         ).ainvoke(
-            input=[
-                SystemMessage(content=system_prompt),
-                SystemMessage(content=f"本轮学习操作信息：\n{learning_action}"),
-                *state["messages"],
-            ]
+            input=input_messages,
         )
 
         if not isinstance(res, LearningEstimateResponse):
@@ -191,10 +212,12 @@ class ChatAgent(BaseAgent):
             estimate_info["next_learning_node"] = ""
             estimate_info["reason"] = ""
 
-        return {
+        update = {
             "learning_decision": decision,
             "estimate_info": estimate_info,
         }
+        update.update(context_update)
+        return update
 
     def estimate_router_node(
         self,
@@ -273,7 +296,10 @@ class ChatAgent(BaseAgent):
     def build_graph(self):
         if chat_checkpoint.saver is None:
             raise RuntimeError("checkpointer 未初始化：请先调用 chat_checkpoint.initialize()")
-        builder = StateGraph(state_schema=StateSchema)
+        builder = StateGraph(
+            state_schema=StateSchema,
+            context_schema=AgentRuntimeContext,
+        )
         structured_retry_policy = RetryPolicy(
             initial_interval=settings.AGENT_RETRY_INITIAL_INTERVAL,
             backoff_factor=settings.AGENT_RETRY_BACKOFF_FACTOR,

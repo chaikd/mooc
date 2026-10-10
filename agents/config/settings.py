@@ -35,6 +35,14 @@ class Settings(BaseSettings):
     AGENT_RETRY_MAX_ATTEMPTS: int = 2
     AGENT_RETRY_JITTER: bool = True
 
+    # Agent context optimization
+    AGENT_CONTEXT_ENABLED: bool = True
+    AGENT_CONTEXT_SUMMARY_TRIGGER_TOKENS: int = 8000
+    AGENT_CONTEXT_RECENT_KEEP_TOKENS: int = 6000
+    AGENT_CONTEXT_SUMMARY_MAX_TOKENS: int = 1000
+    AGENT_LEARNING_CONTEXT_MAX_TOKENS: int = 1000
+    AGENT_CONTEXT_CHARS_PER_TOKEN: float = 1.5
+
     # postgressql
     POSTGRES_URL: str = "postgresql://postgres:123456@localhost:5432/mooc"
     # internal service auth

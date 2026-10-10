@@ -8,6 +8,11 @@ from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 
 from agents_services.agents.chat import chat_agent
+from agents_services.context.learning_context import LearningContextBuilder
+from agents_services.context.schemas import (
+    AgentRuntimeContext,
+    LearningRuntimeContext,
+)
 from database.repository.message_repository import MessageRepository
 from database.repository.target_generated_display_repository import TargetGeneratedDisplayRepository
 from database.repository.target_nodes_repository import TargetNodesRepository
@@ -34,6 +39,10 @@ class MasteryChatService:
         self.display_repo = TargetGeneratedDisplayRepository()
         self.node_repo = TargetNodesRepository()
         self.target_repo = TargetRepository()
+        self.learning_context_builder = LearningContextBuilder(
+            target_repo=self.target_repo,
+            node_repo=self.node_repo,
+        )
 
     # ── 消息持久化接口 ───────────────────────────────────────
 
@@ -139,6 +148,25 @@ class MasteryChatService:
             logger.exception("DB operation failed: %s", func.__name__)
             return False
 
+    def _build_runtime_context(
+        self,
+        *,
+        target_id: uuid.UUID,
+        user_id: str,
+    ) -> AgentRuntimeContext:
+        try:
+            learning_context = self.learning_context_builder.build(
+                target_id=target_id,
+                user_id=user_id,
+            )
+        except Exception:
+            logger.exception(
+                "context.learning_context.build_failed target_id=%s",
+                target_id,
+            )
+            learning_context = LearningRuntimeContext.empty(str(target_id))
+        return AgentRuntimeContext(learning_context=learning_context)
+
     # ── Target 解析 ──────────────────────────────────────────
 
     async def _resolve_target(
@@ -196,6 +224,7 @@ class MasteryChatService:
         input_value: Any,
         config: RunnableConfig,
         request_id: str,
+        runtime_context: AgentRuntimeContext,
     ):
         total_timeout = settings.AGENT_TOTAL_TIMEOUT
         total_timeout = total_timeout if total_timeout > 0 else None
@@ -204,6 +233,7 @@ class MasteryChatService:
                 async for chunk in self.chat_agent.astream(
                     input=input_value,
                     config=config,
+                    context=cast(Any, runtime_context),
                     stream_mode=["messages", "updates", "custom"],
                 ):
                     yield chunk
@@ -292,6 +322,10 @@ class MasteryChatService:
             ),
             "learning_action": user_input if is_learning_action else None,
         })
+        runtime_context = self._build_runtime_context(
+            target_id=real_target_id,
+            user_id=user_id,
+        )
 
         # 1. 保存用户消息
         user_msg_id = uuid.uuid4()
@@ -328,6 +362,7 @@ class MasteryChatService:
             input_value=input_value,
             config=config,
             request_id=request_id,
+            runtime_context=runtime_context,
         ):
             # stream_mode 为列表时，chunk 为 (mode, data) 二元组；data 类型随 mode 变化
             mode, data = cast(tuple[str, Any], chunk)

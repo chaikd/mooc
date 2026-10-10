@@ -1,4 +1,4 @@
-from typing import Any, List, Literal, Optional, TypedDict
+from typing import Any, List, Literal, NotRequired, Optional, TypedDict
 
 from langgraph.graph import MessagesState
 from pydantic import BaseModel, Field
@@ -17,6 +17,9 @@ class StateSchema(MessagesState):
     learning_decision: Optional[Literal["continue_current_node", "next_node"]]
     estimate_info: Optional[dict[str, str]]
     chat_directive: Optional[str]
+    context_summary: NotRequired[str]
+    summary_through_message_id: NotRequired[Optional[str]]
+    context_summary_updated_at: NotRequired[Optional[str]]
 
 class ContentShow(TypedDict):
     result: Optional[str | list[str | dict[Any, Any]]]
