@@ -31,6 +31,9 @@ class AsyncCheckPoint:
             conninfo=settings.POSTGRES_URL,
             min_size=1,
             max_size=4,
+            # setup() 的 migration 里有 CREATE INDEX CONCURRENTLY，该语句不能在事务块内执行，
+            # 必须让连接处于 autocommit 模式（与 AsyncPostgresSaver.from_conn_string 一致）。
+            kwargs={"autocommit": True},
             open=False,
         )
         await pool.open(wait=True)
