@@ -15,7 +15,7 @@ export default async function LiveList({title, page, pageSize}: LiveListProps) {
     liveList: LiveType[],
     total: number
   }>(title, page, pageSize)
-  const liveList = res.liveList
+  const liveList = res?.liveList
   const total = res.total
   return (
     <>
