@@ -32,7 +32,8 @@ class ChatRequest(BaseModel):
 
 router = APIRouter(prefix='/api/mastery_chat')
 
-@router.post('/', response_class=EventSourceResponse)
+@router.post('', response_class=EventSourceResponse)
+@router.post('/', response_class=EventSourceResponse, include_in_schema=False)
 async def post_messages(
     post_info: ChatRequest,
     user_id: CurrentUserId,

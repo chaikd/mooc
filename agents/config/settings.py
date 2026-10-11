@@ -10,9 +10,9 @@ class Settings(BaseSettings):
     app_name: str = "mooc"
     version: str = "0.0.1"
     # LLM
-    LLM_API_KEY: str = "cc_switch"
-    LLM_BASE_URL: str = "http://localhost:15721"
-    LLM_MODEL_NAME: str = "deepseek-v4-flash"
+    LLM_API_KEY=""
+    LLM_BASE_URL=""
+    LLM_MODEL_NAME=""
     LLM_CONNECT_TIMEOUT: float = 10.0
     LLM_READ_TIMEOUT: float = 300.0
     LLM_WRITE_TIMEOUT: float = 30.0

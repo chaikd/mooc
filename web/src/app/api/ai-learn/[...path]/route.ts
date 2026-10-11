@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const AGENTS_API_URL = (process.env.AGENTS_API_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '');
-const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET || 'dev-internal-secret';
+const AGENTS_API_URL = (process.env.AGENTS_API_URL || '').replace(/\/+$/, '');
+const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET || '';
 
 const EXCLUDED_RESPONSE_HEADERS = new Set([
   'connection',

@@ -3,7 +3,8 @@ import { MockLearnDataSource } from './mock';
 import type { LearnDataSource } from './types';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_AI_LEARN_USE_MOCK !== 'false';
-const API_BASE = '/api/ai-learn';
+const configuredApiBase = process.env.NEXT_PUBLIC_AI_LEARN_API?.trim();
+const API_BASE = (configuredApiBase || '/api/ai-learn').replace(/\/+$/, '') || '/api/ai-learn';
 
 let cached: LearnDataSource | null = null;
 
