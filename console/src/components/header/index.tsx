@@ -28,8 +28,9 @@ export default function LayoutHeader({
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const logout = async () => {
-    const res = await logoutServerAction()
-    if(res.success) {
+    try {
+      await logoutServerAction()
+    } finally {
       removeToken()
       removeUserInfo()
       dispatch(setUserInfo({}))

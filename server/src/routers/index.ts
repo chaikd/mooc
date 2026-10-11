@@ -11,6 +11,7 @@ import userRouter from './user.ts';
 const whiteList = [
   '/api/auth/regist',
   '/api/auth/login',
+  '/api/auth/logout',
   '/hls'
 ]
 

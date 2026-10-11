@@ -4,5 +4,9 @@
 
 @theme {
   --color-primary: #6366F1;
-  --width-container: 1280px;
+}
+
+@utility w-container {
+  width: 100%;
+  max-width: 1280px;
 }
