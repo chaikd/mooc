@@ -150,7 +150,7 @@ class ChatAgent(BaseAgent):
         stream = self.llm.astream(
             input=[
                 SystemMessage(content=system_prompt),
-                SystemMessage(content="当前是测试，生成内容要简短，不要浪费token，这很重要。"),
+                SystemMessage(content="当前是测试，生成内容要简短，不要浪费token，这很重要的一点。严格遵循要求，只有html代码，并且html不用markdown格式包裹，直接输出html代码。"),
                 SystemMessage(content="以下是要学习的内容描述："),
                 HumanMessage(content_info),
             ],
