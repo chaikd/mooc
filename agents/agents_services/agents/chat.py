@@ -148,6 +148,8 @@ class ChatAgent(BaseAgent):
         if not content_info:
             raise RuntimeError("generate_node: 缺少 content_info")
         stream = self.llm.astream(
+            # prefix=["<!DOCTYPE html>"],
+            stop=["</html>"],
             input=[
                 SystemMessage(content=system_prompt),
                 SystemMessage(content="当前是测试，生成内容要简短，不要浪费token，这很重要的一点。严格遵循要求，只有html代码，并且html不用markdown格式包裹，直接输出html代码。"),

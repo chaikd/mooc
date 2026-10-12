@@ -14,6 +14,19 @@ interface ContentViewerProps {
 
 const EMPTY_DOCUMENT = '<!doctype html><html><head></head><body></body></html>';
 const MIN_FLUSH_INTERVAL = 50;
+const HTML_DOCUMENT_START = /<!doctype\s+html[^>]*>/i;
+const HTML_DOCUMENT_END = /<\/html\s*>/i;
+
+export function extractHtmlDocument(raw: string): string {
+  const startMatch = HTML_DOCUMENT_START.exec(raw);
+  if (!startMatch || startMatch.index < 0) return '';
+
+  const html = raw.slice(startMatch.index);
+  const endMatch = HTML_DOCUMENT_END.exec(html);
+  if (!endMatch) return html;
+
+  return html.slice(0, endMatch.index + endMatch[0].length);
+}
 
 function parseLearningMessage(value: unknown): IframeLearningMessage | null {
   if (!value || typeof value !== 'object') return null;
@@ -64,6 +77,7 @@ export default function ContentViewer({
   const forceFlushRef = useRef(false);
   const lastFlushAtRef = useRef(0);
   const nodeIdRef = useRef(nodeId);
+  const visibleHtml = extractHtmlDocument(html ?? '');
 
   const flushDocument = useCallback(() => {
     const iframe = iframeRef.current;
@@ -137,7 +151,7 @@ export default function ContentViewer({
   }, [onLearningEvent]);
 
   useEffect(() => {
-    htmlRef.current = html ?? '';
+    htmlRef.current = visibleHtml;
     streamingRef.current = streaming;
     stoppedRef.current = stopped;
 
@@ -162,7 +176,7 @@ export default function ContentViewer({
     }
 
     scheduleFlush(!streaming);
-  }, [html, nodeId, scheduleFlush, stopped, streaming]);
+  }, [html, nodeId, scheduleFlush, stopped, streaming, visibleHtml]);
 
   useEffect(() => {
     return () => {
@@ -180,7 +194,7 @@ export default function ContentViewer({
     scheduleFlush(true);
   }, [scheduleFlush]);
 
-  if (!html) {
+  if (!visibleHtml) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-gray-400">
         {streaming

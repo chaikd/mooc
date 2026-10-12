@@ -188,7 +188,6 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
         streaming={streaming}
         onStop={stop}
         onSend={(text) => {
-          setGeneratedHtml('');
           send('new', text);
         }}
       />
@@ -234,7 +233,6 @@ export default function AiLearnChatClient({ initialTargetId }: { initialTargetId
           streaming={streaming}
           onStop={stop}
           onSend={(text) => {
-            setGeneratedHtml('');
             send(targetId!, text, activeNodeId ?? undefined);
           }}
         />

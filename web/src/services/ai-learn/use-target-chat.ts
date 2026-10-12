@@ -59,6 +59,7 @@ export function useTargetChat({
   const [streaming, setStreaming] = useState(false);
   const [stopped, setStopped] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const generatedStreamStartedRef = useRef(false);
   const [generatedHtml, setGeneratedHtml] = useState<string>('');
 
   // 组件卸载时取消未完成的流
@@ -91,6 +92,7 @@ export function useTargetChat({
       setMessages((prev) => [...prev, userMsg, assistantMsg]);
       setStreaming(true);
       setStopped(false);
+      generatedStreamStartedRef.current = false;
 
       const ac = dataSource.streamChat({
         targetId,
@@ -151,7 +153,13 @@ export function useTargetChat({
         onGenerated: (payload) => {
           onGenerated?.(payload)
           const html = typeof payload === 'string' ? payload : payload.result;
-          setGeneratedHtml(pre => pre + html)
+          setGeneratedHtml(pre => {
+            if (!generatedStreamStartedRef.current) {
+              generatedStreamStartedRef.current = true;
+              return html;
+            }
+            return pre + html;
+          })
         },
         onEnd: () => {
           setMessages((prev) =>
