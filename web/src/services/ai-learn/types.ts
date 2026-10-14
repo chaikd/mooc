@@ -43,7 +43,7 @@ export interface StreamChatOptions {
 
 /**
  * AI 学习模块数据源接口。
- * mock / api 各自实现一份，通过 services/ai-learn/index.ts 工厂切换。
+ * 由 api.ts 的 ApiLearnDataSource 实现，通过 services/ai-learn/index.ts 工厂获取。
  */
 export interface LearnDataSource {
   getTargets(limit?: number): Promise<TargetSummary[]>;
