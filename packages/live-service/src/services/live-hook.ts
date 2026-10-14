@@ -186,19 +186,26 @@ export function useMediasoup({
   }
 
   const producerControl = async (socketIo: Socket, track: MediaStreamTrack,type: ProducerTypes) => {
+    // 只有视频轨需要锁定 H264；音频交给 mediasoup-client 自动协商（router 侧仅 audio/opus），
+    // 否则会拿 video/H264 去严格匹配音频 codec，触发 ortc.reduceCodecs 的 "no matching codec found"
+    const isVideo = track.kind === 'video'
     const producer = await sendTransport?.produce({ 
       track,
-      codec: getCodec(),
-      encodings: [
-        {
-          scaleResolutionDownBy: 1,
-          maxBitrate: 5000000,
-          scalabilityMode: 'L1T3',
-        },
-      ],
-      codecOptions: {
-				videoGoogleStartBitrate: 1000,
-			},
+      codec: isVideo ? getCodec() : undefined,
+      encodings: isVideo
+        ? [
+            {
+              scaleResolutionDownBy: 1,
+              maxBitrate: 5000000,
+              scalabilityMode: 'L1T3',
+            },
+          ]
+        : undefined,
+      codecOptions: isVideo
+        ? {
+            videoGoogleStartBitrate: 1000,
+          }
+        : undefined,
       appData: {
         type
       }}
@@ -221,7 +228,8 @@ export function useMediasoup({
       c => c.mimeType.toLowerCase() === 'video/h264'
     );
     if (!codec) {
-      throw new Error('desired H264 codec+configuration is not supported');
+      // 不抛错：返回 undefined 让 mediasoup-client 回退到默认协商，避免直接断掉推流
+      console.warn('[live] router 不支持 H264，视频将使用默认协商的编码')
     }
     return codec
   }

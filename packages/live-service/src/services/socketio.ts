@@ -156,8 +156,20 @@ export function useSocketIo({
     recvTransport.on('connect', ({ dtlsParameters }: { dtlsParameters: DtlsParameters }, cb: () => void) => {
       socket.emit('transportConnected', { recvTransportId: recvTransport.id, dtlsParameters }, cb);
     })
-    sendTransport.on('produce', ({ kind, rtpParameters, appData }, cb: (obj: {id: string}) => void) => {
-      socket.emit('produce', { transportId: sendTransport.id, recvTransportId: recvTransport.id,kind, rtpParameters, appData, rtpCapabilities: device.rtpCapabilities  }, ({id}: {id: string}) => cb({id}))
+    sendTransport.on('produce', ({ kind, rtpParameters, appData }, cb, errcb) => {
+      requestWs<{ id: string }>(socket, 'produce', {
+        transportId: sendTransport.id,
+        kind,
+        rtpParameters,
+        appData,
+        rtpCapabilities: device.rtpCapabilities,
+      })
+        .then(({ id }) => cb({ id }))
+        .catch((error: Error) => {
+          console.error('[live] produce failed:', error.message)
+          // 让上层 produce() 的 Promise 正常失败，而不是永久挂起
+          errcb?.(error)
+        })
       resetControlState({
         type: (appData.type as string).split('-')[0] + 'State' as ControlStateNamesType,
         stateType: true
@@ -169,20 +181,24 @@ export function useSocketIo({
         type: ProducerTypes
       }
     }) => {
-      const track = await parseConsumer(producerId, appData)
-      if (track) {
-        let stream
-        if (appData.type === 'microphone') {
-          stream = microStream
+      try {
+        const track = await parseConsumer(producerId, appData)
+        if (track) {
+          let stream
+          if (appData.type === 'microphone') {
+            stream = microStream
+          }
+          if (appData.type?.startsWith('screen')) {
+            stream = remoteStream
+          }
+          if(appData.type === 'camera') {
+            stream = cameraStream
+          }
+          stream?.current?.addTrack(track)
+          resetStreamState(appData.type)
         }
-        if (appData.type?.startsWith('screen')) {
-          stream = remoteStream
-        }
-        if(appData.type === 'camera') {
-          stream = cameraStream
-        }
-        stream?.current?.addTrack(track)
-        resetStreamState(appData.type)
+      } catch (error) {
+        console.error('[live] consume failed:', producerId, appData?.type, error)
       }
     }
     
@@ -190,7 +206,7 @@ export function useSocketIo({
     
     const parseConsumer = async (producerId: string, appData: {type: ProducerTypes}) => {
       const consumer = await getConsumer(socket, producerId, device.rtpCapabilities);
-      if (!recvTransport) return;
+      if (!recvTransport || !consumer) return;
       const localConsumer = await recvTransport.consume(consumer);
       addConsumer(producerId, {
         consumer: localConsumer, 
@@ -287,7 +303,61 @@ export function getConsumer(socket: Socket, producerId: string, rtpCapabilities?
   return requestWs(socket, 'getConsumer', {producerId, rtpCapabilities})
 }
 
-export function requestWs<T>(socket: Socket, event: string, data?: Record<string, string | object | undefined>): Promise<T> {
-  return new Promise(resolve => socket.emit(event, data, resolve))
+/** 服务端统一 ack 信封（见 server/src/servers/websocket/ws-ack.ts） */
+export type WsAck<T = unknown> = {
+  success: boolean
+  data?: T
+  error?: string
+  code?: string
+}
+
+export class WsRequestError extends Error {
+  constructor(message: string, readonly code?: string) {
+    super(message)
+    this.name = 'WsRequestError'
+  }
+}
+
+const DEFAULT_ACK_TIMEOUT = 10_000
+
+function isAckEnvelope(value: unknown): value is WsAck {
+  return typeof value === 'object' && value !== null && 'success' in value
+}
+
+/**
+ * 发起一次带 ack 的请求：
+ * 1. 解包服务端信封，成功返回 data，失败抛出 WsRequestError
+ * 2. 超时兜底，避免服务端未回调时 Promise 永久挂起
+ */
+export function requestWs<T>(
+  socket: Socket,
+  event: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: Record<string, any>,
+  timeoutMs = DEFAULT_ACK_TIMEOUT,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    let settled = false
+    const timer = setTimeout(() => {
+      if (settled) return
+      settled = true
+      reject(new WsRequestError(`${event} 响应超时`, 'TIMEOUT'))
+    }, timeoutMs)
+
+    socket.emit(event, data, (ack: unknown) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      if (isAckEnvelope(ack)) {
+        if (!ack.success) {
+          reject(new WsRequestError(ack.error ?? `${event} 请求失败`, ack.code))
+          return
+        }
+        resolve(ack.data as T)
+        return
+      }
+      resolve(ack as T)
+    })
+  })
 }
 

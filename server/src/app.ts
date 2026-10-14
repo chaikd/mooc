@@ -27,9 +27,15 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   checkPromssion(req, res, next)
 })
 
-// 静态资源访问
+// 静态资源访问（HLS 播放文件，白名单免鉴权）：
+// playlist 用 no-cache，每次回源拿最新窗口；分片用 no-store——
+// 每代分片编号从 001 重开，任何缓存都会把上一代同名分片喂给新一代观众（3.25 不变量 3）
 const tmpHlsPath = join(process.cwd(), 'tmp', 'hls')
-app.use('/hls', express.static(tmpHlsPath))
+app.use('/hls', express.static(tmpHlsPath, {
+  setHeaders: (res, filePath) => {
+    res.setHeader('Cache-Control', filePath.endsWith('.m3u8') ? 'no-cache' : 'no-store')
+  },
+}))
 
 registRouters(app)
 

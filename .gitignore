@@ -9,3 +9,4 @@ tmp
 .env**
 .next
 **/prompts/**
+.DS_Store

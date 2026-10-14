@@ -110,6 +110,11 @@
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
+  /* HLS 分片名是 segment_live_%03d.ts（MPEG-TS 二进制），落在 tmp/hls/<roomId>/ 下，
+     不排除会被 tsc 当源码解析并报 TS1490/TS1127。分片命名是对外契约，不能改，只能排除。 */
+  "exclude": [
+    "tmp"
+  ],
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node",
