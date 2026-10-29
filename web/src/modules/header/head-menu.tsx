@@ -3,6 +3,7 @@ import { Space } from "antd";
 import classNames from "classnames";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import HeadSocial from "./head-social";
 export default function HeaderMenu() {
   const pathName = usePathname()
   const menus = [
@@ -31,6 +32,7 @@ export default function HeaderMenu() {
               </Link>)
           })
         }
+        <HeadSocial></HeadSocial>
       </Space>
     </div>
   )
